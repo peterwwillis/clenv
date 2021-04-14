@@ -1,0 +1,59 @@
+#!/usr/bin/env sh
+# cliv - Execute commands using a specific directory of files and variables
+set -eu
+[ "${DEBUG:-0}" = "1" ] && set -x
+
+_err () { printf "%s\n" "$0: Error: $*" ; exit 1 ; }
+
+CLIV_HTTP_PATH="${CLIV_HTTP_PATH:-https://github.com/peterwwillis/cliv/blob/main/}"
+HOME="${HOME:-$(getent passwd $(id -u) | cut -d : -f 6)}"
+CLIV_DIR="${CLIV_DIR:-$HOME/.cliv}"
+[ -d "$CLIV_DIR" ] || mkdir -p "$CLIV_DIR"
+
+if [ $# -lt 1 ] || [ "$1" = "-h" ] ; then
+  printf "%s\n" "
+Usage: $0 [OPTS]
+       $0 [OPTS] VERSION [CMD [ARGS ..]]
+Opts:
+	-h		This screen
+	-l [VERSION]	List versions
+	-n		Create a new $CLIV_DIR/VERSION
+	-i		Clear current environment
+	-I EXT[=V]	Install version V of extension EXT into VERSION
+"
+  exit 1
+fi
+
+if [ "$1" = "-i" ] ; then
+  shift
+  exec env -i "$0" "$@"
+
+elif [ "$1" = "-I" ] ; then
+  ext="${2%%=*}" extver="${2#*=}" vers="$3" ; shift 3
+  [ "$extver" = "$ext" ] && extver="latest"
+  echo "$0: Loading extention $ext version $extver"
+  [ -d "$CLIV_DIR/.ext" ] || mkdir -p "$CLIV_DIR/.ext"
+  curl -fsSL -o "$CLIV_DIR/.ext/$ext" $CLIV_HTTP_PATH/.ext/"$ext"
+  chmod 755 "$CLIV_DIR/.ext/$ext"
+  cd "$CLIV_DIR/$vers"
+  "$CLIV_DIR/.ext/$ext" load $extver "$@"
+
+elif [ "$1" = "-l" ] ; then
+  if [ $# -gt 1 ] ; then
+    shift; for d in "$@" ; do [ -d "$CLIV_DIR/$d" ] && basename $d ; done
+  else
+    for d in "$CLIV_DIR/"* ; do [ -d "$d" ] && basename "$d" ; done
+  fi
+
+elif  [ "$1" = "-n" ] ; then
+  vers="$2" ; shift 2
+  [ -d "$CLIV_DIR/$vers" ] && _err "Version '$CLIV_DIR/$vers' already exists"
+  mkdir -p "$CLIV_DIR/$vers/bin"
+  echo "PATH=$CLIV_DIR/$vers/bin:$PATH" > "$CLIV_DIR/$vers/.env"
+
+elif [ $# -ge 1 ] ; then
+  vers="$1" ; shift
+  [ -d "$CLIV_DIR/$vers" ] || _err "No version '$CLIV_DIR/$vers' found"
+  set -a ; . "$CLIV_DIR/$vers/.env"
+  exec env "$@"
+fi
