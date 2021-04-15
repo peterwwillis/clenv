@@ -46,24 +46,24 @@ That's it.
    ```
 
 3. Install a program in the new directory. You can do this two ways:
-  1. Manualy install a program in `~/.cliv/aws2050/bin/`.
-  2. Use a **cliv extension** to install a specific version of a program.
-     ```bash
-     $ ./cliv -I aws-cli-v2=2.0.50 aws2050 echo success
-     ./cliv: Loading extention aws-cli-v2 version 2.0.50
-     /home/vagrant/.cliv/.ext/aws-cli-v2: Loading extension version '2.0.50'
-     /home/vagrant/.cliv/.ext/aws-cli-v2: Removing awscliv2.zip
-     /home/vagrant/.cliv/.ext/aws-cli-v2: Downloading awscliv2.zip
-       % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
-                                      Dload  Upload   Total   Spent    Left  Speed
-     100 32.2M  100 32.2M    0     0  13.4M      0  0:00:02  0:00:02 --:--:-- 13.4M
-     /home/vagrant/.cliv/.ext/aws-cli-v2: Unpacking aws to '/home/vagrant/.cliv/aws2050/usr'
-     /home/vagrant/.cliv/.ext/aws-cli-v2: Installing symlink: /home/vagrant/.cliv/aws2050/usr/aws/dist/aws -> bin/aws
-     /home/vagrant/.cliv/.ext/aws-cli-v2: Testing aws
-     aws-cli/2.0.50 Python/3.7.3 Linux/4.15.0-135-generic exe/x86_64.ubuntu.18
-     /home/vagrant/.cliv/.ext/aws-cli-v2: Removing awscliv2.zip
-     success
-     ```
+   1. Manually install a program in `~/.cliv/aws2050/bin/`.
+   2. Use a **cliv extension** to install a specific version of a program.
+      ```bash
+      $ ./cliv -I aws-cli-v2=2.0.50 aws2050 echo success
+      ./cliv: Loading extention aws-cli-v2 version 2.0.50
+      /home/vagrant/.cliv/.ext/aws-cli-v2: Loading extension version '2.0.50'
+      /home/vagrant/.cliv/.ext/aws-cli-v2: Removing awscliv2.zip
+      /home/vagrant/.cliv/.ext/aws-cli-v2: Downloading awscliv2.zip
+        % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                       Dload  Upload   Total   Spent    Left  Speed
+      100 32.2M  100 32.2M    0     0  13.4M      0  0:00:02  0:00:02 --:--:-- 13.4M
+      /home/vagrant/.cliv/.ext/aws-cli-v2: Unpacking aws to '/home/vagrant/.cliv/aws2050/usr'
+      /home/vagrant/.cliv/.ext/aws-cli-v2: Installing symlink: /home/vagrant/.cliv/aws2050/usr/aws/dist/aws -> bin/aws
+      /home/vagrant/.cliv/.ext/aws-cli-v2: Testing aws
+      aws-cli/2.0.50 Python/3.7.3 Linux/4.15.0-135-generic exe/x86_64.ubuntu.18
+      /home/vagrant/.cliv/.ext/aws-cli-v2: Removing awscliv2.zip
+      success
+      ```
 
 4. Run the program.
    ```bash
