@@ -1,5 +1,6 @@
 #!/usr/bin/env sh
-# cliv - Execute commands using a specific directory of files and variables
+# cliv v0.1 - Execute commands using a specific directory of files and variables
+# Copyright (C) 2021 Peter Willis
 set -eu
 [ "${DEBUG:-0}" = "1" ] && set -x
 
@@ -16,44 +17,65 @@ Usage: $0 [OPTS]
        $0 [OPTS] VERSION [CMD [ARGS ..]]
 Opts:
 	-h		This screen
+	-i		Clear environment variables. Must be first argument
 	-l [VERSION]	List versions
 	-n		Create a new $CLIV_DIR/VERSION
-	-i		Clear current environment
 	-I EXT[=V]	Install version V of extension EXT into VERSION
 "
   exit 1
 fi
 
-if [ "$1" = "-i" ] ; then
-  shift
-  exec env -i "$0" "$@"
-
-elif [ "$1" = "-I" ] ; then
-  ext="${2%%=*}" extver="${2#*=}" vers="$3" ; shift 3
+_cliv_new () {
+  export CLIV_VER="$1" ; shift
+  [ -d "$CLIV_DIR/$CLIV_VER" ] && _err "Version '$CLIV_DIR/$CLIV_VER' already exists"
+  mkdir -p "$CLIV_DIR/$CLIV_VER/bin"
+  echo "PATH=$CLIV_DIR/$CLIV_VER/bin:$PATH" > "$CLIV_DIR/$CLIV_VER/.env"
+}
+_cliv_list () {
+  if [ $# -gt 0 ] ; then
+    for d in "$@" ; do [ -d "$CLIV_DIR/$d" ] && basename $d ; done
+  else
+    for d in "$CLIV_DIR/"* ; do [ -d "$d" ] && basename "$d" ; done
+  fi
+}
+_cliv_load () {
+  ext="${1%%=*}" extver="${1#*=}" CLIV_VER="$2" ; shift 2
+  export CLIV_VER
   [ "$extver" = "$ext" ] && extver="latest"
   echo "$0: Loading extention $ext version $extver"
   [ -d "$CLIV_DIR/.ext" ] || mkdir -p "$CLIV_DIR/.ext"
   curl -fsSL -o "$CLIV_DIR/.ext/$ext" $CLIV_HTTP_PATH/.ext/"$ext"
   chmod 755 "$CLIV_DIR/.ext/$ext"
-  cd "$CLIV_DIR/$vers"
-  "$CLIV_DIR/.ext/$ext" load $extver "$@"
-
-elif [ "$1" = "-l" ] ; then
-  if [ $# -gt 1 ] ; then
-    shift; for d in "$@" ; do [ -d "$CLIV_DIR/$d" ] && basename $d ; done
-  else
-    for d in "$CLIV_DIR/"* ; do [ -d "$d" ] && basename "$d" ; done
-  fi
-
-elif  [ "$1" = "-n" ] ; then
-  vers="$2" ; shift 2
-  [ -d "$CLIV_DIR/$vers" ] && _err "Version '$CLIV_DIR/$vers' already exists"
-  mkdir -p "$CLIV_DIR/$vers/bin"
-  echo "PATH=$CLIV_DIR/$vers/bin:$PATH" > "$CLIV_DIR/$vers/.env"
-
-elif [ $# -ge 1 ] ; then
-  vers="$1" ; shift
-  [ -d "$CLIV_DIR/$vers" ] || _err "No version '$CLIV_DIR/$vers' found"
-  set -a ; . "$CLIV_DIR/$vers/.env"
+  cd "$CLIV_DIR/$CLIV_VER"
+  "$CLIV_DIR/.ext/$ext" load $extver # "$@"
+}
+_cliv_exec () {
+  export CLIV_VER="$1" ; shift
+  [ -d "$CLIV_DIR/$CLIV_VER" ] || _err "No version '$CLIV_DIR/$CLIV_VER' found"
+  set -a ; . "$CLIV_DIR/$CLIV_VER/.env"
   exec env "$@"
+}
+
+
+
+[ "$1" = "-i" ] && shift 1 && exec env -i "$0" "$@"
+
+CLIV_NEW=0 CLIV_LIST=0
+while getopts "nlI:" args ; do
+    case "$args" in
+        n)  CLIV_NEW=1 ;;
+        l)  CLIV_LIST=1 ;;
+        I)  CLIV_LOAD="$OPTARG" ;;
+    esac
+done
+shift $(($OPTIND-1))
+
+if [ $CLIV_NEW -eq 1 ] ; then        _cliv_new "$@"
+fi
+
+if [ $CLIV_LIST -eq 1 ] ; then       _cliv_list "$@"
+elif [ -n "${CLIV_LOAD:-}" ] ; then  _cliv_load "$CLIV_LOAD" "$@"
+fi
+
+if [ $# -ge 1 ] ; then             _cliv_exec "$@"
 fi
