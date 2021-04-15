@@ -1,15 +1,16 @@
 #!/bin/sh
-# CLIV EXTENSION: aws-cli-v2
+# CLIV EXTENSION: terraform
 set -eu
 [ "${DEBUG:-0}" = "1" ] && set -x
 
 EXT_VER="1.0"
-INSTDIR="${INSTDIR:-$(pwd)/usr}"
+INSTDIR="${INSTDIR:-$(pwd)/usr/bin}"
 
-PROGRAM="aws"
-VERSION="2.1.37"
-BASEURL="https://awscli.amazonaws.com/awscli-exe-linux-x86_64-%s.zip"
-DLFILE="awscliv2.zip"
+PROGRAM="terraform"
+VERSION="0.15.0"
+_HCURL="https://releases.hashicorp.com/$PROGRAM"
+BASEURL="$_HCURL/%s/""$PROGRAM""_%s_linux_amd64.zip"
+DLFILE="terraform.zip"
 
 _usage () {
     cat <<EOUSAGE
@@ -22,29 +23,27 @@ EOUSAGE
 }
 _url () {
     if [ $# -gt 0 ] && [ "$1" = "latest" ] ; then
-         printf "%s\n" "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip"
-    else printf "$BASEURL\n" "$VERSION"
+        VERSION="$( curl -sL "$_HCURL" | grep -e "<a href=\"/$PROGRAM/" | grep -v alpha | head -1 | cut -d \" -f 2 | cut -d / -f 3 )"
     fi
+    printf "$BASEURL\n" "$VERSION" "$VERSION"
 }
 _ext_download () {
     [ $# -gt 0 ] && [ -n "$1" ] && VERSION="$1"
     url="$(_url "$VERSION")"
-    echo "$0: Downloading $DLFILE"
-    [ -e $DLFILE ] || curl -L "$url" -o $DLFILE
+    fname="$(basename "$url")"
+    echo "$0: Downloading $fname"
+    curl -L "$url" -o $DLFILE
 }
 _ext_unpack () {  echo "$0: Unpacking $PROGRAM to '$INSTDIR'"
     mkdir -p "$INSTDIR"
     unzip -q -o -d "$INSTDIR" $DLFILE
 }
-_ext_install_local () {  echo "$0: Installing symlink: $INSTDIR/aws/dist/aws -> bin/$PROGRAM"
-    ln -sf "$INSTDIR"/aws/dist/aws bin/$PROGRAM
+_ext_install_local () {  echo "$0: Installing symlink: $INSTDIR/$PROGRAM -> bin/$PROGRAM"
+    mkdir -p bin
+    ln -sf "$INSTDIR"/$PROGRAM bin/$PROGRAM
 }
 _ext_install_global () {  echo "$0: Installing globally"
-    if [ -e /usr/local/aws-cli/v2/current ] ; then
-        sudo "$INSTDIR"/aws/install --update
-    else
-        sudo "$INSTDIR"/aws/install
-    fi
+    sudo /bin/sh -c "mkdir -p /usr/local/bin; mv $PROGRAM /usr/local/bin/$PROGRAM"
 }
 _ext_clean () {  echo "$0: Removing $DLFILE"
     rm -f $DLFILE
