@@ -6,7 +6,7 @@ set -eu
 
 _err () { printf "%s\n" "$0: Error: $*" ; exit 1 ; }
 
-CLIV_HTTP_PATH="${CLIV_HTTP_PATH:-https://github.com/peterwwillis/cliv/blob/main/}"
+CLIV_HTTP_PATH="${CLIV_HTTP_PATH:-https://raw.githubusercontent.com/peterwwillis/cliv/main}"
 HOME="${HOME:-$(getent passwd $(id -u) | cut -d : -f 6)}"
 CLIV_DIR="${CLIV_DIR:-$HOME/.cliv}"
 [ -d "$CLIV_DIR" ] || mkdir -p "$CLIV_DIR"
@@ -29,7 +29,7 @@ _cliv_new () {
   export CLIV_VER="$1" ; shift
   [ -d "$CLIV_DIR/$CLIV_VER" ] && _err "Version '$CLIV_DIR/$CLIV_VER' already exists"
   mkdir -p "$CLIV_DIR/$CLIV_VER/bin"
-  echo "PATH=$CLIV_DIR/$CLIV_VER/bin:$PATH" > "$CLIV_DIR/$CLIV_VER/.env"
+  echo "PATH=$CLIV_DIR/$CLIV_VER/bin:\$PATH" > "$CLIV_DIR/$CLIV_VER/.env"
 }
 _cliv_list () {
   if [ $# -gt 0 ] ; then
