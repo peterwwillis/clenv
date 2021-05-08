@@ -1,81 +1,153 @@
 #!/usr/bin/env sh
-# cliv v0.1 - Execute commands using a specific directory of files and variables
+# cliv v0.2 - Execute commands using a specific directory of files and variables
 # Copyright (C) 2021 Peter Willis
 set -eu
 [ "${DEBUG:-0}" = "1" ] && set -x
 
-_err () { printf "%s\n" "$0: Error: $*" ; exit 1 ; }
-
 CLIV_HTTP_PATH="${CLIV_HTTP_PATH:-https://raw.githubusercontent.com/peterwwillis/cliv/main}"
 HOME="${HOME:-$(getent passwd $(id -u) | cut -d : -f 6)}"
-CLIV_DIR="${CLIV_DIR:-$HOME/.cliv}"
-[ -d "$CLIV_DIR" ] || mkdir -p "$CLIV_DIR"
+export CLIV_DIR="${CLIV_DIR:-$HOME/.cliv}"
 
-if [ $# -lt 1 ] || [ "$1" = "-h" ] ; then
-  printf "%s\n" "
+_usage () {
+    printf "%s\n" "
 Usage: $0 [OPTS]
-       $0 [OPTS] VERSION [CMD [ARGS ..]]
+       $0 [OPTS] [ALIAS [CMD [ARGS ..]] ]
 Opts:
-	-h		This screen
-	-i		Clear environment variables. Must be first argument
-	-l [VERSION]	List versions
-	-n		Create a new $CLIV_DIR/VERSION
-	-I EXT[=V]	Install version V of extension EXT into VERSION
+	-h			This screen
+	-i			Clear environment variables. Must be first argument
+	-l [ALIAS]		List versions
+	-n ALIAS		Create a new ALIAS
+	-I EXT[=V] [ALIAS] 	Install version V of extension EXT into ALIAS
+	-W EXT [-- CMD ..]	Installs extension EXT and runs CMD
+	-f			Force mode
 "
   exit 1
-fi
-
-_cliv_new () {
-  export CLIV_VER="$1" ; shift
-  [ -d "$CLIV_DIR/$CLIV_VER" ] && _err "Version '$CLIV_DIR/$CLIV_VER' already exists"
-  mkdir -p "$CLIV_DIR/$CLIV_VER/bin"
-  echo "PATH=$CLIV_DIR/$CLIV_VER/bin:\$PATH" > "$CLIV_DIR/$CLIV_VER/.env"
 }
+_err () { printf "%s\n" "$0: Error: $*" ; exit 1 ; }
 _cliv_list () {
-  if [ $# -gt 0 ] ; then
-    for d in "$@" ; do [ -d "$CLIV_DIR/$d" ] && basename $d ; done
-  else
-    for d in "$CLIV_DIR/"* ; do [ -d "$d" ] && basename "$d" ; done
-  fi
+    for d in "$@" ; do
+        [ -d "$CLIV_DIR/$(basename "$d")" ] && basename "$d"
+    done
 }
-_cliv_load () {
-  ext="${1%%=*}" extver="${1#*=}" CLIV_VER="$2" ; shift 2
-  export CLIV_VER
-  [ "$extver" = "$ext" ] && extver="latest"
-  echo "$0: Loading extention $ext version $extver"
-  [ -d "$CLIV_DIR/.ext" ] || mkdir -p "$CLIV_DIR/.ext"
-  curl -fsSL -o "$CLIV_DIR/.ext/$ext" $CLIV_HTTP_PATH/.ext/"$ext"
-  chmod 755 "$CLIV_DIR/.ext/$ext"
-  cd "$CLIV_DIR/$CLIV_VER"
-  "$CLIV_DIR/.ext/$ext" load $extver # "$@"
+_cliv_new () {
+    export CV_ALIAS="$1" ; shift
+    if [ -d "$CLIV_DIR/$CV_ALIAS" ] && [ ! "$CLIV_FORCE" = "1" ] ; then
+        _err "Version '$CLIV_DIR/$CV_ALIAS' already exists"
+    fi
+    mkdir -p "$CLIV_DIR/$CV_ALIAS/bin"
+    echo "PATH=$CLIV_DIR/$CV_ALIAS/bin:\$PATH" > "$CLIV_DIR/$CV_ALIAS/.env"
+}
+_cliv_ext_run () {  "$CLIV_DIR/.ext/$CV_EXT_NAME" "$@"; }
+_cliv_ext_install () {
+    ext="${1%%=*}" ver="${1#*=}" alias="${2:-}"
+    if [ $# -lt 2 ] ; then shift 1; alias="$ext"; else shift 2; fi
+    if [ ! "$ver" = "$ext" ] ; then
+        export CV_VERSION="$ver"
+    fi
+    export CV_EXT_NAME="$ext" CV_ALIAS="$alias" CV_INSTDIR="$CLIV_DIR/$alias"
+
+    if [ ! -e "$CLIV_DIR/.ext/$CV_EXT_NAME" ] || [ "$CLIV_FORCE" = "1" ] ; then
+        echo "$0: Installing extention $CV_EXT_NAME"
+        if   command -v curl >/dev/null ; then  curl -fsSL -o "$CLIV_DIR/.ext/$CV_EXT_NAME" "$CLIV_HTTP_PATH/.ext/$CV_EXT_NAME"
+        elif command -v wget >/dev/null ; then  wget -O "$CLIV_DIR/.ext/$CV_EXT_NAME" "$CLIV_HTTP_PATH/.ext/$CV_EXT_NAME"
+        else _err "Please install 'curl' or 'wget'." ; fi
+        chmod 755 "$CLIV_DIR/.ext/$CV_EXT_NAME"
+        _ext_install_wrapper
+    fi
+
+    [ -z "${CV_VERSION:-}" ] && CV_VERSION="latest"
+    [ "$CV_VERSION" = "latest" ] && CV_VERSION="$(_cliv_ext_run latest)"
+    [ -d "$CLIV_DIR/$CV_ALIAS" ] || _cliv_new "$CV_ALIAS"
+    export CV_VERSION="$CV_VERSION"
+    echo_err "$0: Loading extension version '$CV_VERSION'"
+    _ext_clean; _ext_download; _ext_unpack; _ext_install_local; _ext_test; _ext_clean
 }
 _cliv_exec () {
-  export CLIV_VER="$1" ; shift
-  [ -d "$CLIV_DIR/$CLIV_VER" ] || _err "No version '$CLIV_DIR/$CLIV_VER' found"
-  set -a ; . "$CLIV_DIR/$CLIV_VER/.env"
+  export CV_ALIAS="$1" ; shift
+  [ -d "$CLIV_DIR/$CV_ALIAS" ] || _err "No version '$CLIV_DIR/$CV_ALIAS' found"
+
+  if [ -r "$CLIV_DIR/$CV_ALIAS/.env" ] ; then
+      set -a
+      . "$CLIV_DIR/$CV_ALIAS/.env"
+  else echo "$0: Warning: no '$CLIV_DIR/$CV_ALIAS/.env' found" ; fi
   exec env "$@"
 }
+_cliv_wrapper () {
+    CV_EXT_NAME="$CLIV_WRAPPER"
+    CV_ALIAS="${CV_ALIAS:-$CV_EXT_NAME}" # Default alias to extension name
+    if [ -z "${CV_VERSION:-}" ] ; then
+        if [ -r ".$CV_EXT_NAME-version" ] ; then
+            CV_VERSION="$(cat ".$CV_EXT_NAME-version")"
+        fi
+    fi
+    extfull="$CV_EXT_NAME" aliasfull="$CV_ALIAS"
+    if [ -n "${CV_VERSION:-}" ] ; then
+        extfull="$extfull=$CV_VERSION"
+        aliasfull="$aliasfull=$CV_VERSION"
+    fi
+    cliv -l "$aliasfull" >/dev/null || cliv -I "$extfull" "$aliasfull"
+    cliv "$aliasfull" "$@"
+}
 
+### Extension functions
+echo_err () { echo "$*" 1>&2 ; }
+_ext_test () {          echo_err "$0: Testing $CV_EXT_NAME"; _cliv_ext_run "test"; }
+_ext_clean_install () { echo_err "$0: Removing '$CV_INSTDIR'"; _cliv_ext_run "clean-install"; }
+_ext_clean () {         echo_err "$0: Removing download"; _cliv_ext_run "clean"; }
+_ext_install_global () { echo_err "$0: Installing globally" ; _cliv_ext_run "install-global"; }
+_ext_install_local () { echo_err "$0: Installing symlink"; _cliv_ext_run "install-local"; }
+_ext_install_wrapper () {       echo_err "$0: Installing wrapper"; _cliv_ext_run "install-wrapper"; }
+_ext_unpack () {        echo_err "$0: Unpacking $CV_EXT_NAME to '$CV_INSTDIR'"; _cliv_ext_run "unpack"; }
+_ext_download () {      echo_err "$0: Downloading"; _cliv_ext_run "download" "$CV_VERSION"; }
+_ext_usage () {
+    cat <<EOUSAGE
+Usage: $0 CMD
 
+Commands:
+$(grep -e "^_ext_.* ()" "$CLIV_DIR/.ext/$CV_EXT_NAME" | awk '{print $1}' | sed -e 's/_ext_//;s/^/  /g' | tr _ -)
+EOUSAGE
+    exit 1
+}
+
+### Main program
+if [ $# -lt 1 ] ; then
+    _usage
+fi
 
 [ "$1" = "-i" ] && shift 1 && exec env -i "$0" "$@"
 
-CLIV_NEW=0 CLIV_LIST=0
-while getopts "nlI:" args ; do
+CLIV_NEW=0 CLIV_LIST=0 CLIV_FORCE=0
+while getopts "nlI:W:f" args ; do
     case "$args" in
         n)  CLIV_NEW=1 ;;
         l)  CLIV_LIST=1 ;;
         I)  CLIV_LOAD="$OPTARG" ;;
+        W)  CLIV_WRAPPER="$OPTARG" ;;
+        f)  export CLIV_FORCE=1 ;;
     esac
 done
 shift $(($OPTIND-1))
 
-if [ $CLIV_NEW -eq 1 ] ; then        _cliv_new "$@"
+for d in "$CLIV_DIR" "$CLIV_DIR/.bin" "$CLIV_DIR/.ext" ; do
+    [ -d "$d" ] || mkdir -p "$d"
+done
+
+if [ $CLIV_NEW -eq 1 ] ; then
+    _cliv_new "$@"
+    exit 0
+elif [ $CLIV_LIST -eq 1 ] ; then
+    if [ $# -gt 0 ] ; then  _cliv_list "$@"
+    else _cliv_list "$CLIV_DIR"/*
+    fi
+    exit 0
+elif [ -n "${CLIV_LOAD:-}" ] ; then
+    _cliv_ext_install "$CLIV_LOAD" "$@"
+    exit 0
+elif [ -n "${CLIV_WRAPPER:-}" ] ; then
+    _cliv_wrapper "$@"
+    exit 0
 fi
 
-if [ $CLIV_LIST -eq 1 ] ; then       _cliv_list "$@"
-elif [ -n "${CLIV_LOAD:-}" ] ; then  _cliv_load "$CLIV_LOAD" "$@"
-fi
-
-if [ $# -ge 1 ] ; then             _cliv_exec "$@"
+if [ $# -gt 0 ] ; then
+    _cliv_exec "$@"
 fi
