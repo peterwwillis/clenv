@@ -1,18 +1,57 @@
-#!/bin/sh
-# CLIV EXTENSION: terraform
+#!/usr/bin/env sh
 set -eu
 [ "${DEBUG:-0}" = "1" ] && set -x
 
-EXT_VER="1.0"
-INSTDIR="${INSTDIR:-$(pwd)/usr/bin}"
+CV_EXT_NAME="${CV_EXT_NAME:-terraform}"
+CV_EXT_VER="1.1"
 
-PROGRAM="terraform"
-VERSION="0.15.0"
-_HCURL="https://releases.hashicorp.com/$PROGRAM"
-BASEURL="$_HCURL/%s/""$PROGRAM""_%s_linux_amd64.zip"
+BIN_NAME="terraform"
+_HCURL="https://releases.hashicorp.com/$CV_EXT_NAME"
+BASEURL="$_HCURL/%s/""$CV_EXT_NAME""_%s_linux_amd64.zip"
 DLFILE="terraform.zip"
+VERSION_FILE=".$CV_EXT_NAME-version"
 
-_usage () {
+CV_INSTDIR="${CV_INSTDIR:-$(pwd)/usr/bin}"
+
+_ext_latest () {
+        curl -sL "$_HCURL" | grep -e "<a href=\"/$CV_EXT_NAME/" | grep -v alpha | head -1 | cut -d \" -f 2 | cut -d / -f 3
+}
+_ext_url () {
+    if [ $# -lt 1 ] || [ $# -gt 0 -a "$1" = "latest" ] ; then
+            CV_VERSION="$(_ext_latest)"
+    else    CV_VERSION="$1"
+    fi
+    printf "$BASEURL\n" "$CV_VERSION" "$CV_VERSION"
+}
+_ext_download () {
+    curl -L "$(_ext_url "$@")" -o $DLFILE
+}
+_ext_unpack () {
+    mkdir -p "$CV_INSTDIR"
+    unzip -q -o -d "$CV_INSTDIR" $DLFILE
+}
+_ext_install_local () {
+    mkdir -p bin
+    ln -sf "$CV_INSTDIR"/$BIN_NAME bin/$BIN_NAME
+}
+_ext_install_global () {
+    sudo /bin/sh -c "mkdir -p /usr/local/bin; mv $BIN_NAME /usr/local/bin/$BIN_NAME"
+}
+_ext_install_wrapper () {
+    [ -d "$CLIV_DIR/.bin" ] || mkdir -p "$CLIV_DIR/.bin"
+    printf "#!/usr/bin/env sh\nexec cliv -W $CV_EXT_NAME $BIN_NAME \"\$@\"\n" > "$CLIV_DIR/.bin/$CV_EXT_NAME"
+    chmod 755 "$CLIV_DIR/.bin/$CV_EXT_NAME"
+}
+_ext_clean () {
+    rm -f "$DLFILE"
+}
+_ext_clean_install () {
+    rm -rf "$CV_INSTDIR"
+}
+_ext_test () {
+    "./bin/$BIN_NAME" --version
+}
+_ext_usage () {
     cat <<EOUSAGE
 Usage: $0 CMD
 
@@ -21,61 +60,17 @@ $(grep -e "^_ext_.* ()" "$0" | awk '{print $1}' | sed -e 's/_ext_//;s/^/  /g' | 
 EOUSAGE
     exit 1
 }
-_url () {
-    if [ $# -gt 0 ] && [ "$1" = "latest" ] ; then
-        VERSION="$( curl -sL "$_HCURL" | grep -e "<a href=\"/$PROGRAM/" | grep -v alpha | head -1 | cut -d \" -f 2 | cut -d / -f 3 )"
-    fi
-    printf "$BASEURL\n" "$VERSION" "$VERSION"
-}
-_ext_download () {
-    [ $# -gt 0 ] && [ -n "$1" ] && VERSION="$1"
-    url="$(_url "$VERSION")"
-    fname="$(basename "$url")"
-    echo "$0: Downloading $fname"
-    curl -L "$url" -o $DLFILE
-}
-_ext_unpack () {  echo "$0: Unpacking $PROGRAM to '$INSTDIR'"
-    mkdir -p "$INSTDIR"
-    unzip -q -o -d "$INSTDIR" $DLFILE
-}
-_ext_install_local () {  echo "$0: Installing symlink: $INSTDIR/$PROGRAM -> bin/$PROGRAM"
-    mkdir -p bin
-    ln -sf "$INSTDIR"/$PROGRAM bin/$PROGRAM
-}
-_ext_install_global () {  echo "$0: Installing globally"
-    sudo /bin/sh -c "mkdir -p /usr/local/bin; mv $PROGRAM /usr/local/bin/$PROGRAM"
-}
-_ext_clean () {  echo "$0: Removing $DLFILE"
-    rm -f $DLFILE
-}
-_ext_clean_install () {  echo "$0: Removing '$INSTDIR'"
-    rm -rf "$INSTDIR"
-}
-_ext_test () {  echo "$0: Testing $PROGRAM"
-    ./bin/$PROGRAM --version
-}
-_ext_load () {
-    extver="latest"
-    [ $# -gt 0 ] && [ -n "$1" ] && extver="$1"
-    echo "$0: Loading extension version '$extver'"
-    $0 clean
-    $0 download "$extver"
-    $0 unpack
-    $0 install-local
-    $0 test
-    $0 clean
-}
 
 if [ $# -lt 1 ] ; then
-    _usage
+    _ext_usage
 else
     cmd="$1"; shift
     func="_ext_$(printf "%s\n" "$cmd" | tr - _)"
+    if [ -n "${CLIV_DIR:-}" -a -n "${CV_ALIAS:-}" ] ; then
+        [ -d "$CLIV_DIR/$CV_ALIAS" ] && cd "$CLIV_DIR/$CV_ALIAS"
+    fi
     case "$cmd" in 
         -h|--help)          _usage ;;
-        clean-all)              $0 clean; $0 clean-install ;;
-        install)            $0 install-local ;;
-        *)
-                            $func "$@" ;;
+        *)                  $func "$@" ;;
     esac
 fi
