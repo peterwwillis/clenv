@@ -3,7 +3,7 @@ set -eu
 [ "${DEBUG:-0}" = "1" ] && set -x
 
 CV_EXT_NAME="${CV_EXT_NAME:-terraform}"
-CV_EXT_VER="1.1"
+CV_EXT_VER="0.1.2"
 
 BIN_NAME="terraform"
 _HCURL="https://releases.hashicorp.com/$CV_EXT_NAME"
@@ -14,7 +14,10 @@ VERSION_FILE=".$CV_EXT_NAME-version"
 CV_INSTDIR="${CV_INSTDIR:-$(pwd)/usr/bin}"
 
 _ext_latest () {
-        curl -sL "$_HCURL" | grep -e "<a href=\"/$CV_EXT_NAME/" | grep -v alpha | head -1 | cut -d \" -f 2 | cut -d / -f 3
+    _ext_versions | head -1
+}
+_ext_versions () {
+    curl -sL "$_HCURL" | grep -e "<a href=\"/$CV_EXT_NAME/" | grep -v alpha | cut -d \" -f 2 | cut -d / -f 3
 }
 _ext_url () {
     if [ $# -lt 1 ] || [ $# -gt 0 -a "$1" = "latest" ] ; then
@@ -51,7 +54,7 @@ _ext_clean_install () {
 _ext_test () {
     "./bin/$BIN_NAME" --version
 }
-_ext_usage () {
+_ext_help () {
     cat <<EOUSAGE
 Usage: $0 CMD
 
@@ -62,7 +65,7 @@ EOUSAGE
 }
 
 if [ $# -lt 1 ] ; then
-    _ext_usage
+    _ext_help
 else
     cmd="$1"; shift
     func="_ext_$(printf "%s\n" "$cmd" | tr - _)"
@@ -70,7 +73,6 @@ else
         [ -d "$CLIV_DIR/$CV_ALIAS" ] && cd "$CLIV_DIR/$CV_ALIAS"
     fi
     case "$cmd" in 
-        -h|--help)          _usage ;;
         *)                  $func "$@" ;;
     esac
 fi
