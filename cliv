@@ -1,5 +1,5 @@
 #!/usr/bin/env sh
-# cliv v0.2 - Execute commands using a specific directory of files and variables
+# cliv v0.1.0 - Execute commands using a specific directory of files and variables
 # Copyright (C) 2021 Peter Willis
 set -eu
 [ "${DEBUG:-0}" = "1" ] && set -x
@@ -8,6 +8,7 @@ CLIV_HTTP_PATH="${CLIV_HTTP_PATH:-https://raw.githubusercontent.com/peterwwillis
 HOME="${HOME:-$(getent passwd $(id -u) | cut -d : -f 6)}"
 export CLIV_DIR="${CLIV_DIR:-$HOME/.cliv}"
 
+### General cliv functions
 _usage () {
     printf "%s\n" "
 Usage: $0 [OPTS]
@@ -47,7 +48,7 @@ _cliv_ext_install () {
     export CV_EXT_NAME="$ext" CV_ALIAS="$alias" CV_INSTDIR="$CLIV_DIR/$alias"
 
     if [ ! -e "$CLIV_DIR/.ext/$CV_EXT_NAME" ] || [ "$CLIV_FORCE" = "1" ] ; then
-        echo "$0: Installing extention $CV_EXT_NAME"
+        echo_err "Installing extention $CV_EXT_NAME"
         if   command -v curl >/dev/null ; then  curl -fsSL -o "$CLIV_DIR/.ext/$CV_EXT_NAME" "$CLIV_HTTP_PATH/.ext/$CV_EXT_NAME"
         elif command -v wget >/dev/null ; then  wget -O "$CLIV_DIR/.ext/$CV_EXT_NAME" "$CLIV_HTTP_PATH/.ext/$CV_EXT_NAME"
         else _err "Please install 'curl' or 'wget'." ; fi
@@ -59,8 +60,9 @@ _cliv_ext_install () {
     [ "$CV_VERSION" = "latest" ] && CV_VERSION="$(_cliv_ext_run latest)"
     [ -d "$CLIV_DIR/$CV_ALIAS" ] || _cliv_new "$CV_ALIAS"
     export CV_VERSION="$CV_VERSION"
-    echo_err "$0: Loading extension version '$CV_VERSION'"
+    echo_err "Loading $CV_EXT_NAME version '$CV_VERSION'"
     _ext_clean; _ext_download; _ext_unpack; _ext_install_local; _ext_test; _ext_clean
+    echo_err ""
 }
 _cliv_exec () {
   export CV_ALIAS="$1" ; shift
@@ -69,16 +71,23 @@ _cliv_exec () {
   if [ -r "$CLIV_DIR/$CV_ALIAS/.env" ] ; then
       set -a
       . "$CLIV_DIR/$CV_ALIAS/.env"
-  else echo "$0: Warning: no '$CLIV_DIR/$CV_ALIAS/.env' found" ; fi
+  else echo_err "Warning: no '$CLIV_DIR/$CV_ALIAS/.env' found" ; fi
   exec env "$@"
 }
 _cliv_wrapper () {
     CV_EXT_NAME="$CLIV_WRAPPER"
     CV_ALIAS="${CV_ALIAS:-$CV_EXT_NAME}" # Default alias to extension name
     if [ -z "${CV_VERSION:-}" ] ; then
-        if [ -r ".$CV_EXT_NAME-version" ] ; then
-            CV_VERSION="$(cat ".$CV_EXT_NAME-version")"
-        fi
+        cwd="$(pwd)"
+        while [ ! "$(dirname "$cwd")" = "/" ] ; do
+            echo_err "Looking for '$cwd/.$CV_EXT_NAME-version"
+            if [ -r "$cwd/.$CV_EXT_NAME-version" ] ; then
+                CV_VERSION="$(cat "$cwd/.$CV_EXT_NAME-version")"
+                break
+            else
+                cwd="$(dirname "$cwd")"
+            fi
+        done
     fi
     extfull="$CV_EXT_NAME" aliasfull="$CV_ALIAS"
     if [ -n "${CV_VERSION:-}" ] ; then
@@ -90,15 +99,16 @@ _cliv_wrapper () {
 }
 
 ### Extension functions
-echo_err () { echo "$*" 1>&2 ; }
-_ext_test () {          echo_err "$0: Testing $CV_EXT_NAME"; _cliv_ext_run "test"; }
-_ext_clean_install () { echo_err "$0: Removing '$CV_INSTDIR'"; _cliv_ext_run "clean-install"; }
-_ext_clean () {         echo_err "$0: Removing download"; _cliv_ext_run "clean"; }
-_ext_install_global () { echo_err "$0: Installing globally" ; _cliv_ext_run "install-global"; }
-_ext_install_local () { echo_err "$0: Installing symlink"; _cliv_ext_run "install-local"; }
-_ext_install_wrapper () {       echo_err "$0: Installing wrapper"; _cliv_ext_run "install-wrapper"; }
-_ext_unpack () {        echo_err "$0: Unpacking $CV_EXT_NAME to '$CV_INSTDIR'"; _cliv_ext_run "unpack"; }
-_ext_download () {      echo_err "$0: Downloading"; _cliv_ext_run "download" "$CV_VERSION"; }
+echo_err () { printf "%s\n" "$(basename "$0"): $*" 1>&2 ; }
+echo_info () { printf "%s\n" "$(basename "$0"): $*" ; }
+_ext_test () {          echo_err "$CV_EXT_NAME: Testing"; _cliv_ext_run "test"; }
+_ext_clean_install () { echo_err "$CV_EXT_NAME: Removing '$CV_INSTDIR'"; _cliv_ext_run "clean-install"; }
+_ext_clean () {         echo_err "$CV_EXT_NAME: Removing download"; _cliv_ext_run "clean"; }
+_ext_install_global () { echo_err "$CV_EXT_NAME: Installing globally" ; _cliv_ext_run "install-global"; }
+_ext_install_local () { echo_err "$CV_EXT_NAME: Installing symlink"; _cliv_ext_run "install-local"; }
+_ext_install_wrapper () {       echo_err "$CV_EXT_NAME: Installing wrapper"; _cliv_ext_run "install-wrapper"; }
+_ext_unpack () {        echo_err "$CV_EXT_NAME: Unpacking to '$CV_INSTDIR'"; _cliv_ext_run "unpack"; }
+_ext_download () {      echo_err "$CV_EXT_NAME: Downloading artifact"; _cliv_ext_run "download" "$CV_VERSION"; }
 _ext_usage () {
     cat <<EOUSAGE
 Usage: $0 CMD
@@ -132,7 +142,10 @@ for d in "$CLIV_DIR" "$CLIV_DIR/.bin" "$CLIV_DIR/.ext" ; do
     [ -d "$d" ] || mkdir -p "$d"
 done
 
-if [ $CLIV_NEW -eq 1 ] ; then
+if [ -n "${CLIV_WRAPPER:-}" ] ; then
+    _cliv_wrapper "$@"
+    exit 0
+elif [ $CLIV_NEW -eq 1 ] ; then
     _cliv_new "$@"
     exit 0
 elif [ $CLIV_LIST -eq 1 ] ; then
@@ -142,9 +155,6 @@ elif [ $CLIV_LIST -eq 1 ] ; then
     exit 0
 elif [ -n "${CLIV_LOAD:-}" ] ; then
     _cliv_ext_install "$CLIV_LOAD" "$@"
-    exit 0
-elif [ -n "${CLIV_WRAPPER:-}" ] ; then
-    _cliv_wrapper "$@"
     exit 0
 fi
 
