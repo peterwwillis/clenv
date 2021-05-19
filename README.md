@@ -79,6 +79,59 @@ directories, and call them individually using **cliv**.
    aws-cli/2.0.50 Python/3.7.3 Linux/4.15.0-135-generic exe/x86_64.ubuntu.18
    ```
 
+# Using the default bin directory
+
+You can install default verisons of programs with **cliv** and still use a `.EXTENSION-version` file in any directory.
+
+1. Install the default version using an extension. Example:
+   ```bash
+   cliv -I terraform=0.12.31
+   cliv: Loading extension version '0.12.31'
+   cliv: Removing download
+   cliv: Downloading
+     % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                    Dload  Upload   Total   Spent    Left  Speed
+     100 27.1M  100 27.1M    0     0  4452k      0  0:00:06  0:00:06 --:--:-- 4792k
+   cliv: Unpacking terraform to '/home/vagrant/.cliv/terraform'
+   cliv: Installing symlink
+   cliv: Testing terraform
+   Terraform v0.12.31
+   cliv: Removing download
+   ```
+2. In a new directory, create a `.EXTENSION-version` file with the version you want to use.
+   ```bash
+   $ mkdir foo
+   $ cd foo
+   $ echo "0.15.3" > .terraform-version
+   $ cd ..
+   ```
+3. Export your PATH to include `~/.cliv/.bin/` first (note you need both '.')
+   ```bash
+   $ export PATH=~/.cliv/.bin:$PATH
+   ```
+4. Check the version in different directories.
+   ```bash
+   $ terraform --version
+   Terraform v0.12.31
+   $ cd foo
+   $ terraform --version
+   cliv: Loading extension version '0.15.3'
+   cliv: Removing download
+   cliv: Downloading
+     % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                    Dload  Upload   Total   Spent    Left  Speed
+   100 31.2M  100 31.2M    0     0  4459k      0  0:00:07  0:00:07 --:--:-- 5837k
+   cliv: Unpacking terraform to '/home/vagrant/.cliv/terraform=0.15.3'
+   cliv: Installing symlink
+   cliv: Testing terraform
+
+   Terraform v0.15.3
+   on linux_amd64
+   cliv: Removing download
+   Terraform v0.15.3
+   on linux_amd64
+   ```
+
 # Extensions
 
 Extensions are optional helper programs that download and install any version of
