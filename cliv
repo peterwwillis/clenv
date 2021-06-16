@@ -72,6 +72,7 @@ _cliv_exec () {
       set -a
       . "$CLIV_DIR/$CV_ALIAS/.env"
   else echo_err "Warning: no '$CLIV_DIR/$CV_ALIAS/.env' found" ; fi
+  echo_err "Executing $(which "$1")"
   exec env "$@"
 }
 _cliv_wrapper () {
@@ -83,6 +84,7 @@ _cliv_wrapper () {
             echo_err "Looking for '$cwd/.$CV_EXT_NAME-version"
             if [ -r "$cwd/.$CV_EXT_NAME-version" ] ; then
                 CV_VERSION="$(cat "$cwd/.$CV_EXT_NAME-version")"
+                echo_err "Found '$cwd/.$CV_EXT_NAME-version' = '$CV_VERSION'"
                 break
             else
                 cwd="$(dirname "$cwd")"
@@ -103,7 +105,7 @@ echo_err () { printf "%s\n" "$(basename "$0"): $*" 1>&2 ; }
 echo_info () { printf "%s\n" "$(basename "$0"): $*" ; }
 _ext_test () {          echo_err "$CV_EXT_NAME: Testing"; _cliv_ext_run "test"; }
 _ext_clean_install () { echo_err "$CV_EXT_NAME: Removing '$CV_INSTDIR'"; _cliv_ext_run "clean-install"; }
-_ext_clean () {         echo_err "$CV_EXT_NAME: Removing download"; _cliv_ext_run "clean"; }
+_ext_clean () {         echo_err "$CV_EXT_NAME: Removing temporary download files"; _cliv_ext_run "clean"; }
 _ext_install_global () { echo_err "$CV_EXT_NAME: Installing globally" ; _cliv_ext_run "install-global"; }
 _ext_install_local () { echo_err "$CV_EXT_NAME: Installing symlink"; _cliv_ext_run "install-local"; }
 _ext_install_wrapper () {       echo_err "$CV_EXT_NAME: Installing wrapper"; _cliv_ext_run "install-wrapper"; }
