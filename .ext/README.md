@@ -9,6 +9,6 @@ make shellcheck
 
 ## Local testing
 ```bash
-cliv -l aws2050 || ../cliv -n aws2050
-DEBUG=1 CLIV_HTTP_PATH=file://`pwd`/.. cliv -I aws-cli-v2=2.0.50 aws2050
+clenv -l aws2050 || ../clenv -n aws2050
+DEBUG=1 CLENV_HTTP_PATH=file://`pwd`/.. clenv -I aws-cli-v2=2.0.50 aws2050
 ```

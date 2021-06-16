@@ -2,20 +2,20 @@
 set -eu
 [ "${DEBUG:-0}" = "1" ] && set -x
 
-CLIV_E_NAME="${CLIV_E_NAME:-terraformer}"
-CLIV_E_REV="0.1.2"
+CLENV_E_NAME="${CLENV_E_NAME:-terraformer}"
+CLENV_E_REV="0.1.2"
 
 TERRAFORMER_PLATFORM="${TERRAFORMER_PLATFORM:-aws}"
 TERRAFORMER_OS="${TERRAFORMER_OS:-linux}"
 TERRAFORMER_ARCH="${TERRAFORMER_ARCH:-amd64}"
 
-BIN_NAME="$CLIV_E_NAME"
-DLFILE="$CLIV_E_NAME"
+BIN_NAME="$CLENV_E_NAME"
+DLFILE="$CLENV_E_NAME"
 _GHREPOAPI="https://api.github.com/repos/GoogleCloudPlatform/$BIN_NAME"
 _GHURL="https://github.com/GoogleCloudPlatform/terraformer/releases"
 BASEURL="$_GHURL/download/%s/terraformer-%s-%s-%s"
 
-CLIV_E_INSTDIR="${CLIV_E_INSTDIR:-$(pwd)/usr/bin}"
+CLENV_E_INSTDIR="${CLENV_E_INSTDIR:-$(pwd)/usr/bin}"
 
 _ext_latest () {
     _ext_versions | head -1
@@ -26,35 +26,35 @@ _ext_versions () {
 }
 _ext_url () {
     if [ $# -lt 1 ] || [ $# -gt 0 -a "$1" = "latest" ] ; then
-            CLIV_E_VERSION="$(_ext_latest)"
-    else    CLIV_E_VERSION="$1"
+            CLENV_E_VERSION="$(_ext_latest)"
+    else    CLENV_E_VERSION="$1"
     fi
-    printf "$BASEURL\n" "$CLIV_E_VERSION" "$TERRAFORMER_PLATFORM" "$TERRAFORMER_OS" "$TERRAFORMER_ARCH"
+    printf "$BASEURL\n" "$CLENV_E_VERSION" "$TERRAFORMER_PLATFORM" "$TERRAFORMER_OS" "$TERRAFORMER_ARCH"
 }
 _ext_download () {
     curl -L "$(_ext_url "$@")" -o $DLFILE
 }
 _ext_unpack () {
-    mkdir -p "$CLIV_E_INSTDIR"
+    mkdir -p "$CLENV_E_INSTDIR"
     chmod 755 "$DLFILE"
 }
 _ext_install_local () {
     mkdir -p bin
-    ln -sf "$CLIV_E_INSTDIR"/$BIN_NAME bin/$BIN_NAME
+    ln -sf "$CLENV_E_INSTDIR"/$BIN_NAME bin/$BIN_NAME
 }
 _ext_install_global () {
     sudo /bin/sh -c "mkdir -p /usr/local/bin; mv $BIN_NAME /usr/local/bin/$BIN_NAME"
 }
 _ext_install_wrapper () {
-    [ -d "$CLIV_DIR/.bin" ] || mkdir -p "$CLIV_DIR/.bin"
-    printf "#!/usr/bin/env sh\nexec cliv -W $CLIV_E_NAME $BIN_NAME \"\$@\"\n" > "$CLIV_DIR/.bin/$CLIV_E_NAME"
-    chmod 755 "$CLIV_DIR/.bin/$CLIV_E_NAME"
+    [ -d "$CLENV_DIR/.bin" ] || mkdir -p "$CLENV_DIR/.bin"
+    printf "#!/usr/bin/env sh\nexec clenv -W $CLENV_E_NAME $BIN_NAME \"\$@\"\n" > "$CLENV_DIR/.bin/$CLENV_E_NAME"
+    chmod 755 "$CLENV_DIR/.bin/$CLENV_E_NAME"
 }
 _ext_clean () {
     rm -f "$DLFILE"
 }
 _ext_clean_install () {
-    rm -rf "$CLIV_E_INSTDIR"
+    rm -rf "$CLENV_E_INSTDIR"
 }
 _ext_test () {
     "./bin/$BIN_NAME" --version
@@ -74,8 +74,8 @@ if [ $# -lt 1 ] ; then
 else
     cmd="$1"; shift
     func="_ext_$(printf "%s\n" "$cmd" | tr - _)"
-    if [ -n "${CLIV_DIR:-}" -a -n "${CLIV_E_ALIAS:-}" ] ; then
-        [ -d "$CLIV_DIR/$CLIV_E_ALIAS" ] && cd "$CLIV_DIR/$CLIV_E_ALIAS"
+    if [ -n "${CLENV_DIR:-}" -a -n "${CLENV_E_ALIAS:-}" ] ; then
+        [ -d "$CLENV_DIR/$CLENV_E_ALIAS" ] && cd "$CLENV_DIR/$CLENV_E_ALIAS"
     fi
     case "$cmd" in 
         *)                  $func "$@" ;;
