@@ -1,0 +1,168 @@
+#!/usr/bin/env sh
+# clenv - Execute commands using a specific directory of files and variables
+# Copyright (C) 2021 Peter Willis
+set -eu
+[ "${DEBUG:-0}" = "1" ] && set -x
+
+CLENV_VER="1.0.0"
+CLENV_HTTP_PATH="${CLENV_HTTP_PATH:-https://raw.githubusercontent.com/peterwwillis/clenv/main}"
+HOME="${HOME:-$(getent passwd $(id -u) | cut -d : -f 6)}"
+export CLENV_DIR="${CLENV_DIR:-$HOME/.clenv}"
+
+### General clenv functions
+_usage () {
+    printf "%s\n" "
+Usage: $0 [OPTS]
+       $0 [OPTS] [ALIAS [CMD [ARGS ..]] ]
+Opts:
+	-h			This screen
+	-i			Clear environment variables. Must be first argument
+	-l [ALIAS]		List versions
+	-n ALIAS		Create a new ALIAS
+	-I EXT[=V] [ALIAS] 	Install version V of extension EXT into ALIAS
+	-W EXT [-- CMD ..]	Installs extension EXT and runs CMD
+	-f			Force mode
+ 	-V			Version of clenv
+"
+  exit 1
+}
+_err () { printf "%s\n" "$0: Error: $*" ; exit 1 ; }
+_clenv_list () {
+    for d in "$@" ; do
+        [ -d "$CLENV_DIR/$(basename "$d")" ] && basename "$d"
+    done
+}
+_clenv_new () {
+    export CLENV_E_ALIAS="$1" ; shift
+    if [ -d "$CLENV_DIR/$CLENV_E_ALIAS" ] && [ ! "$CLENV_FORCE" = "1" ] ; then
+        _err "Version '$CLENV_DIR/$CLENV_E_ALIAS' already exists"
+    fi
+    mkdir -p "$CLENV_DIR/$CLENV_E_ALIAS/bin"
+    echo "PATH=$CLENV_DIR/$CLENV_E_ALIAS/bin:\$PATH" > "$CLENV_DIR/$CLENV_E_ALIAS/.env"
+}
+_clenv_ext_run () {  "$CLENV_DIR/.ext/$CLENV_E_NAME" "$@"; }
+_clenv_ext_install () {
+    ext="${1%%=*}" ver="${1#*=}" alias="${2:-}"
+    if [ $# -lt 2 ] ; then shift 1; alias="$ext"; else shift 2; fi
+    if [ ! "$ver" = "$ext" ] ; then
+        export CLENV_E_VERSION="$ver"
+    fi
+    export CLENV_E_NAME="$ext" CLENV_E_ALIAS="$alias" CLENV_E_INSTDIR="$CLENV_DIR/$alias"
+
+    if [ ! -e "$CLENV_DIR/.ext/$CLENV_E_NAME" ] || [ "$CLENV_FORCE" = "1" ] ; then
+        echo_err "Installing extention $CLENV_E_NAME"
+        if   command -v curl >/dev/null ; then  curl -fsSL -o "$CLENV_DIR/.ext/$CLENV_E_NAME" "$CLENV_HTTP_PATH/.ext/$CLENV_E_NAME"
+        elif command -v wget >/dev/null ; then  wget -O "$CLENV_DIR/.ext/$CLENV_E_NAME" "$CLENV_HTTP_PATH/.ext/$CLENV_E_NAME"
+        else _err "Please install 'curl' or 'wget'." ; fi
+        chmod 755 "$CLENV_DIR/.ext/$CLENV_E_NAME"
+        _ext_install_wrapper
+    fi
+
+    [ -z "${CLENV_E_VERSION:-}" ] && CLENV_E_VERSION="latest"
+    [ "$CLENV_E_VERSION" = "latest" ] && CLENV_E_VERSION="$(_clenv_ext_run latest)"
+    [ -d "$CLENV_DIR/$CLENV_E_ALIAS" ] || _clenv_new "$CLENV_E_ALIAS"
+    export CLENV_E_VERSION="$CLENV_E_VERSION"
+    echo_err "Loading $CLENV_E_NAME version '$CLENV_E_VERSION'"
+    _ext_clean; _ext_download; _ext_unpack; _ext_install_local; _ext_test; _ext_clean
+    echo_err ""
+}
+_clenv_exec () {
+  export CLENV_E_ALIAS="$1" ; shift
+  [ -d "$CLENV_DIR/$CLENV_E_ALIAS" ] || _err "No version '$CLENV_DIR/$CLENV_E_ALIAS' found"
+
+  if [ -r "$CLENV_DIR/$CLENV_E_ALIAS/.env" ] ; then
+      set -a
+      . "$CLENV_DIR/$CLENV_E_ALIAS/.env"
+  else echo_err "Warning: no '$CLENV_DIR/$CLENV_E_ALIAS/.env' found" ; fi
+  echo_err "Executing $(which "$1")"
+  exec env "$@"
+}
+_clenv_wrapper () {
+    CLENV_E_NAME="$CLENV_WRAPPER"
+    CLENV_E_ALIAS="${CLENV_E_ALIAS:-$CLENV_E_NAME}" # Default alias to extension name
+    if [ -z "${CLENV_E_VERSION:-}" ] ; then
+        cwd="$(pwd)"
+        while [ ! "$(dirname "$cwd")" = "/" ] ; do
+            echo_err "Looking for '$cwd/.$CLENV_E_NAME-version"
+            if [ -r "$cwd/.$CLENV_E_NAME-version" ] ; then
+                CLENV_E_VERSION="$(cat "$cwd/.$CLENV_E_NAME-version")"
+                echo_err "Found '$cwd/.$CLENV_E_NAME-version' = '$CLENV_E_VERSION'"
+                break
+            else
+                cwd="$(dirname "$cwd")"
+            fi
+        done
+    fi
+    extfull="$CLENV_E_NAME" aliasfull="$CLENV_E_ALIAS"
+    if [ -n "${CLENV_E_VERSION:-}" ] ; then
+        extfull="$extfull=$CLENV_E_VERSION"
+        aliasfull="$aliasfull=$CLENV_E_VERSION"
+    fi
+    clenv -l "$aliasfull" >/dev/null || clenv -I "$extfull" "$aliasfull"
+    clenv "$aliasfull" "$@"
+}
+
+### Extension functions
+echo_err () { printf "%s\n" "$(basename "$0"): $*" 1>&2 ; }
+echo_info () { printf "%s\n" "$(basename "$0"): $*" ; }
+_ext_test () {          echo_err "$CLENV_E_NAME: Testing"; _clenv_ext_run "test"; }
+_ext_clean_install () { echo_err "$CLENV_E_NAME: Removing '$CLENV_E_INSTDIR'"; _clenv_ext_run "clean-install"; }
+_ext_clean () {         echo_err "$CLENV_E_NAME: Removing temporary download files"; _clenv_ext_run "clean"; }
+_ext_install_global () { echo_err "$CLENV_E_NAME: Installing globally" ; _clenv_ext_run "install-global"; }
+_ext_install_local () { echo_err "$CLENV_E_NAME: Installing symlink"; _clenv_ext_run "install-local"; }
+_ext_install_wrapper () {       echo_err "$CLENV_E_NAME: Installing wrapper"; _clenv_ext_run "install-wrapper"; }
+_ext_unpack () {        echo_err "$CLENV_E_NAME: Unpacking to '$CLENV_E_INSTDIR'"; _clenv_ext_run "unpack"; }
+_ext_download () {      echo_err "$CLENV_E_NAME: Downloading artifact"; _clenv_ext_run "download" "$CLENV_E_VERSION"; }
+_ext_usage () {
+    cat <<EOUSAGE
+Usage: $0 CMD
+
+Commands:
+$(grep -e "^_ext_.* ()" "$CLENV_DIR/.ext/$CLENV_E_NAME" | awk '{print $1}' | sed -e 's/_ext_//;s/^/  /g' | tr _ -)
+EOUSAGE
+    exit 1
+}
+
+### Main program
+if [ $# -lt 1 ] ; then
+    _usage
+fi
+
+[ "$1" = "-i" ] && shift 1 && exec env -i "$0" "$@"
+
+CLENV_NEW=0 CLENV_LIST=0 CLENV_FORCE=0
+while getopts "nlI:W:fV" args ; do
+    case "$args" in
+        n)  CLENV_NEW=1 ;;
+        l)  CLENV_LIST=1 ;;
+        I)  CLENV_LOAD="$OPTARG" ;;
+        W)  CLENV_WRAPPER="$OPTARG" ;;
+        f)  export CLENV_FORCE=1 ;;
+        V)  echo "clenv v$CLENV_VER" ; exit 0 ;;
+    esac
+done
+shift $(($OPTIND-1))
+
+for d in "$CLENV_DIR" "$CLENV_DIR/.bin" "$CLENV_DIR/.ext" ; do
+    [ -d "$d" ] || mkdir -p "$d"
+done
+
+if [ -n "${CLENV_WRAPPER:-}" ] ; then
+    _clenv_wrapper "$@"
+    exit 0
+elif [ $CLENV_NEW -eq 1 ] ; then
+    _clenv_new "$@"
+    exit 0
+elif [ $CLENV_LIST -eq 1 ] ; then
+    if [ $# -gt 0 ] ; then  _clenv_list "$@"
+    else _clenv_list "$CLENV_DIR"/*
+    fi
+    exit 0
+elif [ -n "${CLENV_LOAD:-}" ] ; then
+    _clenv_ext_install "$CLENV_LOAD" "$@"
+    exit 0
+fi
+
+if [ $# -gt 0 ] ; then
+    _clenv_exec "$@"
+fi

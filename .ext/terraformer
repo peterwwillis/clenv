@@ -2,16 +2,18 @@
 set -eu
 [ "${DEBUG:-0}" = "1" ] && set -x
 
-CLENV_E_NAME="${CLENV_E_NAME:-terraform}"
+CLENV_E_NAME="${CLENV_E_NAME:-terraformer}"
 CLENV_E_REV="0.1.2"
 
-TERRAFORM_OS="${TERRAFORM_OS:-linux}"
-TERRAFORM_ARCH="${TERRAFORM_ARCH:-amd64}"
+TERRAFORMER_PLATFORM="${TERRAFORMER_PLATFORM:-aws}"
+TERRAFORMER_OS="${TERRAFORMER_OS:-linux}"
+TERRAFORMER_ARCH="${TERRAFORMER_ARCH:-amd64}"
 
 BIN_NAME="$CLENV_E_NAME"
-DLFILE="terraform.zip"
-_HCURL="https://releases.hashicorp.com/$CLENV_E_NAME"
-BASEURL="$_HCURL/%s/""$CLENV_E_NAME""_%s_%s_%s.zip"
+DLFILE="$CLENV_E_NAME"
+_GHREPOAPI="https://api.github.com/repos/GoogleCloudPlatform/$BIN_NAME"
+_GHURL="https://github.com/GoogleCloudPlatform/terraformer/releases"
+BASEURL="$_GHURL/download/%s/terraformer-%s-%s-%s"
 
 CLENV_E_INSTDIR="${CLENV_E_INSTDIR:-$(pwd)/usr/bin}"
 
@@ -19,21 +21,22 @@ _ext_latest () {
     _ext_versions | head -1
 }
 _ext_versions () {
-    curl -sL "$_HCURL" | grep -e "<a href=\"/$CLENV_E_NAME/" | grep -v alpha | cut -d \" -f 2 | cut -d / -f 3
+    # technically '/releases' is better but tags are the same here and this is 1/100th the bandwidth
+    curl -sL "$_GHREPOAPI/tags" | awk -F '"' '/"name":/{print $4}'
 }
 _ext_url () {
     if [ $# -lt 1 ] || [ $# -gt 0 -a "$1" = "latest" ] ; then
             CLENV_E_VERSION="$(_ext_latest)"
     else    CLENV_E_VERSION="$1"
     fi
-    printf "$BASEURL\n" "$CLENV_E_VERSION" "$CLENV_E_VERSION" "$TERRAFORM_OS" "$TERRAFORM_ARCH"
+    printf "$BASEURL\n" "$CLENV_E_VERSION" "$TERRAFORMER_PLATFORM" "$TERRAFORMER_OS" "$TERRAFORMER_ARCH"
 }
 _ext_download () {
     curl -L "$(_ext_url "$@")" -o $DLFILE
 }
 _ext_unpack () {
     mkdir -p "$CLENV_E_INSTDIR"
-    unzip -q -o -d "$CLENV_E_INSTDIR" $DLFILE
+    chmod 755 "$DLFILE"
 }
 _ext_install_local () {
     mkdir -p bin
