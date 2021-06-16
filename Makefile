@@ -1,5 +1,3 @@
 test:
 	export PATH="`pwd`:$$PATH" ; \
-    for test in .ext/test/*.t ; do \
-	    $$test ; \
-    done
+    .ext/test/test.sh .ext/test/*.t
