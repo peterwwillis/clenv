@@ -37,7 +37,6 @@ _ext_download () {
 _ext_unpack () {
     mkdir -p "$CLIV_E_INSTDIR"
     chmod 755 "$DLFILE"
-    mv "$DLFILE" "$CLIV_E_INSTDIR/"
 }
 _ext_install_local () {
     mkdir -p bin
