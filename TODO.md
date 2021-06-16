@@ -1,2 +1,2 @@
-- [ ] Rename from cliv to clenv
+- [x] Rename from cliv to clenv
 

@@ -5,8 +5,8 @@ set -ux
 _fail=0 _pass=0
 for i in "$@" ; do
     tmp="$(mktemp -d)"
-    export CLIV_HTTP_PATH="file://`pwd`"
-    export CLIV_DIR="$tmp"
+    export CLENV_HTTP_PATH="file://`pwd`"
+    export CLENV_DIR="$tmp"
 
     ext_name="$(basename "$i" .t)"
     . "$i"
