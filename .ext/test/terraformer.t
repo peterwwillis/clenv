@@ -1,14 +1,17 @@
 #!/bin/sh
-set -eux
+set -ux
 
-_test_1 () {
-    tf_ver=0.8.14
-    tmp="$(mktemp -d)"
-    export CLIV_HTTP_PATH="file://`pwd`"
-    export CLIV_DIR="$tmp"
-    cliv -f -I "terraformer=$tf_ver" "tfer-ver-$tf_ver"
-    cliv "tfer-ver-$tf_ver" terraform --version
-    rm -rf "$tmp"
+_t_1 () {
+    # Test extension install
+    cliv -f -I "$ext_name=$ext_ver" "ext-ver-$ext_ver"
+}
+_t_2 () {
+    # Test version check
+    result="$(cliv "ext-ver-$ext_ver" $ext_name --version)"
+    if [ ! "$result" = "version v0.8.14" ] ; then
+        return 1
+    fi
 }
 
-_test_1
+ext_ver=0.8.14
+ext_tests="1 2"
