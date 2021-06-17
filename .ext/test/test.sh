@@ -1,5 +1,6 @@
-#!/bin/sh
-set -ux
+#!/usr/bin/env sh
+[ "${DEBUG:-0}" = "1" ] && set -x
+set -u
 
 # Must pass file paths ending in '.t'
 _fail=0 _pass=0
