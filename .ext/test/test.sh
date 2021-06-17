@@ -27,7 +27,7 @@ for i in "$@" ; do
 done
 
 
-echo "$0: Passed _pass tests"
+echo "$0: Passed $_pass tests"
 if [ $_fail -gt 0 ] ; then
     echo "$0: Failed $_fail tests"
     exit 1
