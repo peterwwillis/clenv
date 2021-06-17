@@ -26,7 +26,7 @@ include the *Environment*'s `bin/` directory, and then runs `CMD` (which lives
 in the `bin/` directory).
 
 This allows you to keep different versions of programs in different
-*environment*s and execute those specific versions using **clenv**.
+*Environment*s and execute those specific versions using **clenv**.
 
 Run **clenv** to check out all the options:
    ```bash
@@ -52,11 +52,6 @@ Run **clenv** to check out all the options:
 versions of programs into *Environment*s for you. `clenv` comes with a bunch
 of *Extensions*, and you can provide your own too.
 
-**clenv** has *Extensions*. They are optional scripts that can download and
-install particular programs for you. This way you don't have to manually set
-up your *Environment* directories with different versions of programs; the
-extensions do it for you.
-
 Available extensions:
  - **aws-cli**
  - **docker-compose**
@@ -77,17 +72,20 @@ cut me a Pull Request, I'll merge it!)
 
 ### Wrappers 
 
-When an *Extension* is installed, a script is created in `$CLENV_DIR/.bin/`
-with the name of the program you installed. Add this directory to your *$PATH*.
-When you run your program, the wrapper will run first. This allows `clenv` to
-automatically load the correct *Environment* for you and run the program you
-wanted.
+When an *Extension* is installed, it creates a wrapper script in `$CLENV_DIR/.bin/`
+named after the program you installed. This wrapper will tell `clenv` how to run
+your program so you don't have to use the `clenv` command.
 
-The wrapper mode can also look for a `.EXTENSION-version` file, in the current
-directory, and in parent directories. When it finds a matching file, it uses
-the contents of the file to find an environment named `EXTENSION=VERSION` and
-runs your program in that *Environment*. If that *Environment* does not exist,
-`clenv` will try to install it using the appropriate *Extension* and version.
+The wrapper mode will also look for a file `.EXTENSION-version` in the current
+directory (and parent directories). If it finds that file, the contents of that
+file is the version of the *Extension* that `clenv` will install and use to run
+your program.
+
+So just add the `$CLENV_DIR/.bin/` directory to your *$PATH*, install a program
+using an *Extension*, and then just run your program. `clenv` will detect the
+correct version of your program to use, install it if needed, load the
+*Environment*, and execute your program.
+
 
 ---
 
@@ -156,7 +154,6 @@ This is what happens in the background when you use a `.ENVIRONMENT-version` fil
    clenv:
    ```
 
-
 ## List environments
 
 Let's see the *Environment*s we've created so far:
@@ -167,16 +164,11 @@ Let's see the *Environment*s we've created so far:
    aws-cli=2.0.50
    ```
 
-
 ## Version-pinned environments
 
-You can use a `.ENVIRONMENT-version` file to specify a specific version of an
-*Extension* to install, depending on what directory you're running `clenv` in.
-
-(You technically don't need to use an *Extension* for this feature. All `clenv`
-does is check if there is a file `.ENVIRONMENT-version` matching the *Environment*
-you are trying to run a `clenv` command with. If it does not exist, `clenv` will
-attempt to install a matching *Extension* and version.)
+Finally: this is probably why you want to use this program! You can use a 
+`.ENVIRONMENT-version` file to specify a specific version of an *Extension* to
+install depending on what directory you're running `clenv` in.
 
 1. In a new directory, create a `.EXTENSION-version` file with the version you want to use.
    ```bash
@@ -226,6 +218,16 @@ As you can see, `clenv` will look for the `.EXTENSION-version` file starting fro
 the current directory, and work its way back up each parent directory up to your
 home directory.
 
+
+You technically don't need to use an *Extension* to take advantage of this feature.
+It is enabled by the 'wrapper' argument to `clenv`. You can set up an
+*Environment* manually and create a script to call `clenv` like this:
+   ```bash
+   #!/usr/bin/env sh
+   # this will make cliv look for .EXTENSION-version files.
+   # optionally export CLENV_E_VERSION to avoid the .EXTENSION-version check
+   exec clenv -W <EXTENSION> <COMMAND> <ARGUMENTS>
+   ```
 
 ---
 
