@@ -45,8 +45,8 @@ _ext_install_global () {
 }
 _ext_install_wrapper () {
     [ -d "$CLENV_DIR/.bin" ] || mkdir -p "$CLENV_DIR/.bin"
-    printf "#!/usr/bin/env sh\nexec clenv -W $CLENV_E_NAME $BIN_NAME \"\$@\"\n" > "$CLENV_DIR/.bin/$CLENV_E_NAME"
-    chmod 755 "$CLENV_DIR/.bin/$CLENV_E_NAME"
+    printf "#!/usr/bin/env sh\nexec clenv -W $CLENV_E_NAME $BIN_NAME \"\$@\"\n" > "$CLENV_DIR/.bin/$BIN_NAME"
+    chmod 755 "$CLENV_DIR/.bin/$BIN_NAME"
 }
 _ext_clean () {
     rm -rf "$CLENV_E_INSTDIR/download/"
