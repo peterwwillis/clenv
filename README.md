@@ -22,7 +22,7 @@ $ sudo curl -fsSL -o /usr/local/bin/clenv https://raw.githubusercontent.com/pete
 /usr/local/bin/clenv: OK
 ```
 
-# Install a program with an extension
+## Install a program with an extension
 ```bash
 $ clenv -I packer
 /usr/local/bin/clenv -I packer
