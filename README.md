@@ -6,9 +6,10 @@
 # Requirements
 
  - A POSIX-ish shell
- - Standard Unixy tools (mkdir, env, chmod, basename, etc)
- - Optional: Curl
+ - Standard Unix-y tools (mkdir, env, chmod, basename, etc)
+ - `curl` or `wget` if you want to install *Extensions*
 
+---
 
 # How it works
 
@@ -27,130 +28,207 @@ in the `bin/` directory).
 This allows you to keep different versions of programs in different
 *environment*s and execute those specific versions using **clenv**.
 
-## Features
-
- - **clenv** has *Extensions*. They are optional scripts that can download and
-   install particular programs for you. This way you don't have to manually set
-   up your *Environment* directories with different versions of programs; the
-   extensions do it for you.
-
-   If an extension doesn't exist for the program you want to install 
-
- - **clenv** has a special wrapper mode. When an *Extension* is installed, a
-   matching script is created in `$CLENV_DIR/.bin/`. This wrapper can then
-   detect if you have a '.$extension-version' file in your current directory,
-   and automatically install and run that version of that extension's software.
-   Add the `$CLENV_DIR/.bin/` directory to your *$PATH* to use the wrappers.
-
-
-# Getting started
-
-1. Run **clenv** to get the options.
+Run **clenv** to check out all the options:
    ```bash
+   $ ./clenv
     Usage: ./clenv [OPTS]
            ./clenv [OPTS] [ENVIRON [CMD [ARGS ..]] ]
     Opts:
-        -h			This screen
-        -i			Clear environment variables. Must be first argument
-        -l [ENVIRON]		List versions
-        -n ENVIRON		Create a new ENVIRON
-        -I EXT[=V] [ENVIRON] 	Install version V of extension EXT into ENVIRON
-        -W EXT [-- CMD ..]	Installs extension EXT and runs CMD
-        -f			Force mode
-        -V          Version of clenv
+        -h                      This screen
+        -i                      Clear environment variables. Must be first argument
+        -l [ENVIRON]            List versions
+        -n ENVIRON              Create a new ENVIRON
+        -I EXT[=V] [ENVIRON]    Install version V of extension EXT into ENVIRON
+        -W EXT [-- CMD ..]      Installs extension EXT and runs CMD
+        -f                      Force mode
+        -V                      Version of clenv
    ```
 
-2. Create a new *Environment* directory. (Example name: `aws2050`)
+## Features
+
+### Extensions
+
+*Extensions* are optional helper programs that download and install specific
+versions of programs into *Environment*s for you. `clenv` comes with a bunch
+of *Extensions*, and you can provide your own too.
+
+**clenv** has *Extensions*. They are optional scripts that can download and
+install particular programs for you. This way you don't have to manually set
+up your *Environment* directories with different versions of programs; the
+extensions do it for you.
+
+Available extensions:
+ - **aws-cli**
+ - **docker-compose**
+ - **packer**
+ - **saml2aws**
+ - **terraform**
+ - **terraformer**
+ - **yq**
+
+`clenv` will look for extensions with `curl` or `wget` from a URL
+`$CLENV_HTTP_PATH/.ext/EXTENSION`. Override the *$CLENV_HTTP_PATH* if you want
+to provide your own *Extension* path or URL.
+
+You can also put extensions directly into your `~/.clenv/.ext/` directory.
+
+(Don't see an extension you want? Check out the [.ext/](./.ext/) directory,
+cut me a Pull Request, I'll merge it!)
+
+### Wrappers 
+
+When an *Extension* is installed, a script is created in `$CLENV_DIR/.bin/`
+with the name of the program you installed. Add this directory to your *$PATH*.
+When you run your program, the wrapper will run first. This allows `clenv` to
+automatically load the correct *Environment* for you and run the program you
+wanted.
+
+The wrapper mode can also look for a `.EXTENSION-version` file, in the current
+directory, and in parent directories. When it finds a matching file, it uses
+the contents of the file to find an environment named `EXTENSION=VERSION` and
+runs your program in that *Environment*. If that *Environment* does not exist,
+`clenv` will try to install it using the appropriate *Extension* and version.
+
+---
+
+# Usage
+
+
+## Manual set-up
+
+1. Create a new *Environment*. For this example we'll call it just "aws",
+   but you could also give it a more descriptive name, like "aws=2.0.50".
    ```bash
-   $ ./clenv -n aws2050
+   $ ./clenv -n aws
    ```
 
-3. Install a program in the new directory. You can do this two ways:
-   1. Manually copy a program into `~/.clenv/aws2050/bin/`.
-   2. Use a **clenv extension** to install a specific version of a program.
-      ```bash
-      $ ./clenv -I aws-cli-v2=2.0.50 aws2050
-      ./clenv: Loading extention aws-cli-v2 version 2.0.50
-      /home/vagrant/.clenv/.ext/aws-cli-v2: Loading extension version '2.0.50'
-      /home/vagrant/.clenv/.ext/aws-cli-v2: Removing awsclenv2.zip
-      /home/vagrant/.clenv/.ext/aws-cli-v2: Downloading awsclenv2.zip
-        % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
-                                       Dload  Upload   Total   Spent    Left  Speed
-      100 32.2M  100 32.2M    0     0  13.4M      0  0:00:02  0:00:02 --:--:-- 13.4M
-      /home/vagrant/.clenv/.ext/aws-cli-v2: Unpacking aws to '/home/vagrant/.clenv/aws2050/usr'
-      /home/vagrant/.clenv/.ext/aws-cli-v2: Installing symlink: /home/vagrant/.clenv/aws2050/usr/aws/dist/aws -> bin/aws
-      /home/vagrant/.clenv/.ext/aws-cli-v2: Testing aws
-      aws-cli/2.0.50 Python/3.7.3 Linux/4.15.0-135-generic exe/x86_64.ubuntu.18
-      /home/vagrant/.clenv/.ext/aws-cli-v2: Removing awsclenv2.zip
-      ```
+2. Manually install a program (like `aws`) in the new `bin/` directory of the new *Environment*
+   (`~/.clenv/aws/bin/`).
 
-4. Run the program.
+3. If you want, you can customize the environment used by editing the
+   `~/.clenv/aws/.env` file. `clenv` loads this as a shell script before running
+   your program.
+
+4. Run your program with `clenv`
    ```bash
-   ./clenv aws2050 aws --version
+   $ ./clenv aws aws --version
+   clenv: Executing /home/vagrant/.clenv/aws/bin/aws
    aws-cli/2.0.50 Python/3.7.3 Linux/4.15.0-135-generic exe/x86_64.ubuntu.18
    ```
 
-# Using the default bin directory
 
-You can install default verisons of programs with **clenv** and still use a `.EXTENSION-version` file in any directory.
+## Using Extensions
 
-1. Install the default version using an extension. Example:
+You can install a specific version of an *Extension* into a **default** *Environment*:
+
    ```bash
-   clenv -I terraform=0.12.31
-   clenv: Loading extension version '0.12.31'
-   clenv: Removing download
-   clenv: Downloading
+   $ ./clenv -I aws-cli=2.0.50
+   clenv: Loading aws-cli version '2.0.50'
+   clenv: aws-cli: Removing temporary download files
+   clenv: aws-cli: Downloading artifact
      % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
                                     Dload  Upload   Total   Spent    Left  Speed
-     100 27.1M  100 27.1M    0     0  4452k      0  0:00:06  0:00:06 --:--:-- 4792k
-   clenv: Unpacking terraform to '/home/vagrant/.clenv/terraform'
-   clenv: Installing symlink
-   clenv: Testing terraform
-   Terraform v0.12.31
-   clenv: Removing download
+   100 32.2M  100 32.2M    0     0  8806k      0  0:00:03  0:00:03 --:--:-- 8803k
+   clenv: aws-cli: Unpacking to '/home/vagrant/.clenv/aws-cli'
+   clenv: aws-cli: Installing symlink
+   clenv: aws-cli: Testing
+   aws-cli/2.0.50 Python/3.7.3 Linux/4.15.0-135-generic exe/x86_64.ubuntu.18
+   clenv: aws-cli: Removing temporary download files
+   clenv:
    ```
-2. In a new directory, create a `.EXTENSION-version` file with the version you want to use.
+
+Or you can create a **version-specific** *Environment* (note the final argument to `clenv` below - that's the *Environment* name).
+This is what happens in the background when you use a `.ENVIRONMENT-version` file.
+
+   ```bash
+   $ ./clenv -I aws-cli=2.0.50 aws-cli=2.0.50
+   clenv: Loading aws-cli version '2.0.50'
+   clenv: aws-cli: Removing temporary download files
+   clenv: aws-cli: Downloading artifact
+     % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                    Dload  Upload   Total   Spent    Left  Speed
+   100 32.2M  100 32.2M    0     0  9908k      0  0:00:03  0:00:03 --:--:-- 9905k
+   clenv: aws-cli: Unpacking to '/home/vagrant/.clenv/aws-cli=2.0.50'
+   clenv: aws-cli: Installing symlink
+   clenv: aws-cli: Testing
+   aws-cli/2.0.50 Python/3.7.3 Linux/4.15.0-135-generic exe/x86_64.ubuntu.18
+   clenv: aws-cli: Removing temporary download files
+   clenv:
+   ```
+
+
+## List environments
+
+Let's see the *Environment*s we've created so far:
+   ```bash
+   $ ./clenv -l
+   aws
+   aws-cli
+   aws-cli=2.0.50
+   ```
+
+
+## Version-pinned environments
+
+You can use a `.ENVIRONMENT-version` file to specify a specific version of an
+*Extension* to install, depending on what directory you're running `clenv` in.
+
+(You technically don't need to use an *Extension* for this feature. All `clenv`
+does is check if there is a file `.ENVIRONMENT-version` matching the *Environment*
+you are trying to run a `clenv` command with. If it does not exist, `clenv` will
+attempt to install a matching *Extension* and version.)
+
+1. In a new directory, create a `.EXTENSION-version` file with the version you want to use.
    ```bash
    $ mkdir foo
    $ cd foo
-   $ echo "0.15.3" > .terraform-version
+   $ echo "2.2.10" > .aws-cli-version
    $ cd ..
    ```
-3. Export your PATH to include `~/.clenv/.bin/` first (note you need both '.')
+2. Export your PATH to include `~/.clenv/.bin/` (that is `/.bin/`, not `/bin/`)
    ```bash
    $ export PATH=~/.clenv/.bin:$PATH
    ```
-4. Check the version in different directories.
+3. Check the version of your program in different directories. The wrapper will
+   automatically install the proper extension version as needed.
    ```bash
-   $ terraform --version
-   Terraform v0.12.31
+   $ pwd
+   /home/vagrant/git/PUBLIC/clenv/.ext
+   $ aws --version
+   clenv: Looking for '/home/vagrant/git/PUBLIC/clenv/.ext/.aws-cli-version
+   clenv: Looking for '/home/vagrant/git/PUBLIC/clenv/.aws-cli-version
+   clenv: Looking for '/home/vagrant/git/PUBLIC/.aws-cli-version
+   clenv: Looking for '/home/vagrant/git/.aws-cli-version
+   clenv: Looking for '/home/vagrant/.aws-cli-version
+   clenv: Executing /home/vagrant/.clenv/aws-cli/bin/aws
+   aws-cli/2.0.50 Python/3.7.3 Linux/4.15.0-135-generic exe/x86_64.ubuntu.18
    $ cd foo
-   $ terraform --version
-   clenv: Loading extension version '0.15.3'
-   clenv: Removing download
-   clenv: Downloading
+   $ aws --version
+   clenv: Looking for '/home/vagrant/git/PUBLIC/clenv/.ext/foo/.aws-cli-version
+   clenv: Found '/home/vagrant/git/PUBLIC/clenv/.ext/foo/.aws-cli-version' = '2.2.10'
+   clenv: Loading aws-cli version '2.2.10'
+   clenv: aws-cli: Removing temporary download files
+   clenv: aws-cli: Downloading artifact
      % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
                                     Dload  Upload   Total   Spent    Left  Speed
-   100 31.2M  100 31.2M    0     0  4459k      0  0:00:07  0:00:07 --:--:-- 5837k
-   clenv: Unpacking terraform to '/home/vagrant/.clenv/terraform=0.15.3'
-   clenv: Installing symlink
-   clenv: Testing terraform
-
-   Terraform v0.15.3
-   on linux_amd64
-   clenv: Removing download
-   Terraform v0.15.3
-   on linux_amd64
+   100 41.6M  100 41.6M    0     0  10.2M      0  0:00:04  0:00:04 --:--:-- 10.2M
+   clenv: aws-cli: Unpacking to '/home/vagrant/.clenv/aws-cli=2.2.10'
+   clenv: aws-cli: Installing symlink
+   clenv: aws-cli: Testing
+   aws-cli/2.2.10 Python/3.8.8 Linux/4.15.0-135-generic exe/x86_64.ubuntu.18 prompt/off
+   clenv: aws-cli: Removing temporary download files
+   clenv:
+   clenv: Executing /home/vagrant/.clenv/aws-cli=2.2.10/bin/aws
+   aws-cli/2.2.10 Python/3.8.8 Linux/4.15.0-135-generic exe/x86_64.ubuntu.18 prompt/off
    ```
 
-# Extensions
+As you can see, `clenv` will look for the `.EXTENSION-version` file starting from
+the current directory, and work its way back up each parent directory up to your
+home directory.
 
-Extensions are optional helper programs that download and install any version of
-a program that you might want. They are shell scripts that take a command-line
-argument, and check certain environment variables.
 
-Extensions assume they are running in an *Environment* directory. They will change to
-a `$CLENV_DIR/$CV_NAME` directory first if those environment variables are set.
+---
 
-Check the [.ext/](./.ext/) directory for the available extensions.
+# Testing
 
+Run `make` in this directory to test all the *Extensions*. See [.ext/test/](./.ext/test/) for details.

@@ -1,6 +1,13 @@
 # About
 
-This directory contains the *Extensions* for `clenv`. They are currently implemented as shell scripts, but any executable file can be an *Extension*. Each simply takes environment variables and command-line arguments and is fully responsible for installing and running programs.
+This directory contains the *Extensions* for `clenv`. They are currently
+implemented as shell scripts, but any executable file can be an *Extension*.
+
+Each takes environment variables and command-line arguments, and is fully 
+responsible for installing and running programs in an *Environment*.
+
+Extensions assume they are running in an *Environment* directory. They will change to
+a `$CLENV_DIR/$CV_NAME` directory first if those environment variables are set.
 
 ---
 
