@@ -224,7 +224,7 @@ It is enabled by the 'wrapper' argument to `clenv`. You can set up an
 *Environment* manually and create a script to call `clenv` like this:
    ```bash
    #!/usr/bin/env sh
-   # this will make cliv look for .EXTENSION-version files.
+   # this will make clenv look for .EXTENSION-version files.
    # optionally export CLENV_E_VERSION to avoid the .EXTENSION-version check
    exec clenv -W <EXTENSION> <COMMAND> <ARGUMENTS>
    ```
