@@ -136,7 +136,7 @@ You can install a specific version of an *Extension* into a **default** *Environ
    ```
 
 Or you can create a **version-specific** *Environment* (note the final argument to `clenv` below - that's the *Environment* name).
-This is what happens in the background when you use a `.ENVIRONMENT-version` file.
+This is what happens in the background when you use a `.EXTENSION-version` file.
 
    ```bash
    $ ./clenv -I aws-cli=2.0.50 aws-cli=2.0.50
@@ -167,7 +167,7 @@ Let's see the *Environment*s we've created so far:
 ## Version-pinned environments
 
 Finally: this is probably why you want to use this program! You can use a 
-`.ENVIRONMENT-version` file to specify a specific version of an *Extension* to
+`.EXTENSION-version` file to specify a specific version of an *Extension* to
 install depending on what directory you're running `clenv` in.
 
 1. In a new directory, create a `.EXTENSION-version` file with the version you want to use.
