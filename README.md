@@ -266,11 +266,12 @@ It is enabled by the 'wrapper' argument to `clenv`. You can set up an
    #!/usr/bin/env sh
    # this will make clenv look for .EXTENSION-version files.
    # optionally export CLENV_E_VERSION to avoid the .EXTENSION-version check
-   exec clenv -W <EXTENSION> <COMMAND> <ARGUMENTS>
+   exec clenv -W <EXTENSION> <ENVIRONMENT> <COMMAND> [<ARGUMENTS>]
    ```
 
 ---
 
 # Testing
 
-Run `make` in this directory to test all the *Extensions*. See [.ext/test/](./.ext/test/) for details.
+## Extensions
+Run `make` in this directory to test all the *Extensions*. See [.ext/tests/](./.ext/tests/) for details.
