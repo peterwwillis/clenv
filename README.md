@@ -11,6 +11,46 @@
 
 ---
 
+# Quick start
+
+## Install clenv
+```bash
+$ sudo curl -fsSL -o /usr/local/bin/clenv https://raw.githubusercontent.com/peterwwillis/clenv/main/clenv \
+  && sudo chmod 755 /usr/local/bin/clenv \
+  && echo "7a65b4ad3fcb3446fe962a9ef21b06eead50ae9003fa05d8d08d75fc61fb6d65  /usr/local/bin/clenv" | sha256sum -c \
+  || { echo "FAILED CHECKSUM: REMOVING clenv" && sudo rm -f /usr/local/bin/clenv ; }
+$ clenv 
+```
+
+# Install a program with an extension
+```bash
+$ clenv -I packer
+/usr/local/bin/clenv -I packer
+clenv: Installing extention packer
+clenv: packer: Installing wrapper
+clenv: Loading packer version '1.7.3'
+clenv: packer: Removing temporary download files
+clenv: packer: Downloading artifact
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100 30.2M  100 30.2M    0     0  8829k      0  0:00:03  0:00:03 --:--:-- 8826k
+clenv: packer: Unpacking to '/home/vagrant/.clenv/packer'
+clenv: packer: Installing symlink
+clenv: packer: Testing
+1.7.3
+clenv: packer: Removing temporary download files
+clenv:
+$ ~/.clenv/.bin/packer --version
+clenv: Looking for '/home/vagrant/git/PUBLIC/clenv/.packer-version
+clenv: Looking for '/home/vagrant/git/PUBLIC/.packer-version
+clenv: Looking for '/home/vagrant/git/.packer-version
+clenv: Looking for '/home/vagrant/.packer-version
+clenv: Executing /home/vagrant/.clenv/packer/bin/packer
+1.7.3
+```
+
+---
+
 # How it works
 
 **clenv** keeps a directory *$CLENV_DIR* (default: *$HOME/.clenv/*). In that
@@ -30,9 +70,9 @@ This allows you to keep different versions of programs in different
 
 Run **clenv** to check out all the options:
    ```bash
-   $ ./clenv
-    Usage: ./clenv [OPTS]
-           ./clenv [OPTS] [ENVIRON [CMD [ARGS ..]] ]
+   $ clenv
+    Usage: clenv [OPTS]
+           clenv [OPTS] [ENVIRON [CMD [ARGS ..]] ]
     Opts:
         -h                      This screen
         -i                      Clear environment variables. Must be first argument
@@ -97,7 +137,7 @@ correct version of your program to use, install it if needed, load the
 1. Create a new *Environment*. For this example we'll call it just "aws",
    but you could also give it a more descriptive name, like "aws=2.0.50".
    ```bash
-   $ ./clenv -n aws
+   $ clenv -n aws
    ```
 
 2. Manually install a program (like `aws`) in the new `bin/` directory of the new *Environment*
@@ -109,7 +149,7 @@ correct version of your program to use, install it if needed, load the
 
 4. Run your program with `clenv`
    ```bash
-   $ ./clenv aws aws --version
+   $ clenv aws aws --version
    clenv: Executing /home/vagrant/.clenv/aws/bin/aws
    aws-cli/2.0.50 Python/3.7.3 Linux/4.15.0-135-generic exe/x86_64.ubuntu.18
    ```
@@ -120,7 +160,7 @@ correct version of your program to use, install it if needed, load the
 You can install a specific version of an *Extension* into a **default** *Environment*:
 
    ```bash
-   $ ./clenv -I aws-cli=2.0.50
+   $ clenv -I aws-cli=2.0.50
    clenv: Loading aws-cli version '2.0.50'
    clenv: aws-cli: Removing temporary download files
    clenv: aws-cli: Downloading artifact
@@ -139,7 +179,7 @@ Or you can create a **version-specific** *Environment* (note the final argument 
 This is what happens in the background when you use a `.EXTENSION-version` file.
 
    ```bash
-   $ ./clenv -I aws-cli=2.0.50 aws-cli=2.0.50
+   $ clenv -I aws-cli=2.0.50 aws-cli=2.0.50
    clenv: Loading aws-cli version '2.0.50'
    clenv: aws-cli: Removing temporary download files
    clenv: aws-cli: Downloading artifact
@@ -158,7 +198,7 @@ This is what happens in the background when you use a `.EXTENSION-version` file.
 
 Let's see the *Environment*s we've created so far:
    ```bash
-   $ ./clenv -l
+   $ clenv -l
    aws
    aws-cli
    aws-cli=2.0.50
