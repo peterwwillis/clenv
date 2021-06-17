@@ -34,7 +34,7 @@ _ext_download () {
 }
 _ext_unpack () {
     mkdir -p "$CLENV_E_INSTDIR/usr/bin"
-    unzip -q -o -d "$CLENV_E_INSTDIR" "$CLENV_E_INSTDIR/usr/bin/$DLFILE"
+    unzip -q -o -d "$CLENV_E_INSTDIR/usr/bin" "$CLENV_E_INSTDIR/download/$DLFILE"
 }
 _ext_install_local () {
     mkdir -p bin
