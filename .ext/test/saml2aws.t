@@ -1,5 +1,6 @@
-#!/bin/sh
-set -ux
+#!/usr/bin/env sh
+[ "${DEBUG:-0}" = "1" ] && set -x
+set -u
 
 _t_1 () {
     # Test extension install
