@@ -5,8 +5,8 @@ set -eu
 CLENV_E_NAME="${CLENV_E_NAME:-saml2aws}"
 CLENV_E_REV="0.1.0"
 
-SAML2AWS_OS="${SAML2AWS_OS:-linux}"
-SAML2AWS_ARCH="${SAML2AWS_ARCH:-amd64}"
+CLENV_E_OS="${CLENV_E_OS:-linux}"
+CLENV_E_ARCH="${CLENV_E_ARCH:-amd64}"
 
 BIN_NAME="$CLENV_E_NAME"
 DLFILE="$CLENV_E_NAME.tar.gz"
@@ -14,7 +14,7 @@ _GHREPOAPI="https://api.github.com/repos/Versent/$CLENV_E_NAME"
 _GHURL="https://github.com/Versent/$CLENV_E_NAME/releases"
 BASEURL="$_GHURL/download/v%s/$CLENV_E_NAME""_%s_%s_%s.tar.gz"
 
-CLENV_E_INSTDIR="${CLENV_E_INSTDIR:-$(pwd)/usr/bin}"
+CLENV_E_INSTDIR="${CLENV_E_INSTDIR:-$(pwd)}"
 
 _ext_latest () {
     _ext_versions | head -1
@@ -28,29 +28,30 @@ _ext_url () {
             CLENV_E_VERSION="$(_ext_latest)"
     else    CLENV_E_VERSION="$1"
     fi
-    printf "$BASEURL\n" "$CLENV_E_VERSION" "$CLENV_E_VERSION" "$SAML2AWS_OS" "$SAML2AWS_ARCH"
+    printf "$BASEURL\n" "$CLENV_E_VERSION" "$CLENV_E_VERSION" "$CLENV_E_OS" "$CLENV_E_ARCH"
 }
 _ext_download () {
-    curl -L "$(_ext_url "$@")" -o $DLFILE
+    mkdir -p "$CLENV_E_INSTDIR/download"
+    curl -L "$(_ext_url "$@")" -o "$CLENV_E_INSTDIR/download/$DLFILE"
 }
 _ext_unpack () {
-    mkdir -p "$CLENV_E_INSTDIR"
-    tar -C "$CLENV_E_INSTDIR" -xzf "$DLFILE"
+    mkdir -p "$CLENV_E_INSTDIR/usr/share"
+    tar -C "$CLENV_E_INSTDIR/usr/share" -xzf "$CLENV_E_INSTDIR/download/$DLFILE"
 }
 _ext_install_local () {
     mkdir -p bin
-    ln -sf "$CLENV_E_INSTDIR"/$BIN_NAME bin/$BIN_NAME
+    ln -sf "$CLENV_E_INSTDIR/usr/share/$BIN_NAME" "bin/$BIN_NAME"
 }
 _ext_install_global () {
     sudo /bin/sh -c "mkdir -p /usr/local/bin; mv $BIN_NAME /usr/local/bin/$BIN_NAME"
 }
 _ext_install_wrapper () {
     [ -d "$CLENV_DIR/.bin" ] || mkdir -p "$CLENV_DIR/.bin"
-    printf "#!/usr/bin/env sh\nexec clenv -W $CLENV_E_NAME $BIN_NAME \"\$@\"\n" > "$CLENV_DIR/.bin/$CLENV_E_NAME"
-    chmod 755 "$CLENV_DIR/.bin/$CLENV_E_NAME"
+    printf "#!/usr/bin/env sh\nexec clenv -W $CLENV_E_NAME $BIN_NAME \"\$@\"\n" > "$CLENV_DIR/.bin/$BIN_NAME"
+    chmod 755 "$CLENV_DIR/.bin/$BIN_NAME"
 }
 _ext_clean () {
-    rm -f "$DLFILE"
+    rm -rf "$CLENV_E_INSTDIR/download/"
 }
 _ext_clean_install () {
     rm -rf "$CLENV_E_INSTDIR"
@@ -73,8 +74,8 @@ if [ $# -lt 1 ] ; then
 else
     cmd="$1"; shift
     func="_ext_$(printf "%s\n" "$cmd" | tr - _)"
-    if [ -n "${CLENV_DIR:-}" -a -n "${CLENV_E_ALIAS:-}" ] ; then
-        [ -d "$CLENV_DIR/$CLENV_E_ALIAS" ] && cd "$CLENV_DIR/$CLENV_E_ALIAS"
+    if [ -n "${CLENV_DIR:-}" -a -n "${CLENV_E_ENVIRON:-}" ] ; then
+        [ -d "$CLENV_DIR/$CLENV_E_ENVIRON" ] && cd "$CLENV_DIR/$CLENV_E_ENVIRON"
     fi
     case "$cmd" in 
         *)                  $func "$@" ;;
