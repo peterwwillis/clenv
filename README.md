@@ -12,25 +12,35 @@
 
 # How it works
 
-**clenv** keeps a directory *$CLENV_DIR* (default: *$HOME/.clenv/*). In that directory
-are sub-directories, called `ALIAS`es.
+**clenv** keeps a directory *$CLENV_DIR* (default: *$HOME/.clenv/*). In that
+directory are sub-directories called *Environment*s.
 
-Each `ALIAS` directory has at least two files:
+Each *Environment* directory has at least two files:
  - `bin/` : Put programs you want to execute in here.
  - `.env` : A shell script loaded into the shell to set environment variables. 
 
-When **clenv** is run with an ALIAS and CMD, it loads the `.env` file, sets the
-`PATH` to include the `bin/` directory, and then runs `CMD`, which lives in the
-`bin/` directory.
+When **clenv** is run with *Environment* and `CMD` arguments, it loads the
+*Environment*'s `.env` shell script, sets the environment variable *$PATH* to
+include the *Environment*'s `bin/` directory, and then runs `CMD` (which lives
+in the `bin/` directory).
 
-This way you can keep multiple versions of the same program in different `ALIAS`
-directories, and call them individually using **clenv**.
+This allows you to keep different versions of programs in different
+*environment*s and execute those specific versions using **clenv**.
 
 ## Features
 
- - **clenv** has *Extensions*, which are basically mini scripts that can download and install particular programs for you. This way you don't have to manually set up your `ALIAS` directories with different versions of programs; the extensions do it for you.
+ - **clenv** has *Extensions*. They are optional scripts that can download and
+   install particular programs for you. This way you don't have to manually set
+   up your *Environment* directories with different versions of programs; the
+   extensions do it for you.
 
- - **clenv** has a special wrapper mode. When an *Extension* is installed, a matching script is created in `$CLENV_DIR/.bin/`. This wrapper can then detect if you have a '.$extension-version' file in your current directory, and automatically install and run that version of that extension's software.
+   If an extension doesn't exist for the program you want to install 
+
+ - **clenv** has a special wrapper mode. When an *Extension* is installed, a
+   matching script is created in `$CLENV_DIR/.bin/`. This wrapper can then
+   detect if you have a '.$extension-version' file in your current directory,
+   and automatically install and run that version of that extension's software.
+   Add the `$CLENV_DIR/.bin/` directory to your *$PATH* to use the wrappers.
 
 
 # Getting started
@@ -38,18 +48,19 @@ directories, and call them individually using **clenv**.
 1. Run **clenv** to get the options.
    ```bash
     Usage: ./clenv [OPTS]
-           ./clenv [OPTS] [ALIAS [CMD [ARGS ..]] ]
+           ./clenv [OPTS] [ENVIRON [CMD [ARGS ..]] ]
     Opts:
         -h			This screen
         -i			Clear environment variables. Must be first argument
-        -l [ALIAS]		List versions
-        -n ALIAS		Create a new ALIAS
-        -I EXT[=V] [ALIAS] 	Install version V of extension EXT into ALIAS
+        -l [ENVIRON]		List versions
+        -n ENVIRON		Create a new ENVIRON
+        -I EXT[=V] [ENVIRON] 	Install version V of extension EXT into ENVIRON
         -W EXT [-- CMD ..]	Installs extension EXT and runs CMD
         -f			Force mode
+        -V          Version of clenv
    ```
 
-2. Create a new `ALIAS` directory. (Example name: `aws2050`)
+2. Create a new *Environment* directory. (Example name: `aws2050`)
    ```bash
    $ ./clenv -n aws2050
    ```
@@ -138,7 +149,7 @@ Extensions are optional helper programs that download and install any version of
 a program that you might want. They are shell scripts that take a command-line
 argument, and check certain environment variables.
 
-Extensions assume they are running in an ALIAS directory. They will change to
+Extensions assume they are running in an *Environment* directory. They will change to
 a `$CLENV_DIR/$CV_NAME` directory first if those environment variables are set.
 
 Check the [.ext/](./.ext/) directory for the available extensions.

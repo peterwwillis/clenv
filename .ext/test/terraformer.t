@@ -1,9 +1,12 @@
-#!/bin/sh
-set -ux
+#!/usr/bin/env sh
+[ "${DEBUG:-0}" = "1" ] && set -x
+set -u
 
 _t_1 () {
     # Test extension install
-    clenv -f -I "$ext_name=$ext_ver" "ext-ver-$ext_ver"
+    if ! clenv -f -I "$ext_name=$ext_ver" "ext-ver-$ext_ver" ; then
+        return 1
+    fi
 }
 _t_2 () {
     # Test version check

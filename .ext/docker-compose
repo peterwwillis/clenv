@@ -2,18 +2,17 @@
 set -eu
 [ "${DEBUG:-0}" = "1" ] && set -x
 
-CLENV_E_NAME="${CLENV_E_NAME:-terraformer}"
-CLENV_E_REV="0.1.2"
+CLENV_E_NAME="${CLENV_E_NAME:-docker-compose}"
+CLENV_E_REV="0.1.0"
 
-CLENV_E_PLATFORM="${CLENV_E_PLATFORM:-aws}"
-CLENV_E_OS="${CLENV_E_OS:-linux}"
-CLENV_E_ARCH="${CLENV_E_ARCH:-amd64}"
+CLENV_E_OS="${CLENV_E_OS:-Linux}"
+CLENV_E_ARCH="${CLENV_E_ARCH:-x86_64}"
 
 BIN_NAME="$CLENV_E_NAME"
 DLFILE="$CLENV_E_NAME"
-_GHREPOAPI="https://api.github.com/repos/GoogleCloudPlatform/$BIN_NAME"
-_GHURL="https://github.com/GoogleCloudPlatform/$CLENV_E_NAME/releases"
-BASEURL="$_GHURL/download/%s/$CLENV_E_NAME-%s-%s-%s"
+_GHREPOAPI="https://api.github.com/repos/docker/$BIN_NAME"
+_GHURL="https://github.com/docker/compose/releases"
+BASEURL="$_GHURL/download/%s/$CLENV_E_NAME-%s-%s"
 
 CLENV_E_INSTDIR="${CLENV_E_INSTDIR:-$(pwd)}"
 
@@ -29,7 +28,7 @@ _ext_url () {
             CLENV_E_VERSION="$(_ext_latest)"
     else    CLENV_E_VERSION="$1"
     fi
-    printf "$BASEURL\n" "$CLENV_E_VERSION" "$CLENV_E_PLATFORM" "$CLENV_E_OS" "$CLENV_E_ARCH"
+    printf "$BASEURL\n" "$CLENV_E_VERSION" "$CLENV_E_OS" "$CLENV_E_ARCH"
 }
 _ext_download () {
     mkdir -p "$CLENV_E_INSTDIR/download"
@@ -49,8 +48,8 @@ _ext_install_global () {
 }
 _ext_install_wrapper () {
     [ -d "$CLENV_DIR/.bin" ] || mkdir -p "$CLENV_DIR/.bin"
-    printf "#!/usr/bin/env sh\nexec clenv -W $CLENV_E_NAME $BIN_NAME \"\$@\"\n" > "$CLENV_DIR/.bin/$BIN_NAME"
-    chmod 755 "$CLENV_DIR/.bin/$BIN_NAME"
+    printf "#!/usr/bin/env sh\nexec clenv -W $CLENV_E_NAME $BIN_NAME \"\$@\"\n" > "$CLENV_DIR/.bin/$CLENV_E_NAME"
+    chmod 755 "$CLENV_DIR/.bin/$CLENV_E_NAME"
 }
 _ext_clean () {
     rm -rf "$CLENV_E_INSTDIR/download/"
