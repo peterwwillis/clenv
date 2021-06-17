@@ -1,0 +1,71 @@
+#!/usr/bin/env sh
+# This is a sample extension used for tests
+set -eu
+[ "${DEBUG:-0}" = "1" ] && set -x
+
+CLENV_E_NAME="${CLENV_E_NAME:-test}"
+CLENV_E_REV="0.1.0"
+
+CLENV_E_BIN_NAME="${CLENV_E_BIN_NAME:-$CLENV_E_NAME}"
+CLENV_E_DLFILE="${CLENV_E_DLFILE:-$CLENV_E_NAME}"
+
+CLENV_E_INSTDIR="${CLENV_E_INSTDIR:-$(pwd)}"
+
+_ext_latest () {
+    _ext_versions | head -1
+}
+_ext_versions () {
+    echo "1.0.0"
+}
+_ext_download () {
+    mkdir -p "$CLENV_E_INSTDIR/download"
+    printf '#!/usr/bin/env sh\necho "running test ($$) - $*"\n[ "${1:-}" = "--version" ] && exec echo Version 1.0.0\n[ $# -gt 0 ] && exec "$@"\nexit 0\n' > "$CLENV_E_INSTDIR/download/$CLENV_E_DLFILE"
+}
+_ext_unpack () {
+    mkdir -p "$CLENV_E_INSTDIR/usr/bin"
+    chmod 755 "$CLENV_E_INSTDIR/download/$CLENV_E_DLFILE"
+    mv "$CLENV_E_INSTDIR/download/$CLENV_E_DLFILE" "$CLENV_E_INSTDIR/usr/bin/$CLENV_E_BIN_NAME"
+}
+_ext_install_local () {
+    mkdir -p bin
+    ln -sf "$CLENV_E_INSTDIR/usr/bin/$CLENV_E_BIN_NAME" "bin/$CLENV_E_BIN_NAME"
+}
+_ext_install_global () {
+    sudo /bin/sh -c "mkdir -p /usr/local/bin; mv $CLENV_E_BIN_NAME /usr/local/bin/$CLENV_E_BIN_NAME"
+}
+_ext_install_wrapper () {
+    [ -d "$CLENV_DIR/.bin" ] || mkdir -p "$CLENV_DIR/.bin"
+    printf "#!/usr/bin/env sh\nexec clenv -W $CLENV_E_NAME $CLENV_E_ENVIRON $CLENV_E_BIN_NAME \"\$@\"\n" > "$CLENV_DIR/.bin/$CLENV_E_BIN_NAME"
+    chmod 755 "$CLENV_DIR/.bin/$CLENV_E_BIN_NAME"
+}
+_ext_clean () {
+    rm -rf "$CLENV_E_INSTDIR/download/"
+}
+_ext_clean_install () {
+    rm -rf "$CLENV_E_INSTDIR"
+}
+_ext_test () {
+    "./bin/$CLENV_E_BIN_NAME" --version
+}
+_ext_help () {
+    cat <<EOUSAGE
+Usage: $0 CMD
+
+Commands:
+$(grep -e "^_ext_.* ()" "$0" | awk '{print $1}' | sed -e 's/_ext_//;s/^/  /g' | tr _ -)
+EOUSAGE
+    exit 1
+}
+
+if [ $# -lt 1 ] ; then
+    _ext_help
+else
+    cmd="$1"; shift
+    func="_ext_$(printf "%s\n" "$cmd" | tr - _)"
+    if [ -n "${CLENV_DIR:-}" -a -n "${CLENV_E_ENVIRON:-}" ] ; then
+        [ -d "$CLENV_DIR/$CLENV_E_ENVIRON" ] && cd "$CLENV_DIR/$CLENV_E_ENVIRON"
+    fi
+    case "$cmd" in 
+        *)                  $func "$@" ;;
+    esac
+fi
