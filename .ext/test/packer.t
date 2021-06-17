@@ -10,11 +10,11 @@ _t_1 () {
 }
 _t_2 () {
     # Test version check
-    result="$(clenv "ext-ver-$ext_ver" $ext_name --version 2>&1 | tail -1)"
-    if [ ! "$result" = "2.30.0" ] ; then
+    result="$(clenv "ext-ver-$ext_ver" $ext_name --version)"
+    if [ ! "$result" = "1.7.3" ] ; then
         return 1
     fi
 }
 
-ext_ver=2.30.0
+ext_ver=1.7.3
 ext_tests="1 2"

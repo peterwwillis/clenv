@@ -2,18 +2,16 @@
 set -eu
 [ "${DEBUG:-0}" = "1" ] && set -x
 
-CLENV_E_NAME="${CLENV_E_NAME:-terraformer}"
-CLENV_E_REV="0.1.2"
+CLENV_E_NAME="${CLENV_E_NAME:-packer}"
+CLENV_E_REV="0.1.0"
 
-CLENV_E_PLATFORM="${CLENV_E_PLATFORM:-aws}"
 CLENV_E_OS="${CLENV_E_OS:-linux}"
 CLENV_E_ARCH="${CLENV_E_ARCH:-amd64}"
 
 BIN_NAME="$CLENV_E_NAME"
-DLFILE="$CLENV_E_NAME"
-_GHREPOAPI="https://api.github.com/repos/GoogleCloudPlatform/$BIN_NAME"
-_GHURL="https://github.com/GoogleCloudPlatform/$CLENV_E_NAME/releases"
-BASEURL="$_GHURL/download/%s/$CLENV_E_NAME-%s-%s-%s"
+DLFILE="$CLENV_E_NAME.zip"
+_HCURL="https://releases.hashicorp.com/$CLENV_E_NAME"
+BASEURL="$_HCURL/%s/$CLENV_E_NAME""_%s_%s_%s.zip"
 
 CLENV_E_INSTDIR="${CLENV_E_INSTDIR:-$(pwd)}"
 
@@ -21,15 +19,14 @@ _ext_latest () {
     _ext_versions | head -1
 }
 _ext_versions () {
-    # technically '/releases' is better but tags are the same here and this is 1/100th the bandwidth
-    curl -sL "$_GHREPOAPI/tags" | awk -F '"' '/"name":/{print $4}' | sed -e 's/^v//'
+    curl -sL "$_HCURL" | grep -e "<a href=\"/$CLENV_E_NAME/" | grep -v alpha | cut -d \" -f 2 | cut -d / -f 3 | sed -e 's/^v//'
 }
 _ext_url () {
     if [ $# -lt 1 ] || [ $# -gt 0 -a "$1" = "latest" ] ; then
             CLENV_E_VERSION="$(_ext_latest)"
     else    CLENV_E_VERSION="$1"
     fi
-    printf "$BASEURL\n" "$CLENV_E_VERSION" "$CLENV_E_PLATFORM" "$CLENV_E_OS" "$CLENV_E_ARCH"
+    printf "$BASEURL\n" "$CLENV_E_VERSION" "$CLENV_E_VERSION" "$CLENV_E_OS" "$CLENV_E_ARCH"
 }
 _ext_download () {
     mkdir -p "$CLENV_E_INSTDIR/download"
@@ -37,8 +34,7 @@ _ext_download () {
 }
 _ext_unpack () {
     mkdir -p "$CLENV_E_INSTDIR/usr/bin"
-    chmod 755 "$CLENV_E_INSTDIR/download/$DLFILE"
-    mv "$CLENV_E_INSTDIR/download/$DLFILE" "$CLENV_E_INSTDIR/usr/bin/"
+    unzip -q -o -d "$CLENV_E_INSTDIR/usr/bin" "$CLENV_E_INSTDIR/download/$DLFILE"
 }
 _ext_install_local () {
     mkdir -p bin

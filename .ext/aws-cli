@@ -2,18 +2,18 @@
 set -eu
 [ "${DEBUG:-0}" = "1" ] && set -x
 
-CLENV_E_NAME="${CLENV_E_NAME:-terraformer}"
-CLENV_E_REV="0.1.2"
+CLENV_E_NAME="${CLENV_E_NAME:-aws-cli}"
+CLENV_E_REV="0.1.0"
 
-CLENV_E_PLATFORM="${CLENV_E_PLATFORM:-aws}"
 CLENV_E_OS="${CLENV_E_OS:-linux}"
-CLENV_E_ARCH="${CLENV_E_ARCH:-amd64}"
+CLENV_E_ARCH="${CLENV_E_ARCH:-x86_64}"
 
-BIN_NAME="$CLENV_E_NAME"
-DLFILE="$CLENV_E_NAME"
-_GHREPOAPI="https://api.github.com/repos/GoogleCloudPlatform/$BIN_NAME"
-_GHURL="https://github.com/GoogleCloudPlatform/$CLENV_E_NAME/releases"
-BASEURL="$_GHURL/download/%s/$CLENV_E_NAME-%s-%s-%s"
+BIN_NAME="aws"
+DLFILE="$CLENV_E_NAME.zip"
+
+_GHREPOAPI="https://api.github.com/repos/aws/$CLENV_E_NAME"
+_HCURL="https://awscli.amazonaws.com"
+BASEURL="$_HCURL/awscli-exe-%s-%s-%s.zip"
 
 CLENV_E_INSTDIR="${CLENV_E_INSTDIR:-$(pwd)}"
 
@@ -22,30 +22,46 @@ _ext_latest () {
 }
 _ext_versions () {
     # technically '/releases' is better but tags are the same here and this is 1/100th the bandwidth
-    curl -sL "$_GHREPOAPI/tags" | awk -F '"' '/"name":/{print $4}' | sed -e 's/^v//'
+    next_url="$_GHREPOAPI/tags"
+    echo "$0: Warning: retrieving list of aws-cli versions; this will take some time..." 1>&2
+    # yes, this is very ugly. please feel free to give it a facelift...
+    while [ -n "$next_url" ] ; do
+        output="$(curl -siL "$next_url")"
+        printf "%s\n" "$output" | awk -F '"' '/"name":/{print $4}' | sed -e 's/^v//'
+        next="$(printf "%s\n" "$output" | grep '^link:' \
+            | sed -e 's/link: //; s/, /\n/g; s/[<>]//g; s/; rel/ rel/g; s/\(https:\/\/[^ ]\+\) rel="\([a-z]\+\)"/\2 \1/g' \
+            | awk '/next / { print $2}')"
+        if [ -n "${next:-}" ] ; then
+                next_url="$next"
+        else    next_url=""
+        fi
+    done
 }
 _ext_url () {
     if [ $# -lt 1 ] || [ $# -gt 0 -a "$1" = "latest" ] ; then
             CLENV_E_VERSION="$(_ext_latest)"
     else    CLENV_E_VERSION="$1"
     fi
-    printf "$BASEURL\n" "$CLENV_E_VERSION" "$CLENV_E_PLATFORM" "$CLENV_E_OS" "$CLENV_E_ARCH"
+    printf "$BASEURL\n" "$CLENV_E_OS" "$CLENV_E_ARCH" "$CLENV_E_VERSION"
 }
 _ext_download () {
     mkdir -p "$CLENV_E_INSTDIR/download"
     curl -L "$(_ext_url "$@")" -o "$CLENV_E_INSTDIR/download/$DLFILE"
 }
 _ext_unpack () {
-    mkdir -p "$CLENV_E_INSTDIR/usr/bin"
-    chmod 755 "$CLENV_E_INSTDIR/download/$DLFILE"
-    mv "$CLENV_E_INSTDIR/download/$DLFILE" "$CLENV_E_INSTDIR/usr/bin/"
+    mkdir -p "$CLENV_E_INSTDIR/usr/share"
+    unzip -q -o -d "$CLENV_E_INSTDIR/usr/share" "$CLENV_E_INSTDIR/download/$DLFILE"
 }
 _ext_install_local () {
     mkdir -p bin
-    ln -sf "$CLENV_E_INSTDIR/usr/bin/$BIN_NAME" "bin/$BIN_NAME"
+    ln -sf "$CLENV_E_INSTDIR/usr/share/aws/dist/aws" "bin/$BIN_NAME"
 }
 _ext_install_global () {
-    sudo /bin/sh -c "mkdir -p /usr/local/bin; mv $BIN_NAME /usr/local/bin/$BIN_NAME"
+    if [ -e /usr/local/aws-cli/v2/current ] ; then
+        sudo "$CLIV_E_INSTDIR/usr/share/aws/install" --update
+    else
+        sudo "$CLIV_E_INSTDIR/usr/share/aws/install"
+    fi
 }
 _ext_install_wrapper () {
     [ -d "$CLENV_DIR/.bin" ] || mkdir -p "$CLENV_DIR/.bin"
