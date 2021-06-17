@@ -13,7 +13,7 @@ DLFILE="$CLENV_E_NAME.zip"
 _HCURL="https://releases.hashicorp.com/$CLENV_E_NAME"
 BASEURL="$_HCURL/%s/$CLENV_E_NAME""_%s_%s_%s.zip"
 
-CLENV_E_INSTDIR="${CLENV_E_INSTDIR:-$(pwd)/usr/bin}"
+CLENV_E_INSTDIR="${CLENV_E_INSTDIR:-$(pwd)}"
 
 _ext_latest () {
     _ext_versions | head -1
