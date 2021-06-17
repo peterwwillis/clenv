@@ -13,13 +13,13 @@ export CLENV_DIR="${CLENV_DIR:-$HOME/.clenv}"
 _usage () {
     printf "%s\n" "
 Usage: $0 [OPTS]
-       $0 [OPTS] [ALIAS [CMD [ARGS ..]] ]
+       $0 [OPTS] [ENVIRON [CMD [ARGS ..]] ]
 Opts:
 	-h			This screen
 	-i			Clear environment variables. Must be first argument
-	-l [ALIAS]		List versions
-	-n ALIAS		Create a new ALIAS
-	-I EXT[=V] [ALIAS] 	Install version V of extension EXT into ALIAS
+	-l [ENVIRON]		List environments
+	-n ENVIRON		Create a new environment
+	-I EXT[=V] [ENVIRON] 	Install version V of extension EXT into ENVIRON
 	-W EXT [-- CMD ..]	Installs extension EXT and runs CMD
 	-f			Force mode
  	-V			Version of clenv
@@ -33,12 +33,12 @@ _clenv_list () {
     done
 }
 _clenv_new () {
-    export CLENV_E_ALIAS="$1" ; shift
-    if [ -d "$CLENV_DIR/$CLENV_E_ALIAS" ] && [ ! "$CLENV_FORCE" = "1" ] ; then
-        _err "Version '$CLENV_DIR/$CLENV_E_ALIAS' already exists"
+    export CLENV_E_ENVIRON="$1" ; shift
+    if [ -d "$CLENV_DIR/$CLENV_E_ENVIRON" ] && [ ! "$CLENV_FORCE" = "1" ] ; then
+        _err "Version '$CLENV_DIR/$CLENV_E_ENVIRON' already exists"
     fi
-    mkdir -p "$CLENV_DIR/$CLENV_E_ALIAS/bin"
-    echo "PATH=$CLENV_DIR/$CLENV_E_ALIAS/bin:\$PATH" > "$CLENV_DIR/$CLENV_E_ALIAS/.env"
+    mkdir -p "$CLENV_DIR/$CLENV_E_ENVIRON/bin"
+    echo "PATH=$CLENV_DIR/$CLENV_E_ENVIRON/bin:\$PATH" > "$CLENV_DIR/$CLENV_E_ENVIRON/.env"
 }
 _clenv_ext_run () {  "$CLENV_DIR/.ext/$CLENV_E_NAME" "$@"; }
 _clenv_ext_install () {
@@ -47,7 +47,7 @@ _clenv_ext_install () {
     if [ ! "$ver" = "$ext" ] ; then
         export CLENV_E_VERSION="$ver"
     fi
-    export CLENV_E_NAME="$ext" CLENV_E_ALIAS="$alias" CLENV_E_INSTDIR="$CLENV_DIR/$alias"
+    export CLENV_E_NAME="$ext" CLENV_E_ENVIRON="$alias" CLENV_E_INSTDIR="$CLENV_DIR/$alias"
 
     if [ ! -e "$CLENV_DIR/.ext/$CLENV_E_NAME" ] || [ "$CLENV_FORCE" = "1" ] ; then
         echo_err "Installing extention $CLENV_E_NAME"
@@ -60,26 +60,26 @@ _clenv_ext_install () {
 
     [ -z "${CLENV_E_VERSION:-}" ] && CLENV_E_VERSION="latest"
     [ "$CLENV_E_VERSION" = "latest" ] && CLENV_E_VERSION="$(_clenv_ext_run latest)"
-    [ -d "$CLENV_DIR/$CLENV_E_ALIAS" ] || _clenv_new "$CLENV_E_ALIAS"
+    [ -d "$CLENV_DIR/$CLENV_E_ENVIRON" ] || _clenv_new "$CLENV_E_ENVIRON"
     export CLENV_E_VERSION="$CLENV_E_VERSION"
     echo_err "Loading $CLENV_E_NAME version '$CLENV_E_VERSION'"
     _ext_clean; _ext_download; _ext_unpack; _ext_install_local; _ext_test; _ext_clean
     echo_err ""
 }
 _clenv_exec () {
-  export CLENV_E_ALIAS="$1" ; shift
-  [ -d "$CLENV_DIR/$CLENV_E_ALIAS" ] || _err "No version '$CLENV_DIR/$CLENV_E_ALIAS' found"
+  export CLENV_E_ENVIRON="$1" ; shift
+  [ -d "$CLENV_DIR/$CLENV_E_ENVIRON" ] || _err "No version '$CLENV_DIR/$CLENV_E_ENVIRON' found"
 
-  if [ -r "$CLENV_DIR/$CLENV_E_ALIAS/.env" ] ; then
+  if [ -r "$CLENV_DIR/$CLENV_E_ENVIRON/.env" ] ; then
       set -a
-      . "$CLENV_DIR/$CLENV_E_ALIAS/.env"
-  else echo_err "Warning: no '$CLENV_DIR/$CLENV_E_ALIAS/.env' found" ; fi
+      . "$CLENV_DIR/$CLENV_E_ENVIRON/.env"
+  else echo_err "Warning: no '$CLENV_DIR/$CLENV_E_ENVIRON/.env' found" ; fi
   echo_err "Executing $(which "$1")"
   exec env "$@"
 }
 _clenv_wrapper () {
     CLENV_E_NAME="$CLENV_WRAPPER"
-    CLENV_E_ALIAS="${CLENV_E_ALIAS:-$CLENV_E_NAME}" # Default alias to extension name
+    CLENV_E_ENVIRON="${CLENV_E_ENVIRON:-$CLENV_E_NAME}" # Default alias to extension name
     if [ -z "${CLENV_E_VERSION:-}" ] ; then
         cwd="$(pwd)"
         while [ ! "$(dirname "$cwd")" = "/" ] ; do
@@ -93,7 +93,7 @@ _clenv_wrapper () {
             fi
         done
     fi
-    extfull="$CLENV_E_NAME" aliasfull="$CLENV_E_ALIAS"
+    extfull="$CLENV_E_NAME" aliasfull="$CLENV_E_ENVIRON"
     if [ -n "${CLENV_E_VERSION:-}" ] ; then
         extfull="$extfull=$CLENV_E_VERSION"
         aliasfull="$aliasfull=$CLENV_E_VERSION"
