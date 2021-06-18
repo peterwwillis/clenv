@@ -7,3 +7,5 @@
       - Needs to test one wrapper-application calling another wrapper-application
 - [ ] Fix extensions to not overwrite '.bin' wrapper if it already exists.
       (*unless* $CLENV_FORCE=1)
+- [ ] Fix extensions to not try to remove $CLENV_E_INSTDIR as that might be the
+      current directory if otherwise unspecified
