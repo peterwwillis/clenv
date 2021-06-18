@@ -4,6 +4,7 @@
 
 ### Added
  - Test extension and core tests, including a test of the wrapper functionality.
+ - GitHub Actions/Workflow to run CI tests on pull requests
 
 ### Changed
  - '-W' wrapper mode now requires an extension name. If the execution function
@@ -14,6 +15,8 @@
 ### Fixed
  - Wrapper mode would result in an infinite loop if one wrapper called another
    wrapper.
+ - Terraform test only looks for the first version line now to work around notice
+   about upgrading.
 
 ---
 
