@@ -1,4 +1,11 @@
-FROM alpine:latest
-RUN apk add -U curl git make unzip tree file
+FROM debian:stable-slim
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+           curl git make unzip tree \
+    && rm -rf /var/lib/apt/lists/*
+
 COPY entrypoint.sh /entrypoint.sh
 ENTRYPOINT ["/entrypoint.sh"]
