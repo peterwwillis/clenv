@@ -15,9 +15,9 @@
 
 ## Install clenv
 ```bash
-$ sudo curl -fsSL -o /usr/local/bin/clenv https://raw.githubusercontent.com/peterwwillis/clenv/main/clenv \
+$ sudo curl -fsSL -o /usr/local/bin/clenv https://raw.githubusercontent.com/peterwwillis/clenv/v1.3.0/clenv \
   && sudo chmod 755 /usr/local/bin/clenv \
-  && echo "7a65b4ad3fcb3446fe962a9ef21b06eead50ae9003fa05d8d08d75fc61fb6d65  /usr/local/bin/clenv" | sha256sum -c \
+  && echo "00854335a8e649513a47507e7108f0facc2fee35667f0f0a99425e0f57fb4ef9  /usr/local/bin/clenv" | sha256sum -c \
   || { echo "FAILED CHECKSUM: REMOVING clenv" && sudo rm -f /usr/local/bin/clenv ; }
 /usr/local/bin/clenv: OK
 ```
@@ -266,11 +266,12 @@ It is enabled by the 'wrapper' argument to `clenv`. You can set up an
    #!/usr/bin/env sh
    # this will make clenv look for .EXTENSION-version files.
    # optionally export CLENV_E_VERSION to avoid the .EXTENSION-version check
-   exec clenv -W <EXTENSION> <COMMAND> <ARGUMENTS>
+   exec clenv -W <EXTENSION> <ENVIRONMENT> <COMMAND> [<ARGUMENTS>]
    ```
 
 ---
 
 # Testing
 
-Run `make` in this directory to test all the *Extensions*. See [.ext/test/](./.ext/test/) for details.
+## Extensions
+Run `make` in this directory to test all the *Extensions*. See [.ext/tests/](./.ext/tests/) for details.

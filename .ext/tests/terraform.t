@@ -10,7 +10,7 @@ _t_1 () {
 }
 _t_2 () {
     # Test version check
-    result="$(clenv "ext-ver-$ext_ver" $ext_name --version)"
+    result="$(clenv "ext-ver-$ext_ver" $ext_name --version | head -1)"
     if [ ! "$result" = "Terraform v0.12.31" ] ; then
         return 1
     fi

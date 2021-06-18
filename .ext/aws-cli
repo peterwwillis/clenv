@@ -8,8 +8,8 @@ CLENV_E_REV="0.1.0"
 CLENV_E_OS="${CLENV_E_OS:-linux}"
 CLENV_E_ARCH="${CLENV_E_ARCH:-x86_64}"
 
-BIN_NAME="aws"
-DLFILE="$CLENV_E_NAME.zip"
+CLENV_E_BIN_NAME="${CLENV_E_BIN_NAME:-aws}"
+CLENV_E_DLFILE="${CLENV_E_DLFILE:-$CLENV_E_NAME.zip}"
 
 _GHREPOAPI="https://api.github.com/repos/aws/$CLENV_E_NAME"
 _HCURL="https://awscli.amazonaws.com"
@@ -26,7 +26,7 @@ _ext_versions () {
     echo "$0: Warning: retrieving list of aws-cli versions; this will take some time..." 1>&2
     # yes, this is very ugly. please feel free to give it a facelift...
     while [ -n "$next_url" ] ; do
-        output="$(curl -siL "$next_url")"
+        output="$(curl -ifsSL "$next_url")"
         printf "%s\n" "$output" | awk -F '"' '/"name":/{print $4}' | sed -e 's/^v//'
         next="$(printf "%s\n" "$output" | grep '^link:' \
             | sed -e 's/link: //; s/, /\n/g; s/[<>]//g; s/; rel/ rel/g; s/\(https:\/\/[^ ]\+\) rel="\([a-z]\+\)"/\2 \1/g' \
@@ -46,15 +46,15 @@ _ext_url () {
 }
 _ext_download () {
     mkdir -p "$CLENV_E_INSTDIR/download"
-    curl -L "$(_ext_url "$@")" -o "$CLENV_E_INSTDIR/download/$DLFILE"
+    curl -fSL "$(_ext_url "$@")" -o "$CLENV_E_INSTDIR/download/$CLENV_E_DLFILE"
 }
 _ext_unpack () {
     mkdir -p "$CLENV_E_INSTDIR/usr/share"
-    unzip -q -o -d "$CLENV_E_INSTDIR/usr/share" "$CLENV_E_INSTDIR/download/$DLFILE"
+    unzip -q -o -d "$CLENV_E_INSTDIR/usr/share" "$CLENV_E_INSTDIR/download/$CLENV_E_DLFILE"
 }
 _ext_install_local () {
     mkdir -p bin
-    ln -sf "$CLENV_E_INSTDIR/usr/share/aws/dist/aws" "bin/$BIN_NAME"
+    ln -sf "$CLENV_E_INSTDIR/usr/share/aws/dist/aws" "bin/$CLENV_E_BIN_NAME"
 }
 _ext_install_global () {
     if [ -e /usr/local/aws-cli/v2/current ] ; then
@@ -65,8 +65,8 @@ _ext_install_global () {
 }
 _ext_install_wrapper () {
     [ -d "$CLENV_DIR/.bin" ] || mkdir -p "$CLENV_DIR/.bin"
-    printf "#!/usr/bin/env sh\nexec clenv -W $CLENV_E_NAME $BIN_NAME \"\$@\"\n" > "$CLENV_DIR/.bin/$BIN_NAME"
-    chmod 755 "$CLENV_DIR/.bin/$BIN_NAME"
+    printf "#!/usr/bin/env sh\nexec clenv -W $CLENV_E_NAME $CLENV_E_ENVIRON $CLENV_E_BIN_NAME \"\$@\"\n" > "$CLENV_DIR/.bin/$CLENV_E_BIN_NAME"
+    chmod 755 "$CLENV_DIR/.bin/$CLENV_E_BIN_NAME"
 }
 _ext_clean () {
     rm -rf "$CLENV_E_INSTDIR/download/"
@@ -75,7 +75,7 @@ _ext_clean_install () {
     rm -rf "$CLENV_E_INSTDIR"
 }
 _ext_test () {
-    "./bin/$BIN_NAME" --version
+    "./bin/$CLENV_E_BIN_NAME" --version
 }
 _ext_help () {
     cat <<EOUSAGE
