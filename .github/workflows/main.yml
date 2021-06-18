@@ -7,6 +7,7 @@ on:
 jobs:
   test_pull_request:
     name: Run tests on a pull request
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout git
         uses: actions/checkout@v2
