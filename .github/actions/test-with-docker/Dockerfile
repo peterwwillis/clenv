@@ -1,4 +1,4 @@
 FROM alpine:latest
-RUN apk add -U curl git make unzip
+RUN apk add -U curl git make unzip tree
 COPY entrypoint.sh /entrypoint.sh
 ENTRYPOINT ["/entrypoint.sh"]
