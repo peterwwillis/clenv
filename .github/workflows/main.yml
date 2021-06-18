@@ -14,4 +14,3 @@ jobs:
 
       - name: Test pull-request
         uses: ./.github/actions/test-with-docker
-        run: make test
