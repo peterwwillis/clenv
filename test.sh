@@ -17,7 +17,7 @@ for i in "$@" ; do
             echo "$0: $ext_name: Test $t failed"
             fail=$(($fail+1))
             pwd
-            tree -a $CLENV_DIR
+            tree -a $CLENV_DIR *
         else
             echo "$0: $ext_name: Test $t succeeded"
             pass=$(($pass+1))
