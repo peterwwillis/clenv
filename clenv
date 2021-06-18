@@ -43,12 +43,12 @@ _clenv_new () {
 }
 _clenv_ext_run () {  "$CLENV_DIR/.ext/$CLENV_E_NAME" "$@"; }
 _clenv_ext_install () {
-    ext="${1%%=*}" ver="${1#*=}" alias="${2:-}"
-    if [ $# -lt 2 ] ; then shift 1; alias="$ext"; else shift 2; fi
+    ext="${1%%=*}" ver="${1#*=}" environ="${2:-}"
+    if [ $# -lt 2 ] ; then shift 1; environ="$ext"; else shift 2; fi
     if [ ! "$ver" = "$ext" ] ; then
         export CLENV_E_VERSION="$ver"
     fi
-    export CLENV_E_NAME="$ext" CLENV_E_ENVIRON="$alias" CLENV_E_INSTDIR="$CLENV_DIR/$alias"
+    export CLENV_E_NAME="$ext" CLENV_E_ENVIRON="$environ" CLENV_E_INSTDIR="$CLENV_DIR/$environ"
 
     if [ ! -e "$CLENV_DIR/.ext/$CLENV_E_NAME" ] || [ "$CLENV_FORCE" = "1" ] ; then
         echo_err "Installing extention $CLENV_E_NAME"
@@ -83,12 +83,14 @@ _clenv_exec () {
 _clenv_wrapper () {
     CLENV_E_NAME="$CLENV_WRAPPER"
     CLENV_E_ENVIRON="${CLENV_E_ENVIRON:-$CLENV_E_NAME}" # Default environ to extension name
+    ver_detected=0
     if [ -z "${CLENV_E_VERSION:-}" ] ; then
         cwd="$(pwd)"
         while [ ! "$(dirname "$cwd")" = "/" ] ; do
             echo_err "Looking for '$cwd/.$CLENV_E_NAME-version"
             if [ -r "$cwd/.$CLENV_E_NAME-version" ] ; then
                 CLENV_E_VERSION="$(cat "$cwd/.$CLENV_E_NAME-version")"
+                ver_detected=1
                 echo_err "Found '$cwd/.$CLENV_E_NAME-version' = '$CLENV_E_VERSION'"
                 break
             else
@@ -96,13 +98,11 @@ _clenv_wrapper () {
             fi
         done
     fi
-    extfull="$CLENV_E_NAME" envfull="$CLENV_E_ENVIRON"
-    if [ -n "${CLENV_E_VERSION:-}" ] ; then
-        extfull="$extfull=$CLENV_E_VERSION"
-        envfull="$envfull=$CLENV_E_VERSION"
-    fi
+    # Wrapper version detection makes an environment of extension name + version
+    [ $ver_detected -eq 1 -a -n "${CLENV_E_VERSION:-}" ] && \
+        CLENV_E_ENVIRON="$CLENV_E_NAME=$CLENV_E_VERSION"
     # Try to auto-install extensions in case a new/different version is needed
-    _clenv_list "$envfull" >/dev/null || _clenv_ext_install "$extfull" "$envfull"
+    _clenv_list "$CLENV_E_ENVIRON" >/dev/null || _clenv_ext_install "$CLENV_E_NAME" "$CLENV_E_ENVIRON"
 }
 
 ### Extension functions
