@@ -50,7 +50,7 @@ _clenv_ext_install () {
     fi
     export CLENV_E_NAME="$ext" CLENV_E_ENVIRON="$environ" CLENV_E_INSTDIR="$CLENV_DIR/$environ"
 
-    if [ ! -e "$CLENV_DIR/.ext/$CLENV_E_NAME" ] || [ "$CLENV_FORCE" = "1" ] ; then
+    if [ "$CLENV_FORCE" = "1" ] || [ ! -e "$CLENV_DIR/.ext/$CLENV_E_NAME" ] ; then
         echo_err "Installing extention $CLENV_E_NAME"
         if   command -v curl >/dev/null ; then  curl -fsSL -o "$CLENV_DIR/.ext/$CLENV_E_NAME" "$CLENV_HTTP_PATH/.ext/$CLENV_E_NAME"
         elif command -v wget >/dev/null ; then  wget -O "$CLENV_DIR/.ext/$CLENV_E_NAME" "$CLENV_HTTP_PATH/.ext/$CLENV_E_NAME"
