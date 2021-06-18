@@ -1,12 +1,5 @@
 name: "Test pull request with Docker"
 description: "GitHub action for testing pull request with Docker"
-inputs:
-  debug:
-    description: "Set debug mode for script tracing"
-    required: false
-    default: '0'
 runs:
   using: "docker"
   image: "Dockerfile"
-  args:
-    - "${{ inputs.debug }}"

@@ -75,7 +75,11 @@ _ext_clean_install () {
     rm -rf "$CLENV_E_INSTDIR"
 }
 _ext_test () {
-    "./bin/$CLENV_E_BIN_NAME" --version
+    if ! "./bin/$CLENV_E_BIN_NAME" --version ; then
+        ls -la "./bin/$CLENV_E_BIN_NAME"
+        file "./bin/$CLENV_E_BIN_NAME"
+        false
+    fi
 }
 _ext_help () {
     cat <<EOUSAGE

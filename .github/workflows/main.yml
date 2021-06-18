@@ -14,5 +14,5 @@ jobs:
 
       - name: Test pull-request
         uses: ./.github/actions/test-with-docker
-        with:
-          debug: 1
+        env:
+          DEBUG: 1
