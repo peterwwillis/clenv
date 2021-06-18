@@ -1,0 +1,116 @@
+#!/usr/bin/env sh
+set -eu
+[ "${DEBUG:-0}" = "1" ] && set -x
+
+CLENV_E_NAME="${CLENV_E_NAME:-ansible}"
+CLENV_E_REV="0.1.0"
+
+CLENV_E_OS="${CLENV_E_OS:-linux}"
+CLENV_E_ARCH="${CLENV_E_ARCH:-amd64}"
+
+CLENV_E_BIN_NAME="${CLENV_E_BIN_NAME:-$CLENV_E_NAME}"
+CLENV_E_DLFILE="${CLENV_E_DLFILE:-$CLENV_E_NAME}"
+_GHREPOAPI="https://api.github.com/repos/ansible/$CLENV_E_NAME"
+_GHURL="https://github.com/ansible/$CLENV_E_NAME/releases"
+_PYPIAPI="https://pypi.org/pypi/$CLENV_E_NAME"
+BASEURL="$_PYPIAPI"
+
+CLENV_E_INSTDIR="${CLENV_E_INSTDIR:-$(pwd)}"
+
+PYTHON="" PYMOD=""
+_detect_python () {
+    if   command -v python3 >/dev/null ; then PYTHON="python3"
+    elif command -v python >/dev/null  ; then PYTHON="python"
+    else echo "$0: Error: please install python"; exit 1; fi
+    if   $PYTHON -c 'import virtualenv' ; then PYMOD="virtualenv -p $PYTHON"
+    elif $PYTHON -c 'import venv'       ; then PYMOD="venv"
+    else echo "$0: Error: please install Python module virtualenv or venv"; exit 1; fi
+}
+_detect_python
+
+_ext_latest () {
+    _ext_versions | head -1
+}
+_ext_pypi_versions () {
+    # this returns PyPI versions, which are different than GitHub versions for Ansible
+    curl -fsSL "$_PYPIAPI/json" | sed -e 's/"\([0-9]\+\.[0-9]\+\.[0-9]\+\)"/\nVERSION=\1\n/g' | grep ^VERSION= | sed -e 's/VERSION=//g' | tac
+}
+_ext_github_versions () {
+    # this only returns 'ansible-core' versions
+    # technically '/releases' is better but tags are the same here and this is 1/100th the bandwidth
+    # only look for prefix of 'v' + number in tag name. remove 'rc' and 'b' versions
+    next_url="$_GHREPOAPI/tags"
+    echo "$0: Warning: retrieving list of versions; this will take some time..." 1>&2
+    while [ -n "$next_url" ] ; do
+        output="$(curl -ifsSL "$next_url")"
+        printf "%s\n" "$output" | awk -F '"' '/"name":/{print $4}' | sed -e 's/^v//' | grep -v 'rc[0-9]\+\|b[0-9]\+'
+        next_url="$(printf "%s\n" "$output" | grep '^link:' \
+            | sed -e 's/link: //; s/, /\n/g; s/[<>]//g; s/; rel/ rel/g; s/\(https:\/\/[^ ]\+\) rel="\([a-z]\+\)"/\2 \1/g' \
+            | awk '/next / { print $2}')"
+    done
+}
+_ext_versions () {
+    _ext_pypi_versions
+}
+_ext_url () {
+    printf "$BASEURL\n"
+}
+_ext_download () {
+    mkdir -p "$CLENV_E_INSTDIR"
+    $PYTHON -m $PYMOD --clear "$CLENV_E_INSTDIR/usr/"
+    "$CLENV_E_INSTDIR/usr/bin/pip" install "ansible==$CLENV_E_VERSION"
+}
+_ext_unpack () {
+    true
+}
+_ext_install_local () {
+    mkdir -p "$CLENV_E_INSTDIR/bin"
+    for app in ansible ansible-config ansible-connection ansible-console ansible-doc \
+               ansible-galaxy ansible-inventory ansible-playbook ansible-pull \
+               ansible-test ansible-vault
+    do
+        if [ -h "$CLENV_E_INSTDIR/usr/bin/$app" -o -e "$CLENV_E_INSTDIR/usr/bin/$app" ] ; then
+            ln -sf "$CLENV_E_INSTDIR/usr/bin/$app" "$CLENV_E_INSTDIR/bin/$app"
+        fi
+    done
+}
+_ext_install_global () {
+    #sudo /bin/sh -c "mkdir -p /usr/local/bin; mv $CLENV_E_BIN_NAME /usr/local/bin/$CLENV_E_BIN_NAME"
+    sudo /bin/sh -c "pip install ansible==$CLENV_E_VERSION"
+}
+_ext_install_wrapper () {
+    [ -d "$CLENV_DIR/.bin" ] || mkdir -p "$CLENV_DIR/.bin"
+    printf "#!/usr/bin/env sh\nexec clenv -W $CLENV_E_NAME $CLENV_E_ENVIRON $CLENV_E_BIN_NAME \"\$@\"\n" > "$CLENV_DIR/.bin/$CLENV_E_BIN_NAME"
+    chmod 755 "$CLENV_DIR/.bin/$CLENV_E_BIN_NAME"
+}
+_ext_clean () {
+    rm -rf "$CLENV_E_INSTDIR/download/"
+}
+_ext_clean_install () {
+    rm -rf "$CLENV_E_INSTDIR/bin/" "$CLENV_E_INSTDIR/usr/"
+}
+_ext_test () {
+    "./bin/$CLENV_E_BIN_NAME" --version 2>/dev/null 1>/dev/null
+}
+_ext_help () {
+    cat <<EOUSAGE
+Usage: $0 CMD
+
+Commands:
+$(grep -e "^_ext_.* ()" "$0" | awk '{print $1}' | sed -e 's/_ext_//;s/^/  /g' | tr _ -)
+EOUSAGE
+    exit 1
+}
+
+if [ $# -lt 1 ] ; then
+    _ext_help
+else
+    cmd="$1"; shift
+    func="_ext_$(printf "%s\n" "$cmd" | tr - _)"
+    if [ -n "${CLENV_DIR:-}" -a -n "${CLENV_E_ENVIRON:-}" ] ; then
+        [ -d "$CLENV_DIR/$CLENV_E_ENVIRON" ] && cd "$CLENV_DIR/$CLENV_E_ENVIRON"
+    fi
+    case "$cmd" in 
+        *)                  $func "$@" ;;
+    esac
+fi
