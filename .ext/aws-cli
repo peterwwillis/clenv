@@ -76,8 +76,9 @@ _ext_clean_install () {
 }
 _ext_test () {
     if ! "./bin/$CLENV_E_BIN_NAME" --version ; then
-        ls -la "./bin/$CLENV_E_BIN_NAME"
-        file "./bin/$CLENV_E_BIN_NAME"
+        foo="$(readlink -f "./bin/$CLENV_E_BIN_NAME")"
+        ls -la "$foo"
+        file "$foo"
         false
     fi
 }
