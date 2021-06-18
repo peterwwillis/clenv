@@ -1,3 +1,11 @@
-test:
+
+.PHONY: test test-main test-extensions
+test: test-main test-extensions
+
+test-extensions:
 	export PATH="`pwd`:$$PATH" ; \
-    .ext/test/test.sh .ext/test/*.t
+    ./test.sh .ext/tests/*.t
+
+test-main:
+	export PATH="`pwd`:$$PATH" ; \
+    ./test.sh tests/*.t

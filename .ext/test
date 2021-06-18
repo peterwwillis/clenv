@@ -1,18 +1,13 @@
 #!/usr/bin/env sh
+# This is a sample extension used for tests
 set -eu
 [ "${DEBUG:-0}" = "1" ] && set -x
 
-CLENV_E_NAME="${CLENV_E_NAME:-saml2aws}"
+CLENV_E_NAME="${CLENV_E_NAME:-test}"
 CLENV_E_REV="0.1.0"
 
-CLENV_E_OS="${CLENV_E_OS:-linux}"
-CLENV_E_ARCH="${CLENV_E_ARCH:-amd64}"
-
 CLENV_E_BIN_NAME="${CLENV_E_BIN_NAME:-$CLENV_E_NAME}"
-CLENV_E_DLFILE="${CLENV_E_DLFILE:-$CLENV_E_NAME.tar.gz}"
-_GHREPOAPI="https://api.github.com/repos/Versent/$CLENV_E_NAME"
-_GHURL="https://github.com/Versent/$CLENV_E_NAME/releases"
-BASEURL="$_GHURL/download/v%s/$CLENV_E_NAME""_%s_%s_%s.tar.gz"
+CLENV_E_DLFILE="${CLENV_E_DLFILE:-$CLENV_E_NAME}"
 
 CLENV_E_INSTDIR="${CLENV_E_INSTDIR:-$(pwd)}"
 
@@ -20,27 +15,20 @@ _ext_latest () {
     _ext_versions | head -1
 }
 _ext_versions () {
-    # technically '/releases' is better but tags are the same here and this is 1/100th the bandwidth
-    curl -fsSL "$_GHREPOAPI/tags" | awk -F '"' '/"name":/{print $4}' | sed -e 's/^v//'
-}
-_ext_url () {
-    if [ $# -lt 1 ] || [ $# -gt 0 -a "$1" = "latest" ] ; then
-            CLENV_E_VERSION="$(_ext_latest)"
-    else    CLENV_E_VERSION="$1"
-    fi
-    printf "$BASEURL\n" "$CLENV_E_VERSION" "$CLENV_E_VERSION" "$CLENV_E_OS" "$CLENV_E_ARCH"
+    echo "1.0.0"
 }
 _ext_download () {
     mkdir -p "$CLENV_E_INSTDIR/download"
-    curl -fSL "$(_ext_url "$@")" -o "$CLENV_E_INSTDIR/download/$CLENV_E_DLFILE"
+    printf '#!/usr/bin/env sh\necho "running test ($$) - $*"\n[ "${1:-}" = "--version" ] && exec echo Version 1.0.0\n[ $# -gt 0 ] && exec "$@"\nexit 0\n' > "$CLENV_E_INSTDIR/download/$CLENV_E_DLFILE"
 }
 _ext_unpack () {
-    mkdir -p "$CLENV_E_INSTDIR/usr/share"
-    tar -C "$CLENV_E_INSTDIR/usr/share" -xzf "$CLENV_E_INSTDIR/download/$CLENV_E_DLFILE"
+    mkdir -p "$CLENV_E_INSTDIR/usr/bin"
+    chmod 755 "$CLENV_E_INSTDIR/download/$CLENV_E_DLFILE"
+    mv "$CLENV_E_INSTDIR/download/$CLENV_E_DLFILE" "$CLENV_E_INSTDIR/usr/bin/$CLENV_E_BIN_NAME"
 }
 _ext_install_local () {
     mkdir -p bin
-    ln -sf "$CLENV_E_INSTDIR/usr/share/$CLENV_E_BIN_NAME" "bin/$CLENV_E_BIN_NAME"
+    ln -sf "$CLENV_E_INSTDIR/usr/bin/$CLENV_E_BIN_NAME" "bin/$CLENV_E_BIN_NAME"
 }
 _ext_install_global () {
     sudo /bin/sh -c "mkdir -p /usr/local/bin; mv $CLENV_E_BIN_NAME /usr/local/bin/$CLENV_E_BIN_NAME"
