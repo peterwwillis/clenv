@@ -94,6 +94,7 @@ of *Extensions*, and you can provide your own too.
 
 Available extensions:
  - **aws-cli**
+ - **ansible**
  - **docker-compose**
  - **packer**
  - **saml2aws**
