@@ -6,7 +6,6 @@ on:
 
 jobs:
   test_pull_request:
-    runs-on: alpine-latest
     name: Run tests on a pull request
     steps:
       - name: Checkout git
