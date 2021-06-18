@@ -55,7 +55,7 @@ _clenv_ext_install () {
         if   command -v curl >/dev/null ; then  curl -fsSL -o "$CLENV_DIR/.ext/$CLENV_E_NAME" "$CLENV_HTTP_PATH/.ext/$CLENV_E_NAME"
         elif command -v wget >/dev/null ; then  wget -O "$CLENV_DIR/.ext/$CLENV_E_NAME" "$CLENV_HTTP_PATH/.ext/$CLENV_E_NAME"
         else _err "Please install 'curl' or 'wget'." ; fi
-        chmod 755 "$CLENV_DIR/.ext/$CLENV_E_NAME"
+        chmod +x "$CLENV_DIR/.ext/$CLENV_E_NAME"
     fi
     _ext_install_wrapper
 
