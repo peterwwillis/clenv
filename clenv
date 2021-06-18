@@ -76,7 +76,8 @@ _clenv_exec () {
       . "$CLENV_DIR/$CLENV_E_ENVIRON/.env"
   else echo_err "Warning: no '$CLENV_DIR/$CLENV_E_ENVIRON/.env' found" ; fi
   echo_err "Executing $(which "$1")"
-  unset CLENV_E_ENVIRON # prevent an infinite loop
+  # prevents infinite loops
+  unset CLENV_E_ENVIRON CLENV_E_VERSION CLENV_E_NAME CLENV_FORCE
   exec env "$@"
 }
 _clenv_wrapper () {
