@@ -8,8 +8,8 @@ CLENV_E_REV="0.1.0"
 CLENV_E_OS="${CLENV_E_OS:-linux}"
 CLENV_E_ARCH="${CLENV_E_ARCH:-amd64}"
 
-BIN_NAME="$CLENV_E_NAME"
-DLFILE="$CLENV_E_NAME.zip"
+CLENV_E_BIN_NAME="${CLENV_E_BIN_NAME:-$CLENV_E_NAME}"
+CLENV_E_DLFILE="${CLENV_E_DLFILE:-$CLENV_E_NAME.zip}"
 _HCURL="https://releases.hashicorp.com/$CLENV_E_NAME"
 BASEURL="$_HCURL/%s/$CLENV_E_NAME""_%s_%s_%s.zip"
 
@@ -19,7 +19,7 @@ _ext_latest () {
     _ext_versions | head -1
 }
 _ext_versions () {
-    curl -sL "$_HCURL" | grep -e "<a href=\"/$CLENV_E_NAME/" | grep -v alpha | cut -d \" -f 2 | cut -d / -f 3 | sed -e 's/^v//'
+    curl -fsSL "$_HCURL" | grep -e "<a href=\"/$CLENV_E_NAME/" | grep -v alpha | cut -d \" -f 2 | cut -d / -f 3 | sed -e 's/^v//'
 }
 _ext_url () {
     if [ $# -lt 1 ] || [ $# -gt 0 -a "$1" = "latest" ] ; then
@@ -30,23 +30,23 @@ _ext_url () {
 }
 _ext_download () {
     mkdir -p "$CLENV_E_INSTDIR/download"
-    curl -L "$(_ext_url "$@")" -o "$CLENV_E_INSTDIR/download/$DLFILE"
+    curl -fSL "$(_ext_url "$@")" -o "$CLENV_E_INSTDIR/download/$CLENV_E_DLFILE"
 }
 _ext_unpack () {
     mkdir -p "$CLENV_E_INSTDIR/usr/bin"
-    unzip -q -o -d "$CLENV_E_INSTDIR/usr/bin" "$CLENV_E_INSTDIR/download/$DLFILE"
+    unzip -q -o -d "$CLENV_E_INSTDIR/usr/bin" "$CLENV_E_INSTDIR/download/$CLENV_E_DLFILE"
 }
 _ext_install_local () {
     mkdir -p bin
-    ln -sf "$CLENV_E_INSTDIR/usr/bin/$BIN_NAME" "bin/$BIN_NAME"
+    ln -sf "$CLENV_E_INSTDIR/usr/bin/$CLENV_E_BIN_NAME" "bin/$CLENV_E_BIN_NAME"
 }
 _ext_install_global () {
-    sudo /bin/sh -c "mkdir -p /usr/local/bin; mv $BIN_NAME /usr/local/bin/$BIN_NAME"
+    sudo /bin/sh -c "mkdir -p /usr/local/bin; mv $CLENV_E_BIN_NAME /usr/local/bin/$CLENV_E_BIN_NAME"
 }
 _ext_install_wrapper () {
     [ -d "$CLENV_DIR/.bin" ] || mkdir -p "$CLENV_DIR/.bin"
-    printf "#!/usr/bin/env sh\nexec clenv -W $CLENV_E_NAME $BIN_NAME \"\$@\"\n" > "$CLENV_DIR/.bin/$BIN_NAME"
-    chmod 755 "$CLENV_DIR/.bin/$BIN_NAME"
+    printf "#!/usr/bin/env sh\nexec clenv -W $CLENV_E_NAME $CLENV_E_ENVIRON $CLENV_E_BIN_NAME \"\$@\"\n" > "$CLENV_DIR/.bin/$CLENV_E_BIN_NAME"
+    chmod 755 "$CLENV_DIR/.bin/$CLENV_E_BIN_NAME"
 }
 _ext_clean () {
     rm -rf "$CLENV_E_INSTDIR/download/"
@@ -55,7 +55,7 @@ _ext_clean_install () {
     rm -rf "$CLENV_E_INSTDIR"
 }
 _ext_test () {
-    "./bin/$BIN_NAME" --version
+    "./bin/$CLENV_E_BIN_NAME" --version
 }
 _ext_help () {
     cat <<EOUSAGE

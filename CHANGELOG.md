@@ -1,5 +1,25 @@
 # Changelog
 
+## [1.3.0] - 2021-06-17
+
+### Added
+ - Test extension and core tests, including a test of the wrapper functionality.
+ - GitHub Actions/Workflow to run CI tests on pull requests
+
+### Changed
+ - '-W' wrapper mode now requires an extension name. If the execution function
+   is eventually run, that requires the environment name (and optional commands).
+ - Each extension's binary file and wrapper names can now be overridden by passing
+   *$CLENV_E_BIN_FILE*.
+
+### Fixed
+ - Wrapper mode would result in an infinite loop if one wrapper called another
+   wrapper.
+ - Terraform test only looks for the first version line now to work around notice
+   about upgrading.
+
+---
+
 ## [1.2.0] - 2021-06-16
 
 ### Added

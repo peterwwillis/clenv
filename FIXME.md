@@ -3,3 +3,5 @@
       Check rbenv for implementation hints.
 - [ ] `test.sh` should stop running sub-tests once the first one in a test fails.
       Otherwise you just keep running sub-tests you know probably won't work.
+- [x] Write tests for the wrapper mode.
+      - Needs to test one wrapper-application calling another wrapper-application
