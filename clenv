@@ -10,6 +10,7 @@ HOME="${HOME:-$(getent passwd $(id -u) | cut -d : -f 6)}"
 export CLENV_DIR="${CLENV_DIR:-$HOME/.clenv}"
 
 ### General clenv functions
+
 _usage () {
     printf "%s\n" "
 Usage: $0 [OPTS]
@@ -42,10 +43,9 @@ _clenv_new () {
 _clenv_ext_run () {  "$CLENV_DIR/.ext/$CLENV_E_NAME" "$@"; }
 _clenv_ext_install () {
     ext="${1%%=*}" ver="${1#*=}" environ="${2:-}"
-    if [ $# -lt 2 -o -z "$environ" ] ; then shift 1; environ="$ext"; else shift 2; fi
-    if [ ! "$ver" = "$ext" ] ; then export CLENV_E_VERSION="$ver"; fi
+    if [ $# -lt 2 -o -z "$environ" ] ; then shift 1; environ="$ext";       else shift 2;  fi
+    if [ ! "$ver" = "$ext" ]         ; then export CLENV_E_VERSION="$ver";                fi
     export CLENV_E_NAME="$ext" CLENV_E_ENVIRON="$environ" CLENV_E_INSTDIR="$CLENV_DIR/$environ"
-
     if [ "$CLENV_FORCE" = "1" ] || [ ! -e "$CLENV_DIR/.ext/$CLENV_E_NAME" ] ; then
         echo_err "Installing extention '$CLENV_E_NAME'"
         if   command -v curl >/dev/null ; then  curl -fsSL -o "$CLENV_DIR/.ext/$CLENV_E_NAME" "$CLENV_HTTP_PATH/.ext/$CLENV_E_NAME"
@@ -53,23 +53,19 @@ _clenv_ext_install () {
         else _err "Please install 'curl' or 'wget'." ; fi
         chmod +x "$CLENV_DIR/.ext/$CLENV_E_NAME"
     fi
-
-    [ -z "${CLENV_E_VERSION:-}" ] && CLENV_E_VERSION="latest"
-    [ "$CLENV_E_VERSION" = "latest" ] && CLENV_E_VERSION="$(_clenv_ext_run latest)"
+    [ -z "${CLENV_E_VERSION:-}" ]        && CLENV_E_VERSION="latest"
+    [ "$CLENV_E_VERSION" = "latest" ]    && CLENV_E_VERSION="$(_clenv_ext_run latest)"
     export CLENV_E_VERSION
-
     [ -d "$CLENV_DIR/$CLENV_E_ENVIRON" ] || _clenv_new "$CLENV_E_ENVIRON"
     echo_err "Loading extension '$CLENV_E_NAME' version '$CLENV_E_VERSION'"
-    _ext_clean; _ext_download; _ext_unpack; _ext_install_local; _ext_test; _ext_clean
-    _ext_install_wrapper
+    _ext_variables; _ext_clean; _ext_download; _ext_unpack; _ext_install_local; _ext_test; _ext_clean; _ext_install_wrapper
 }
 _clenv_exec () {
   export CLENV_E_ENVIRON="${CLENV_E_ENVIRON:-$1}" # default environment name to command name
-  [ ${CLENV_WRAPPER:-1} -eq 1 ] && _clenv_wrapper "$CLENV_E_ENVIRON"
+  [ ${CLENV_WRAPPER:-1} -eq 1 ]        && _clenv_wrapper "$CLENV_E_ENVIRON"
   [ -d "$CLENV_DIR/$CLENV_E_ENVIRON" ] || _err "No environment '$CLENV_DIR/$CLENV_E_ENVIRON' found"
   if [ -r "$CLENV_DIR/$CLENV_E_ENVIRON/.env" ] ; then
-      set -a
-      . "$CLENV_DIR/$CLENV_E_ENVIRON/.env"
+      set -a;  . "$CLENV_DIR/$CLENV_E_ENVIRON/.env"
   else echo_err "Warning: no '$CLENV_DIR/$CLENV_E_ENVIRON/.env' found" ; fi
   echo_err "Executing $(which "$1")"
   # unset variables to prevents infinite loops
@@ -101,20 +97,63 @@ _clenv_wrapper () {
     # Try to auto-install extensions in case a new/different version is needed
     _clenv_list "$CLENV_E_ENVIRON" >/dev/null || _clenv_ext_install "$CLENV_E_NAME" "$CLENV_E_ENVIRON"
 }
-
-### Extension functions
 echo_err () { [ $CLENV_QUIET -eq 1 ] || printf "%s\n" "$(basename "$0"): $*" 1>&2 ; }
 echo_info () { printf "%s\n" "$(basename "$0"): $*" ; }
-_ext_test () {          echo_err "$CLENV_E_NAME: Testing"; _clenv_ext_run "test"; }
-_ext_clean_install () { echo_err "$CLENV_E_NAME: Removing '$CLENV_E_INSTDIR'"; _clenv_ext_run "clean-install"; }
-_ext_clean () {         echo_err "$CLENV_E_NAME: Removing temporary download files"; _clenv_ext_run "clean"; }
-_ext_install_global () { echo_err "$CLENV_E_NAME: Installing globally" ; _clenv_ext_run "install-global"; }
-_ext_install_local () { echo_err "$CLENV_E_NAME: Installing symlink"; _clenv_ext_run "install-local"; }
-_ext_install_wrapper () {       echo_err "$CLENV_E_NAME: Installing wrapper"; _clenv_ext_run "install-wrapper"; }
-_ext_unpack () {        echo_err "$CLENV_E_NAME: Unpacking to '$CLENV_E_INSTDIR'"; _clenv_ext_run "unpack"; }
-_ext_download () {      echo_err "$CLENV_E_NAME: Downloading artifact"; _clenv_ext_run "download" "$CLENV_E_VERSION"; }
+
+### Extension functions
+
+CLENV_EXT_HELP=""
+_ext_help_grep () { 
+    CLENV_EXT_HELP="${CLENV_EXT_HELP:-$(_clenv_ext_run help)}"
+    if [ $(expr "$CLENV_EXT_HELP" : ".*  $*") -ne 0 ] ; then return 0; else return 1; fi
+}
+_ext_variables () { eval $(_clenv_ext_run variables) ; }
+_ext_test () {
+    echo_err "$CLENV_E_NAME: Testing"; 
+    if _ext_help_grep "help"; then  _clenv_ext_run "test"
+    else "$CLENV_E_INSTDIR/bin/$CLENV_E_BIN_NAME" --version >/dev/null ; fi
+}
+_ext_clean_install () {
+    echo_err "$CLENV_E_NAME: Removing '$CLENV_E_INSTDIR'"; 
+    if _ext_help_grep "clean-install"; then _clenv_ext_run "clean-install"
+    else rm -rf "$CLENV_E_INSTDIR" ; fi
+}
+_ext_clean () {
+    echo_err "$CLENV_E_NAME: Removing temporary download files"; 
+    if _ext_help_grep "clean"; then _clenv_ext_run "clean"
+    else rm -rf "$CLENV_E_INSTDIR/download/" ; fi
+}
+_ext_install_global () {
+    echo_err "$CLENV_E_NAME: Installing globally" ; _clenv_ext_run "install-global"; 
+}
+_ext_install_local () {
+    echo_err "$CLENV_E_NAME: Installing symlink";
+    if _ext_help_grep "install-local" ; then _clenv_ext_run "install-local"
+    else mkdir -p "$CLENV_E_INSTDIR/bin"; ln -sf "$CLENV_E_INSTDIR/usr/share/$CLENV_E_BIN_NAME" "$CLENV_E_INSTDIR/bin/$CLENV_E_BIN_NAME"
+    fi
+}
+_ext_install_wrapper () {
+    echo_err "$CLENV_E_NAME: Installing wrapper"
+    if _ext_help_grep "install-wrapper"; then _clenv_ext_run "install-wrapper"
+    else
+        [ -d "$CLENV_DIR/.bin" ] || mkdir -p "$CLENV_DIR/.bin"
+        [ -e "$CLENV_DIR/.bin/$CLENV_E_BIN_NAME" -a "${CLENV_FORCE:-0}" = "0" ] || \                                                                         printf "#!/usr/bin/env sh\nexec clenv -E $CLENV_E_NAME -e $CLENV_E_ENVIRON $CLENV_E_BIN_NAME \"\$@\"\n" > "$CLENV_DIR/.bin/$CLENV_E_BIN_NAME"
+        [ -x "$CLENV_DIR/.bin/$CLENV_E_BIN_NAME" ] || chmod +x "$CLENV_DIR/.bin/$CLENV_E_BIN_NAME"
+    fi
+}
+_ext_versions () {  _clenv_ext_run "versions" ; }
+_ext_latest () {  _ext_versions | head -1 ; }
+_ext_url () {  export CLENV_E_VERSION="${CLENV_E_VERSION:-$(_ext_latest)}"; _clenv_ext_run "url"; }
+_ext_unpack () {  echo_err "$CLENV_E_NAME: Unpacking to '$CLENV_E_INSTDIR'"; _clenv_ext_run "unpack"; }
+_ext_download () {
+    echo_err "$CLENV_E_NAME: Downloading artifact";
+    if _ext_help_grep "download" ; then _clenv_ext_run "download"
+    else mkdir -p "$CLENV_E_INSTDIR/download"; curl -fSL "$(_ext_url)" -o "$CLENV_E_INSTDIR/download/$CLENV_E_DLFILE"
+    fi
+}
 
 ### Main program
+
 if [ $# -lt 1 ] ; then
     _usage
 fi
@@ -147,7 +186,7 @@ elif [ ${CLENV_LIST:-0} -eq 1 ] ; then
     if [ $# -gt 0 ] ; then  _clenv_list "$@"
     else _clenv_list "$CLENV_DIR"/* ; fi
 elif [ -n "${CLENV_REQUIRES:-}" ] ; then
-    cat "$CLENV_REQUIRES" | while read LINE ; do $0 -E "$LINE" ; done
+    while read -r LINE ; do $0 -E "$LINE" ; done < "$CLENV_REQUIRES"
 elif [ $# -lt 1 -a -n "${CLENV_E_NAME:-}" ] ; then
     _clenv_ext_install "$CLENV_E_NAME" "${CLENV_E_ENVIRON:-}"
 elif [ $# -gt 0 ] ; then
