@@ -69,7 +69,7 @@ Think of it like *virtualenv*, *rbenv*, *tfenv*, etc, but for any program at all
    ```
 
 Available extensions:
- - **aws-cli**
+ - **aws**
  - **ansible**
  - **docker-compose**
  - **packer**
@@ -178,7 +178,7 @@ wrapper. (To disable it completely, use the `-W` option)
 
 4. Run your program with `clenv`
    ```bash
-   $ clenv aws aws --version
+   $ clenv -e aws aws --version
    clenv: Executing /home/vagrant/.clenv/aws/bin/aws
    aws-cli/2.0.50 Python/3.7.3 Linux/4.15.0-135-generic exe/x86_64.ubuntu.18
    ```
@@ -189,8 +189,7 @@ Let's see the *Environment*s we've created so far:
    ```bash
    $ clenv -l
    aws
-   aws-cli
-   aws-cli=2.0.50
+   aws=2.0.50
    ```
 
 ---
