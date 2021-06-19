@@ -23,6 +23,7 @@ Opts:
 	-E EXT[=V] 	 	Use (optional) version V of extension EXT
 	-e ENVIRON		Use environment ENVIRON
 	-r FILE			Install a list of extensions from FILE
+    -X CMD [ARG ..]		(internal function) Run command for an extention
 	-W			Disables wrapper mode
 	-f			Force mode
  	-V			Version of clenv
@@ -31,6 +32,8 @@ Opts:
   exit 1
 }
 _err () { printf "%s\n" "$0: Error: $*" ; exit 1 ; }
+echo_err () { [ $CLENV_QUIET -eq 1 ] || printf "%s\n" "$(basename "$0"): $*" 1>&2 ; }
+echo_info () { printf "%s\n" "$(basename "$0"): $*" ; }
 _clenv_list () { for d in "$@" ; do [ -d "$CLENV_DIR/$(basename "$d")" ] && basename "$d"; done ; }
 _clenv_new () {
     _env="$1"; shift
@@ -97,17 +100,15 @@ _clenv_wrapper () {
     # Try to auto-install extensions in case a new/different version is needed
     _clenv_list "$CLENV_E_ENVIRON" >/dev/null || _clenv_ext_install "$CLENV_E_NAME" "$CLENV_E_ENVIRON"
 }
-echo_err () { [ $CLENV_QUIET -eq 1 ] || printf "%s\n" "$(basename "$0"): $*" 1>&2 ; }
-echo_info () { printf "%s\n" "$(basename "$0"): $*" ; }
 
 ### Extension functions
 
 CLENV_EXT_HELP=""
-_ext_help_grep () { 
+_ext_help_grep () {
     CLENV_EXT_HELP="${CLENV_EXT_HELP:-$(_clenv_ext_run help)}"
     if [ $(expr "$CLENV_EXT_HELP" : ".*  $*") -ne 0 ] ; then return 0; else return 1; fi
 }
-_ext_variables () { eval $(_clenv_ext_run variables) ; }
+_ext_variables () {  eval $(_clenv_ext_run variables) ;  }
 _ext_test () {
     echo_err "$CLENV_E_NAME: Testing"; 
     if _ext_help_grep "test"; then  _clenv_ext_run "test"
@@ -116,7 +117,7 @@ _ext_test () {
 _ext_clean_install () {
     echo_err "$CLENV_E_NAME: Removing '$CLENV_E_INSTDIR'"; 
     if _ext_help_grep "clean-install"; then _clenv_ext_run "clean-install"
-    else rm -rf "$CLENV_E_INSTDIR" ; fi
+    else rm -rf "$CLENV_E_INSTDIR/bin/" "$CLENV_E_INSTDIR/usr/" ; fi
 }
 _ext_clean () {
     echo_err "$CLENV_E_NAME: Removing temporary download files"; 
@@ -137,7 +138,8 @@ _ext_install_wrapper () {
     if _ext_help_grep "install-wrapper"; then _clenv_ext_run "install-wrapper"
     else
         [ -d "$CLENV_DIR/.bin" ] || mkdir -p "$CLENV_DIR/.bin"
-        if [ ! -e "$CLENV_DIR/.bin/$CLENV_E_BIN_NAME" -o "${CLENV_FORCE:-0}" = "1" ] ; then                                                                         printf "#!/usr/bin/env sh\nexec clenv -E $CLENV_E_NAME -e $CLENV_E_ENVIRON $CLENV_E_BIN_NAME \"\$@\"\n" > "$CLENV_DIR/.bin/$CLENV_E_BIN_NAME"
+        if [ ! -e "$CLENV_DIR/.bin/$CLENV_E_BIN_NAME" -o "${CLENV_FORCE:-0}" = "1" ] ; then
+            printf "#!/usr/bin/env sh\nexec clenv -E $CLENV_E_NAME -e $CLENV_E_ENVIRON $CLENV_E_BIN_NAME \"\$@\"\n" > "$CLENV_DIR/.bin/$CLENV_E_BIN_NAME"
         fi
         [ -x "$CLENV_DIR/.bin/$CLENV_E_BIN_NAME" ] || chmod +x "$CLENV_DIR/.bin/$CLENV_E_BIN_NAME"
     fi
@@ -152,6 +154,20 @@ _ext_download () {
     else mkdir -p "$CLENV_E_INSTDIR/download"; curl -fSL "$(_ext_url)" -o "$CLENV_E_INSTDIR/download/$CLENV_E_DLFILE"
     fi
 }
+_ext_versions_ghtags () {  next_url="$1/tags"; 
+    while [ -n "$next_url" ] ; do output="$(curl -ifsSL "$next_url")"
+        printf "%s\n" "$output" | awk -F '"' '/"name":/{print $4}' | sed -e 's/^v//'
+        next_url="$(printf "%s\n" "$output" | grep '^link:' \
+            | sed -e 's/link: //; s/, /\n/g; s/[<>]//g; s/; rel/ rel/g; s/\(https:\/\/[^ ]\+\) rel="\([a-z]\+\)"/\2 \1/g' \
+            | awk '/next / { print $2}')"
+    done
+}
+_ext_versions_pypi () { # Warning: this only matches "N.N.N" versions
+    curl -fsSL "$1" | sed -e 's/"\([0-9]\+\.[0-9]\+\.[0-9]\+\)"/\nVERSION=\1\n/g' | grep ^VERSION= | sed -e 's/VERSION=//g' | tac
+}
+_ext_versions_hc () {
+    curl -fsSL "$1" | grep -e "<a href=\"/$CLENV_E_NAME/" | grep -v alpha | cut -d \" -f 2 | cut -d / -f 3 | sed -e 's/^v//'
+}
 
 ### Main program
 
@@ -162,13 +178,14 @@ fi
 [ "$1" = "-i" ] && shift 1 && exec env -i "$0" "$@"
 
 CLENV_FORCE=0 CLENV_QUIET="${CLENV_QUIET:-0}"
-while getopts "nlE:e:r:WfVq" args ; do
+while getopts "nlE:e:r:X:WfVq" args ; do
     case "$args" in
         n)  CLENV_NEW=1 ;;
         l)  CLENV_LIST=1 ;;
         E)  CLENV_E_NAME="$OPTARG" ;;
         e)  CLENV_E_ENVIRON="$OPTARG" ;;
         r)  CLENV_REQUIRES="$OPTARG" ;;
+        X)  CLENV_XCALL="$OPTARG" ;;
         W)  CLENV_WRAPPER=0 ;;
         f)  export CLENV_FORCE=1 ;;
         V)  echo "clenv v$CLENV_VER" ; exit 0 ;;
@@ -181,7 +198,9 @@ for d in "$CLENV_DIR" "$CLENV_DIR/.bin" "$CLENV_DIR/.ext" ; do
     [ -d "$d" ] || mkdir -p "$d"
 done
 
-if [ ${CLENV_NEW:-0} -eq 1 ] ; then
+if [ -n "${CLENV_XCALL:-}" ] ; then
+    _ext_"$CLENV_XCALL" "$@"
+elif [ ${CLENV_NEW:-0} -eq 1 ] ; then
     _clenv_new "$@"
 elif [ ${CLENV_LIST:-0} -eq 1 ] ; then
     if [ $# -gt 0 ] ; then  _clenv_list "$@"

@@ -3,83 +3,37 @@ set -eu
 [ "${DEBUG:-0}" = "1" ] && set -x
 
 CLENV_E_NAME="${CLENV_E_NAME:-terraformer}"
-CLENV_E_REV="0.1.2"
+CLENV_E_REV="0.2.0"
+CLENV_E_BIN_NAME="${CLENV_E_BIN_NAME:-$CLENV_E_NAME}"
+CLENV_E_DLFILE="${CLENV_E_DLFILE:-$CLENV_E_NAME}"
+CLENV_E_INSTDIR="${CLENV_E_INSTDIR:-$(pwd)}"
 
 CLENV_E_PLATFORM="${CLENV_E_PLATFORM:-aws}"
 CLENV_E_OS="${CLENV_E_OS:-linux}"
 CLENV_E_ARCH="${CLENV_E_ARCH:-amd64}"
 
-CLENV_E_BIN_NAME="${CLENV_E_BIN_NAME:-$CLENV_E_NAME}"
-CLENV_E_DLFILE="${CLENV_E_DLFILE:-$CLENV_E_NAME}"
-_GHREPOAPI="https://api.github.com/repos/GoogleCloudPlatform/$CLENV_E_BIN_NAME"
-_GHURL="https://github.com/GoogleCloudPlatform/$CLENV_E_NAME/releases"
-BASEURL="$_GHURL/download/%s/$CLENV_E_NAME-%s-%s-%s"
+CLENV_E_GHREPOAPI="https://api.github.com/repos/GoogleCloudPlatform/$CLENV_E_BIN_NAME"
+CLENV_E_BASEURL="https://github.com/GoogleCloudPlatform/$CLENV_E_NAME/releases/download/%s/$CLENV_E_NAME-%s-%s-%s"
 
-CLENV_E_INSTDIR="${CLENV_E_INSTDIR:-$(pwd)}"
-
-_ext_latest () {
-    _ext_versions | head -1
-}
-_ext_versions () {
-    # technically '/releases' is better but tags are the same here and this is 1/100th the bandwidth
-    curl -fsSL "$_GHREPOAPI/tags" | awk -F '"' '/"name":/{print $4}' | sed -e 's/^v//'
-}
-_ext_url () {
-    if [ $# -lt 1 ] || [ $# -gt 0 -a "$1" = "latest" ] ; then
-            CLENV_E_VERSION="$(_ext_latest)"
-    else    CLENV_E_VERSION="$1"
-    fi
-    printf "$BASEURL\n" "$CLENV_E_VERSION" "$CLENV_E_PLATFORM" "$CLENV_E_OS" "$CLENV_E_ARCH"
-}
-_ext_download () {
-    mkdir -p "$CLENV_E_INSTDIR/download"
-    curl -fSL "$(_ext_url "$@")" -o "$CLENV_E_INSTDIR/download/$CLENV_E_DLFILE"
-}
+### Core functions
+_ext_versions () {  clenv -X versions_ghtags "$CLENV_E_GHREPOAPI" ;  }
+_ext_url () {  printf "$BASEURL\n" "$CLENV_E_VERSION" "$CLENV_E_PLATFORM" "$CLENV_E_OS" "$CLENV_E_ARCH" ;  }
 _ext_unpack () {
     mkdir -p "$CLENV_E_INSTDIR/usr/bin"
     chmod +x "$CLENV_E_INSTDIR/download/$CLENV_E_DLFILE"
     mv "$CLENV_E_INSTDIR/download/$CLENV_E_DLFILE" "$CLENV_E_INSTDIR/usr/bin/$CLENV_E_BIN_NAME"
 }
-_ext_install_local () {
-    mkdir -p bin
-    ln -sf "$CLENV_E_INSTDIR/usr/bin/$CLENV_E_BIN_NAME" "bin/$CLENV_E_BIN_NAME"
-}
-_ext_install_global () {
-    sudo /bin/sh -c "mkdir -p /usr/local/bin; mv $CLENV_E_BIN_NAME /usr/local/bin/$CLENV_E_BIN_NAME"
-}
-_ext_install_wrapper () {
-    [ -d "$CLENV_DIR/.bin" ] || mkdir -p "$CLENV_DIR/.bin"
-    printf "#!/usr/bin/env sh\nexec clenv -W $CLENV_E_NAME $CLENV_E_ENVIRON $CLENV_E_BIN_NAME \"\$@\"\n" > "$CLENV_DIR/.bin/$CLENV_E_BIN_NAME"
-    chmod +x "$CLENV_DIR/.bin/$CLENV_E_BIN_NAME"
-}
-_ext_clean () {
-    rm -rf "$CLENV_E_INSTDIR/download/"
-}
-_ext_clean_install () {
-    rm -rf "$CLENV_E_INSTDIR"
-}
-_ext_test () {
-    "./bin/$CLENV_E_BIN_NAME" --version
-}
+
+### The rest of this doesn't need to be modified
+_ext_variables () { set | grep '^CLENV_E_' ; }
 _ext_help () {
-    cat <<EOUSAGE
-Usage: $0 CMD
-
-Commands:
-$(grep -e "^_ext_.* ()" "$0" | awk '{print $1}' | sed -e 's/_ext_//;s/^/  /g' | tr _ -)
-EOUSAGE
-    exit 1
+    printf "Usage: $0 CMD\n\nCommands:\n%s\n" "$(grep -e "^_ext_.* ()" "$0" | awk '{print $1}' | sed -e 's/_ext_//;s/^/  /g' | tr _ -)"
+    exit 0
 }
-
-if [ $# -lt 1 ] ; then
-    _ext_help
-else
-    cmd="$1"; shift
-    func="_ext_$(printf "%s\n" "$cmd" | tr - _)"
-    if [ -n "${CLENV_DIR:-}" -a -n "${CLENV_E_ENVIRON:-}" ] ; then
+if [ $# -lt 1 ] ; then  _ext_help
+else cmd="$1"; shift; func="_ext_$(printf "%s\n" "$cmd" | tr - _)"
+    if [ -n "${CLENV_DIR:-}" -a -n "${CLENV_E_ENVIRON:-}" ] ; then 
         [ -d "$CLENV_DIR/$CLENV_E_ENVIRON" ] && cd "$CLENV_DIR/$CLENV_E_ENVIRON"
     fi
-    case "$cmd" in 
-        *)                  $func "$@" ;;
-    esac
+    case "$cmd" in *) $func "$@" ;; esac
 fi
