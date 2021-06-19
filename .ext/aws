@@ -2,8 +2,8 @@
 set -eu
 [ "${DEBUG:-0}" = "1" ] && set -x
 
-CLENV_E_NAME="${CLENV_E_NAME:-aws-cli}"
-CLENV_E_REV="0.1.0"
+CLENV_E_NAME="${CLENV_E_NAME:-aws}"
+CLENV_E_REV="0.2.0"
 
 CLENV_E_OS="${CLENV_E_OS:-linux}"
 CLENV_E_ARCH="${CLENV_E_ARCH:-x86_64}"
@@ -11,7 +11,7 @@ CLENV_E_ARCH="${CLENV_E_ARCH:-x86_64}"
 CLENV_E_BIN_NAME="${CLENV_E_BIN_NAME:-aws}"
 CLENV_E_DLFILE="${CLENV_E_DLFILE:-$CLENV_E_NAME.zip}"
 
-_GHREPOAPI="https://api.github.com/repos/aws/$CLENV_E_NAME"
+_GHREPOAPI="https://api.github.com/repos/aws/aws-cli"
 _HCURL="https://awscli.amazonaws.com"
 BASEURL="$_HCURL/awscli-exe-%s-%s-%s.zip"
 
@@ -65,8 +65,9 @@ _ext_install_global () {
 }
 _ext_install_wrapper () {
     [ -d "$CLENV_DIR/.bin" ] || mkdir -p "$CLENV_DIR/.bin"
-    printf "#!/usr/bin/env sh\nexec clenv -W $CLENV_E_NAME $CLENV_E_ENVIRON $CLENV_E_BIN_NAME \"\$@\"\n" > "$CLENV_DIR/.bin/$CLENV_E_BIN_NAME"
-    chmod 755 "$CLENV_DIR/.bin/$CLENV_E_BIN_NAME"
+    [ -e "$CLENV_DIR/.bin/$CLENV_E_BIN_NAME" -a "${CLENV_FORCE:-0}" = "0" ] || \
+        printf "#!/usr/bin/env sh\nexec clenv -E $CLENV_E_NAME -e $CLENV_E_ENVIRON $CLENV_E_BIN_NAME \"\$@\"\n" > "$CLENV_DIR/.bin/$CLENV_E_BIN_NAME"
+    [ -x "$CLENV_DIR/.bin/$CLENV_E_BIN_NAME" ] || chmod +x "$CLENV_DIR/.bin/$CLENV_E_BIN_NAME"
 }
 _ext_clean () {
     rm -rf "$CLENV_E_INSTDIR/download/"
@@ -75,7 +76,7 @@ _ext_clean_install () {
     rm -rf "$CLENV_E_INSTDIR"
 }
 _ext_test () {
-    "./bin/$CLENV_E_BIN_NAME" --version
+    "./bin/$CLENV_E_BIN_NAME" --version >/dev/null
 }
 _ext_help () {
     cat <<EOUSAGE

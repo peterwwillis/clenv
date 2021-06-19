@@ -13,81 +13,79 @@ export CLENV_DIR="${CLENV_DIR:-$HOME/.clenv}"
 _usage () {
     printf "%s\n" "
 Usage: $0 [OPTS]
-       $0 [OPTS] [ENVIRON [CMD [ARGS ..]] ]
+       $0 [OPTS] [CMD [ARGS ..]]
 Opts:
 	-h			This screen
 	-i			Clear environment variables. Must be first argument
 	-l [ENVIRON]		List environments
-	-n ENVIRON		Create a new environment
-	-I EXT[=V] [ENVIRON] 	Install version V of extension EXT into ENVIRON
-	-W EXT 			Enables the '.EXT-version' wrapper mode
+	-n ENVIRON		Create a new environment ENVIRON
+	-E EXT[=V] 	 	Use (optional) version V of extension EXT
+	-e ENVIRON		Use environment ENVIRON
+	-W			Disables wrapper mode
 	-f			Force mode
  	-V			Version of clenv
+	-q			Quiet mode
 "
   exit 1
 }
 _err () { printf "%s\n" "$0: Error: $*" ; exit 1 ; }
 _clenv_list () {
-    for d in "$@" ; do
-        [ -d "$CLENV_DIR/$(basename "$d")" ] && basename "$d"
-    done
+    for d in "$@" ; do [ -d "$CLENV_DIR/$(basename "$d")" ] && basename "$d"; done
 }
 _clenv_new () {
-    export CLENV_E_ENVIRON="$1" ; shift
-    if [ -d "$CLENV_DIR/$CLENV_E_ENVIRON" ] && [ ! "$CLENV_FORCE" = "1" ] ; then
-        _err "Version '$CLENV_DIR/$CLENV_E_ENVIRON' already exists"
-    fi
-    mkdir -p "$CLENV_DIR/$CLENV_E_ENVIRON/bin"
-    printf "%s\n" 'pmunge () { if ! echo "$PATH"|/bin/grep -Eq "(^|:)$1($|:)"; then if [ "${2:-}" = "after" ]; then PATH="$PATH:$1"; else PATH="$1:$PATH"; fi;fi; }' >> "$CLENV_DIR/$CLENV_E_ENVIRON/.env"
-    printf "%s\n" 'pmunge "'"$CLENV_DIR/$CLENV_E_ENVIRON/bin"'"' >> "$CLENV_DIR/$CLENV_E_ENVIRON/.env"
+    _env="$1"; shift
+    [ -d "$CLENV_DIR/$_env" ] && [ ! "$CLENV_FORCE" = "1" ] && _err "Environment '$CLENV_DIR/$_env' already exists"
+    echo_err "Creating new environment '$CLENV_DIR/$_env'"
+    mkdir -p "$CLENV_DIR/$_env/bin"
+    printf "%s\n" 'pmunge () { if ! echo "$PATH"|/bin/grep -Eq "(^|:)$1($|:)"; then if [ "${2:-}" = "after" ]; then PATH="$PATH:$1"; else PATH="$1:$PATH"; fi;fi; }' >> "$CLENV_DIR/$_env/.env"
+    printf "%s\n" 'pmunge "'"$CLENV_DIR/$_env/bin"'"' >> "$CLENV_DIR/$_env/.env"
 }
 _clenv_ext_run () {  "$CLENV_DIR/.ext/$CLENV_E_NAME" "$@"; }
 _clenv_ext_install () {
     ext="${1%%=*}" ver="${1#*=}" environ="${2:-}"
-    if [ $# -lt 2 ] ; then shift 1; environ="$ext"; else shift 2; fi
-    if [ ! "$ver" = "$ext" ] ; then
-        export CLENV_E_VERSION="$ver"
-    fi
+    if [ $# -lt 2 -o -z "$environ" ] ; then shift 1; environ="$ext"; else shift 2; fi
+    if [ ! "$ver" = "$ext" ] ; then export CLENV_E_VERSION="$ver"; fi
     export CLENV_E_NAME="$ext" CLENV_E_ENVIRON="$environ" CLENV_E_INSTDIR="$CLENV_DIR/$environ"
 
     if [ "$CLENV_FORCE" = "1" ] || [ ! -e "$CLENV_DIR/.ext/$CLENV_E_NAME" ] ; then
-        echo_err "Installing extention $CLENV_E_NAME"
+        echo_err "Installing extention '$CLENV_E_NAME'"
         if   command -v curl >/dev/null ; then  curl -fsSL -o "$CLENV_DIR/.ext/$CLENV_E_NAME" "$CLENV_HTTP_PATH/.ext/$CLENV_E_NAME"
         elif command -v wget >/dev/null ; then  wget -O "$CLENV_DIR/.ext/$CLENV_E_NAME" "$CLENV_HTTP_PATH/.ext/$CLENV_E_NAME"
         else _err "Please install 'curl' or 'wget'." ; fi
         chmod +x "$CLENV_DIR/.ext/$CLENV_E_NAME"
     fi
-    _ext_install_wrapper
 
     [ -z "${CLENV_E_VERSION:-}" ] && CLENV_E_VERSION="latest"
     [ "$CLENV_E_VERSION" = "latest" ] && CLENV_E_VERSION="$(_clenv_ext_run latest)"
+    export CLENV_E_VERSION
+
     [ -d "$CLENV_DIR/$CLENV_E_ENVIRON" ] || _clenv_new "$CLENV_E_ENVIRON"
-    export CLENV_E_VERSION="$CLENV_E_VERSION"
-    echo_err "Loading extension $CLENV_E_NAME version '$CLENV_E_VERSION'"
+    echo_err "Loading extension '$CLENV_E_NAME' version '$CLENV_E_VERSION'"
     _ext_clean; _ext_download; _ext_unpack; _ext_install_local; _ext_test; _ext_clean
-    echo_err ""
+    _ext_install_wrapper
 }
 _clenv_exec () {
-  export CLENV_E_ENVIRON="$1" ; shift
+  export CLENV_E_ENVIRON="${CLENV_E_ENVIRON:-$1}" # default environment name to command name
+  [ $CLENV_WRAPPER -eq 1 ] && _clenv_wrapper "$CLENV_E_ENVIRON"
   [ -d "$CLENV_DIR/$CLENV_E_ENVIRON" ] || _err "No environment '$CLENV_DIR/$CLENV_E_ENVIRON' found"
-  [ -n "${CLENV_WRAPPER:-}" ] && _clenv_wrapper
   if [ -r "$CLENV_DIR/$CLENV_E_ENVIRON/.env" ] ; then
       set -a
       . "$CLENV_DIR/$CLENV_E_ENVIRON/.env"
   else echo_err "Warning: no '$CLENV_DIR/$CLENV_E_ENVIRON/.env' found" ; fi
   echo_err "Executing $(which "$1")"
-  # prevents infinite loops
+  # unset variables to prevents infinite loops
   unset CLENV_E_ENVIRON CLENV_E_VERSION CLENV_E_NAME CLENV_FORCE
   exec env "$@"
 }
 _clenv_wrapper () {
-    CLENV_E_NAME="$CLENV_WRAPPER"
-    CLENV_E_ENVIRON="${CLENV_E_ENVIRON:-$CLENV_E_NAME}" # Default environ to extension name
+    CLENV_E_NAME="${CLENV_E_NAME:-$1}" # default extension name to environment name
+    ext="${CLENV_E_NAME%%=*}" ver="${CLENV_E_NAME#*=}"
+    if [ ! "$ver" = "$ext" ] ; then CLENV_E_VERSION="$ver"; fi
     ver_detected=0
     if [ -z "${CLENV_E_VERSION:-}" ] ; then
         cwd="$(pwd)"
         while [ ! "$(dirname "$cwd")" = "/" ] ; do
-            echo_err "Looking for '$cwd/.$CLENV_E_NAME-version"
+            echo_err "Looking for '$cwd/.$CLENV_E_NAME-version'"
             if [ -r "$cwd/.$CLENV_E_NAME-version" ] ; then
                 CLENV_E_VERSION="$(cat "$cwd/.$CLENV_E_NAME-version")"
                 ver_detected=1
@@ -106,7 +104,7 @@ _clenv_wrapper () {
 }
 
 ### Extension functions
-echo_err () { printf "%s\n" "$(basename "$0"): $*" 1>&2 ; }
+echo_err () { [ $CLENV_QUIET -eq 1 ] || printf "%s\n" "$(basename "$0"): $*" 1>&2 ; }
 echo_info () { printf "%s\n" "$(basename "$0"): $*" ; }
 _ext_test () {          echo_err "$CLENV_E_NAME: Testing"; _clenv_ext_run "test"; }
 _ext_clean_install () { echo_err "$CLENV_E_NAME: Removing '$CLENV_E_INSTDIR'"; _clenv_ext_run "clean-install"; }
@@ -116,15 +114,6 @@ _ext_install_local () { echo_err "$CLENV_E_NAME: Installing symlink"; _clenv_ext
 _ext_install_wrapper () {       echo_err "$CLENV_E_NAME: Installing wrapper"; _clenv_ext_run "install-wrapper"; }
 _ext_unpack () {        echo_err "$CLENV_E_NAME: Unpacking to '$CLENV_E_INSTDIR'"; _clenv_ext_run "unpack"; }
 _ext_download () {      echo_err "$CLENV_E_NAME: Downloading artifact"; _clenv_ext_run "download" "$CLENV_E_VERSION"; }
-_ext_usage () {
-    cat <<EOUSAGE
-Usage: $0 CMD
-
-Commands:
-$(grep -e "^_ext_.* ()" "$CLENV_DIR/.ext/$CLENV_E_NAME" | awk '{print $1}' | sed -e 's/_ext_//;s/^/  /g' | tr _ -)
-EOUSAGE
-    exit 1
-}
 
 ### Main program
 if [ $# -lt 1 ] ; then
@@ -133,15 +122,17 @@ fi
 
 [ "$1" = "-i" ] && shift 1 && exec env -i "$0" "$@"
 
-CLENV_NEW=0 CLENV_LIST=0 CLENV_FORCE=0 CLENV_WRAPPER=0
-while getopts "nlI:W:fV" args ; do
+CLENV_NEW=0 CLENV_LIST=0 CLENV_FORCE=0 CLENV_WRAPPER=1 CLENV_QUIET="${CLENV_QUIET:-0}"
+while getopts "nlE:e:WfVq" args ; do
     case "$args" in
         n)  CLENV_NEW=1 ;;
         l)  CLENV_LIST=1 ;;
-        I)  CLENV_LOAD="$OPTARG" ;;
-        W)  CLENV_WRAPPER="$OPTARG" ;;
+        E)  CLENV_E_NAME="$OPTARG" ;;
+        e)  CLENV_E_ENVIRON="$OPTARG" ;;
+        W)  CLENV_WRAPPER=0 ;;
         f)  export CLENV_FORCE=1 ;;
         V)  echo "clenv v$CLENV_VER" ; exit 0 ;;
+        q)  CLENV_QUIET=1 ;;
     esac
 done
 shift $(($OPTIND-1))
@@ -150,15 +141,13 @@ for d in "$CLENV_DIR" "$CLENV_DIR/.bin" "$CLENV_DIR/.ext" ; do
     [ -d "$d" ] || mkdir -p "$d"
 done
 
-
 if [ $CLENV_NEW -eq 1 ] ; then
     _clenv_new "$@"
 elif [ $CLENV_LIST -eq 1 ] ; then
     if [ $# -gt 0 ] ; then  _clenv_list "$@"
-    else _clenv_list "$CLENV_DIR"/*
-    fi
-elif [ -n "${CLENV_LOAD:-}" ] ; then
-    _clenv_ext_install "$CLENV_LOAD" "$@"
+    else _clenv_list "$CLENV_DIR"/* ; fi
+elif [ $# -lt 1 -a -n "${CLENV_E_NAME:-}" ] ; then
+    _clenv_ext_install "$CLENV_E_NAME" "${CLENV_E_ENVIRON:-}"
 elif [ $# -gt 0 ] ; then
     _clenv_exec "$@"
 fi
