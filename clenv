@@ -21,6 +21,7 @@ Opts:
 	-n ENVIRON		Create a new environment ENVIRON
 	-E EXT[=V] 	 	Use (optional) version V of extension EXT
 	-e ENVIRON		Use environment ENVIRON
+	-r FILE			Install a list of extensions from FILE
 	-W			Disables wrapper mode
 	-f			Force mode
  	-V			Version of clenv
@@ -29,9 +30,7 @@ Opts:
   exit 1
 }
 _err () { printf "%s\n" "$0: Error: $*" ; exit 1 ; }
-_clenv_list () {
-    for d in "$@" ; do [ -d "$CLENV_DIR/$(basename "$d")" ] && basename "$d"; done
-}
+_clenv_list () { for d in "$@" ; do [ -d "$CLENV_DIR/$(basename "$d")" ] && basename "$d"; done ; }
 _clenv_new () {
     _env="$1"; shift
     [ -d "$CLENV_DIR/$_env" ] && [ ! "$CLENV_FORCE" = "1" ] && _err "Environment '$CLENV_DIR/$_env' already exists"
@@ -66,7 +65,7 @@ _clenv_ext_install () {
 }
 _clenv_exec () {
   export CLENV_E_ENVIRON="${CLENV_E_ENVIRON:-$1}" # default environment name to command name
-  [ $CLENV_WRAPPER -eq 1 ] && _clenv_wrapper "$CLENV_E_ENVIRON"
+  [ ${CLENV_WRAPPER:-1} -eq 1 ] && _clenv_wrapper "$CLENV_E_ENVIRON"
   [ -d "$CLENV_DIR/$CLENV_E_ENVIRON" ] || _err "No environment '$CLENV_DIR/$CLENV_E_ENVIRON' found"
   if [ -r "$CLENV_DIR/$CLENV_E_ENVIRON/.env" ] ; then
       set -a
@@ -122,13 +121,14 @@ fi
 
 [ "$1" = "-i" ] && shift 1 && exec env -i "$0" "$@"
 
-CLENV_NEW=0 CLENV_LIST=0 CLENV_FORCE=0 CLENV_WRAPPER=1 CLENV_QUIET="${CLENV_QUIET:-0}"
-while getopts "nlE:e:WfVq" args ; do
+CLENV_FORCE=0 CLENV_QUIET="${CLENV_QUIET:-0}"
+while getopts "nlE:e:r:WfVq" args ; do
     case "$args" in
         n)  CLENV_NEW=1 ;;
         l)  CLENV_LIST=1 ;;
         E)  CLENV_E_NAME="$OPTARG" ;;
         e)  CLENV_E_ENVIRON="$OPTARG" ;;
+        r)  CLENV_REQUIRES="$OPTARG" ;;
         W)  CLENV_WRAPPER=0 ;;
         f)  export CLENV_FORCE=1 ;;
         V)  echo "clenv v$CLENV_VER" ; exit 0 ;;
@@ -141,11 +141,13 @@ for d in "$CLENV_DIR" "$CLENV_DIR/.bin" "$CLENV_DIR/.ext" ; do
     [ -d "$d" ] || mkdir -p "$d"
 done
 
-if [ $CLENV_NEW -eq 1 ] ; then
+if [ ${CLENV_NEW:-0} -eq 1 ] ; then
     _clenv_new "$@"
-elif [ $CLENV_LIST -eq 1 ] ; then
+elif [ ${CLENV_LIST:-0} -eq 1 ] ; then
     if [ $# -gt 0 ] ; then  _clenv_list "$@"
     else _clenv_list "$CLENV_DIR"/* ; fi
+elif [ -n "${CLENV_REQUIRES:-}" ] ; then
+    cat "$CLENV_REQUIRES" | while read LINE ; do $0 -E "$LINE" ; done
 elif [ $# -lt 1 -a -n "${CLENV_E_NAME:-}" ] ; then
     _clenv_ext_install "$CLENV_E_NAME" "${CLENV_E_ENVIRON:-}"
 elif [ $# -gt 0 ] ; then
