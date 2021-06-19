@@ -5,13 +5,9 @@ set -eu
 CLENV_E_NAME="${CLENV_E_NAME:-ansible}"
 CLENV_E_REV="0.1.0"
 
-CLENV_E_OS="${CLENV_E_OS:-linux}"
-CLENV_E_ARCH="${CLENV_E_ARCH:-amd64}"
-
 CLENV_E_BIN_NAME="${CLENV_E_BIN_NAME:-$CLENV_E_NAME}"
 CLENV_E_DLFILE="${CLENV_E_DLFILE:-$CLENV_E_NAME}"
 _GHREPOAPI="https://api.github.com/repos/ansible/$CLENV_E_NAME"
-_GHURL="https://github.com/ansible/$CLENV_E_NAME/releases"
 _PYPIAPI="https://pypi.org/pypi/$CLENV_E_NAME"
 BASEURL="$_PYPIAPI"
 
@@ -75,7 +71,6 @@ _ext_install_local () {
     done
 }
 _ext_install_global () {
-    #sudo /bin/sh -c "mkdir -p /usr/local/bin; mv $CLENV_E_BIN_NAME /usr/local/bin/$CLENV_E_BIN_NAME"
     sudo /bin/sh -c "pip install ansible==$CLENV_E_VERSION"
 }
 _ext_install_wrapper () {
