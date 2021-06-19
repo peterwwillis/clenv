@@ -19,9 +19,9 @@
 
 1. Install **clenv**
    ```bash
-   $ sudo curl -fsSL -o /usr/local/bin/clenv https://raw.githubusercontent.com/peterwwillis/clenv/v1.3.0/clenv \
+   $ sudo curl -fsSL -o /usr/local/bin/clenv https://raw.githubusercontent.com/peterwwillis/clenv/v2.0.0/clenv \
      && sudo chmod +x /usr/local/bin/clenv \
-     && echo "00854335a8e649513a47507e7108f0facc2fee35667f0f0a99425e0f57fb4ef9  /usr/local/bin/clenv" | sha256sum -c \
+     && echo "cfca6d9ded47ad97c91522c290adccc97d5c1f6a06b308604041cd3240a87b4f  /usr/local/bin/clenv" | sha256sum -c \
      || { echo "FAILED CHECKSUM: REMOVING clenv" && sudo rm -f /usr/local/bin/clenv ; }
    /usr/local/bin/clenv: OK
    ```
