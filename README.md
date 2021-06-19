@@ -1,14 +1,21 @@
 # About
 
-**clenv** is a wrapper that manages and runs arbitrary programs in individual environments.
+**clenv** is a wrapper that manages and runs arbitrary applications in individual environments.
 
-Think of it like *virtualenv*, *rbenv*, *tfenv*, etc, but for any program at all. You can use *Extensions* to automatically install specific versions of programs, or build a custom environment. A wrapper mode seamlessly switches between versions in different directories.
+Think of it like *virtualenv*, *rbenv*, *tfenv*, etc, but for any application at all. You can use *Extensions* to automatically install specific versions of applications, or build a custom environment. A wrapper mode seamlessly switches between versions in different directories.
 
 # Requirements
 
  - A POSIX shell
  - Standard Unix-y tools (mkdir, env, chmod, basename, etc)
  - `curl` or `wget` (if you use *Extensions*)
+
+# Features
+ - *Extensions* to automate downloading & installing any application
+ - Pin versions with `.EXTENSION-version` files
+ - Wrappers in `~/.clenv/.bin` allow your shell to automatically find installed applications
+ - Small codebase (~160 lines shell script for `cliv`)
+ - Customize environments to your needs
 
 # Quick start
 
@@ -21,7 +28,7 @@ Think of it like *virtualenv*, *rbenv*, *tfenv*, etc, but for any program at all
    /usr/local/bin/clenv: OK
    ```
 
-2. Install and run a program with an *Extension*
+2. Install and run an application with an *Extension*
    ```bash
    vagrant@devbox:~$ packer --version
    bash: packer: command not found
@@ -88,29 +95,31 @@ cut me a Pull Request, I'll merge it!)
 **clenv** keeps a directory *$CLENV_DIR* (default: *$HOME/.clenv/*). In that
 directory are sub-directories called *Environment*s.
 
-Each *Environment* directory has at least two files:
- - `bin/` : *Extensions* install symlinks into this directory. You can put any programs you like here.
- - `.env` : A mini shell script to set environment variables that can be customized as you wish.
+Each *Environment* has at least two files:
+ - `bin/` : applications (or symlinks to applications) installed here.
+ - `.env` : A shell script to set environment variables at run time.
 
-When **clenv** is run with a `CMD` argument, it looks for an *Environment* with the
-same name. If found, it loads that *Environment*. If not found, **clenv** looks for
+When **clenv** is run with a `CMD`, it looks for an *Environment* with the same 
+name. If found, it loads that *Environment*. If not found, **clenv** looks for
 an *Extension* of the same name. If found, it uses that *Extension* to install a
-program in a new *Environment*. If no *Extension* is found, **clenv** errors.
+application in a new *Environment*. If no *Extension* is found, **clenv** errors.
 
-*Extensions* look up the version of a program, download it, install it in an
-*Environment*, and set up a wrapper in `~/.clenv/.bin/` pointing to the program
+*Extensions* look up the version of an application, download it, install it in an
+*Environment*, and set up a wrapper in `~/.clenv/.bin/` pointing to the application
 in the *Environment*, so you can add this directory to your *$PATH* and run any
-programs installed by **clenv**.
+applications installed by **clenv**.
 
 Once an *Environment* is found, the `.env` is loaded from it, the *$PATH* environment
 variable is changed to include the `bin/` directory, and `CMD` and any arguments
 are executed.
 
-**clenv** also looks for a file `.EXTENSION-version` in the current and parent
+**clenv** looks for a file `.EXTENSION-version` in the current and parent
 directories. If it finds one, the contents of that file is the version to use to
 create a new *Environment* for that *Extension* and version. This way you can
-pin different versions of a program in different directories and **clenv** will
-automatically install and run the right version.
+pin different versions of an application in different directories and **clenv**
+will automatically install and run the right version. If you specify a version
+in the `-E` option, this does not happen, and the `-W` option disable it
+entirely.
 
 
 ### Using Extensions
@@ -126,7 +135,7 @@ By default, *Extensions* and *Environments* use the same name as a `CMD`. But
 sometimes this doesn't work well, so all 3 can have different names.
 
 Use the `-E` option to specify an *Extension* name. If you add `=VERSION` to the
-*Extension* name, it will install that version of the intended program.
+*Extension* name, it will install that version of the application.
    ```bash
    $ clenv -E aws=2.0.34
    ```
@@ -135,6 +144,16 @@ and `CMD`). To use a custom *Environment* name, pass the `-e` option.
    ```bash
    $ clenv -E aws=2.0.34 -e some-aws-env
    ```
+To execute a program in this new custom *Environment*, just pass the `-e` option
+and a command to run.
+   ```bash
+   $ clenv -e some-aws-env aws --version
+   ```
+Remember: `cliv` uses the `.env` file in the *Environment* to set the *$PATH* to
+include `~/.cliv/some-aws-env/bin/`. If the file you want to execute isn't in that
+directory, you'll have to modify the `.env` to include the path to your
+application in your *Environment*.
+
 If you *don't* pass a version with `-E`, and a `.EXTENSION-version` file is found,
 **clenv** will make an *Environment* named `$EXTENSION=$VERSION`. This happens
 automatically whether you're calling `clenv` directly, or using the `~/.clenv/.bin/`
@@ -169,14 +188,14 @@ wrapper. (To disable it completely, use the `-W` option)
    $ clenv -n aws
    ```
 
-2. Manually install a program (like `aws`) in the new `bin/` directory of the new *Environment*
+2. Manually install an application (like `aws`) in the new `bin/` directory of the new *Environment*
    (`~/.clenv/aws/bin/`).
 
 3. If you want, you can customize the environment used by editing the
    `~/.clenv/aws/.env` file. `clenv` loads this as a shell script before running
-   your program.
+   your application.
 
-4. Run your program with `clenv`
+4. Run your application with `clenv`
    ```bash
    $ clenv -e aws aws --version
    clenv: Executing /home/vagrant/.clenv/aws/bin/aws
