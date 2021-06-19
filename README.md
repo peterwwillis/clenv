@@ -68,10 +68,6 @@ Think of it like *virtualenv*, *rbenv*, *tfenv*, etc, but for any program at all
            -q                      Quiet mode
    ```
 
-## Features
-
-### Extensions
-
 Available extensions:
  - **aws-cli**
  - **ansible**
@@ -82,36 +78,12 @@ Available extensions:
  - **terraformer**
  - **yq**
 
-**clenv** will look for extensions with `curl` or `wget` from a URL
-`$CLENV_HTTP_PATH/.ext/EXTENSION`. Override *$CLENV_HTTP_PATH* if you want
-to provide your own *Extension* path or URL.
-
-You can also put extensions directly into your `~/.clenv/.ext/` directory.
-These are not overwritten unless you pass the `-f` option to **clenv**.
-
 (Don't see an extension you want? Check out the [.ext/](./.ext/) directory,
 cut me a Pull Request, I'll merge it!)
 
-### Wrappers 
-
-When an *Extension* is installed, it creates a wrapper script in `$CLENV_DIR/.bin/`
-named after the program you installed. This wrapper will tell `clenv` how to run
-your program so you don't have to use the `clenv` command.
-
-The wrapper mode will also look for a file `.EXTENSION-version` in the current
-directory (and parent directories). If it finds that file, the contents of that
-file is the version of the *Extension* that `clenv` will install and use to run
-your program.
-
-So just add the `$CLENV_DIR/.bin/` directory to your *$PATH*, install a program
-using an *Extension*, and then just run your program. `clenv` will detect the
-correct version of your program to use, install it if needed, load the
-*Environment*, and execute your program.
-
-
 ---
 
-# How it works
+## How it works
 
 **clenv** keeps a directory *$CLENV_DIR* (default: *$HOME/.clenv/*). In that
 directory are sub-directories called *Environment*s.
@@ -141,30 +113,14 @@ pin different versions of a program in different directories and **clenv** will
 automatically install and run the right version.
 
 
-## Manually set up an *Environment*
+### Using Extensions
 
-1. Create a new *Environment*. For this example we'll call it just "aws",
-   but you could also give it a more descriptive name, like "aws=2.0.50".
-   ```bash
-   $ clenv -n aws
-   ```
+**clenv** will download *Extensions* with `curl` or `wget` from a URL
+`$CLENV_HTTP_PATH/.ext/EXTENSION`. Override *$CLENV_HTTP_PATH* if you want
+to provide your own *Extension* path or URL.
 
-2. Manually install a program (like `aws`) in the new `bin/` directory of the new *Environment*
-   (`~/.clenv/aws/bin/`).
-
-3. If you want, you can customize the environment used by editing the
-   `~/.clenv/aws/.env` file. `clenv` loads this as a shell script before running
-   your program.
-
-4. Run your program with `clenv`
-   ```bash
-   $ clenv aws aws --version
-   clenv: Executing /home/vagrant/.clenv/aws/bin/aws
-   aws-cli/2.0.50 Python/3.7.3 Linux/4.15.0-135-generic exe/x86_64.ubuntu.18
-   ```
-
-
-## Using Extensions
+You can also put extensions directly into your `~/.clenv/.ext/` directory.
+These are not overwritten unless you pass the `-f` option to **clenv**.
 
 By default, *Extensions* and *Environments* use the same name as a `CMD`. But
 sometimes this doesn't work well, so all 3 can have different names.
@@ -204,7 +160,30 @@ wrapper. (To disable it completely, use the `-W` option)
    aws-cli/2.0.50 Python/3.7.3 Linux/4.15.0-135-generic exe/x86_64.ubuntu.18
    ```
 
-## List environments
+
+### Manually setting up an *Environment*
+
+1. Create a new *Environment*. For this example we'll call it just "aws",
+   but you could also give it a more descriptive name, like "aws=2.0.50".
+   ```bash
+   $ clenv -n aws
+   ```
+
+2. Manually install a program (like `aws`) in the new `bin/` directory of the new *Environment*
+   (`~/.clenv/aws/bin/`).
+
+3. If you want, you can customize the environment used by editing the
+   `~/.clenv/aws/.env` file. `clenv` loads this as a shell script before running
+   your program.
+
+4. Run your program with `clenv`
+   ```bash
+   $ clenv aws aws --version
+   clenv: Executing /home/vagrant/.clenv/aws/bin/aws
+   aws-cli/2.0.50 Python/3.7.3 Linux/4.15.0-135-generic exe/x86_64.ubuntu.18
+   ```
+
+### List environments
 
 Let's see the *Environment*s we've created so far:
    ```bash
@@ -216,7 +195,6 @@ Let's see the *Environment*s we've created so far:
 
 ---
 
-# Testing
+## Testing
 
-## Extensions
 Run `make` in this directory to run all the tests. See [.ext/tests/](./.ext/tests/) for details.
