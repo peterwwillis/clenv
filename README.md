@@ -1,8 +1,6 @@
 # About
 
-**clenv** is a wrapper that manages and runs arbitrary applications in individual environments.
-
-Think of it like *virtualenv*, *rbenv*, *tfenv*, etc, but for any application at all. You can use *Extensions* to automatically install specific versions of applications, or build a custom environment. A wrapper mode seamlessly switches between versions in different directories.
+**clenv** is a tool to manage and run arbitrary applications in individual environments. Inspired by programs like `rbenv`, `tfenv`, `virtualenv`, etc.
 
 # Requirements
 
@@ -69,6 +67,7 @@ Think of it like *virtualenv*, *rbenv*, *tfenv*, etc, but for any application at
            -n ENVIRON              Create a new environment ENVIRON
            -E EXT[=V]              Use (optional) version V of extension EXT
            -e ENVIRON              Use environment ENVIRON
+           -r FILE                 Install a list of extensions from FILE
            -W                      Disables wrapper mode
            -f                      Force mode
            -V                      Version of clenv
@@ -92,34 +91,32 @@ cut me a Pull Request, I'll merge it!)
 
 ## How it works
 
-**clenv** keeps a directory *$CLENV_DIR* (default: *$HOME/.clenv/*). In that
-directory are sub-directories called *Environment*s.
+ - When **clenv** is run with a `CMD`, it looks for an *Environment* with the same name. If found, it loads that *Environment*.
+ - If the *Environment* is not found, **clenv** looks for an *Extension* of the same name. If found, it installs an application in a new *Environment*.
+ - If no *Extension* is found, **clenv** dies.
 
+*Environments* are kept in sub-directories of *$CLENV_DIR* (default: *$HOME/.clenv/*).
 Each *Environment* has at least two files:
  - `bin/` : applications (or symlinks to applications) installed here.
  - `.env` : A shell script to set environment variables at run time.
 
-When **clenv** is run with a `CMD`, it looks for an *Environment* with the same 
-name. If found, it loads that *Environment*. If not found, **clenv** looks for
-an *Extension* of the same name. If found, it uses that *Extension* to install a
-application in a new *Environment*. If no *Extension* is found, **clenv** errors.
-
-*Extensions* look up the version of an application, download it, install it in an
-*Environment*, and set up a wrapper in `~/.clenv/.bin/` pointing to the application
-in the *Environment*, so you can add this directory to your *$PATH* and run any
-applications installed by **clenv**.
+Applications are automatically installed in *Environments* by using *Extensions*.
+*Extensions* are programs that look up the version of an application, download
+it, install it in an *Environment*, and set up a wrapper in `~/.clenv/.bin/`
+pointing to the *Environment*. Add this directory to your *$PATH* to run those
+wrappers automatically.
 
 Once an *Environment* is found, the `.env` is loaded from it, the *$PATH* environment
 variable is changed to include the `bin/` directory, and `CMD` and any arguments
 are executed.
 
-**clenv** looks for a file `.EXTENSION-version` in the current and parent
-directories. If it finds one, the contents of that file is the version to use to
-create a new *Environment* for that *Extension* and version. This way you can
-pin different versions of an application in different directories and **clenv**
-will automatically install and run the right version. If you specify a version
-in the `-E` option, this does not happen, and the `-W` option disable it
-entirely.
+If a file `.EXTENSION-version` exists in the current or a parent directory, the
+contents of the file is the version of an *Extension* to install. If you specify
+a version in the `-E` option, this does not happen, and the `-W` option disable
+it entirely.
+
+To silence the normal output of **clenv**, pass the `-q` option, or set environment
+variable `CLENV_QUIET=1`.
 
 
 ### Using Extensions
