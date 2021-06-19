@@ -1,5 +1,31 @@
 # Changelog
 
+## [2.0.0] - 2021-06-19
+
+### Added
+ - Add ansible extension
+ - Add '-q' mode to silence output
+ - Add '-e' option
+ - Add '-r' option
+
+### Changed
+ - Apply fewer permissions changes
+ - Rename aws-cli extension to aws
+ - Try not to overwrite wrappers unless CLIV_FORCE=1
+ - No need to add '-I' option to install extensions
+ - Rename '-I' to '-E'
+ - Wrapper mode enabled by default; '-W' now disables
+ - If version passed to '-E', don't check for version file
+ - Updated docs
+
+### Fixed
+ - Fix an indefinite loop
+ - Fix a version detection bug
+ - Force mode now always copies latest extension code
+
+---
+
+
 ## [1.3.0] - 2021-06-17
 
 ### Added
