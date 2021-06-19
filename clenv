@@ -110,7 +110,7 @@ _ext_help_grep () {
 _ext_variables () { eval $(_clenv_ext_run variables) ; }
 _ext_test () {
     echo_err "$CLENV_E_NAME: Testing"; 
-    if _ext_help_grep "help"; then  _clenv_ext_run "test"
+    if _ext_help_grep "test"; then  _clenv_ext_run "test"
     else "$CLENV_E_INSTDIR/bin/$CLENV_E_BIN_NAME" --version >/dev/null ; fi
 }
 _ext_clean_install () {
@@ -137,7 +137,8 @@ _ext_install_wrapper () {
     if _ext_help_grep "install-wrapper"; then _clenv_ext_run "install-wrapper"
     else
         [ -d "$CLENV_DIR/.bin" ] || mkdir -p "$CLENV_DIR/.bin"
-        [ -e "$CLENV_DIR/.bin/$CLENV_E_BIN_NAME" -a "${CLENV_FORCE:-0}" = "0" ] || \                                                                         printf "#!/usr/bin/env sh\nexec clenv -E $CLENV_E_NAME -e $CLENV_E_ENVIRON $CLENV_E_BIN_NAME \"\$@\"\n" > "$CLENV_DIR/.bin/$CLENV_E_BIN_NAME"
+        if [ ! -e "$CLENV_DIR/.bin/$CLENV_E_BIN_NAME" -o "${CLENV_FORCE:-0}" = "1" ] ; then                                                                         printf "#!/usr/bin/env sh\nexec clenv -E $CLENV_E_NAME -e $CLENV_E_ENVIRON $CLENV_E_BIN_NAME \"\$@\"\n" > "$CLENV_DIR/.bin/$CLENV_E_BIN_NAME"
+        fi
         [ -x "$CLENV_DIR/.bin/$CLENV_E_BIN_NAME" ] || chmod +x "$CLENV_DIR/.bin/$CLENV_E_BIN_NAME"
     fi
 }
