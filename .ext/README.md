@@ -27,7 +27,9 @@ The following environment variables are commonly (but not necessarily) overridea
 
 ## Commands
 
-Each *Extension* takes command-line arguments. The following commands MUST be supported by an extension in order to be run by `clenv`:
+Each *Extension* takes command-line arguments. Each extension may implement their own version of the command and provide the name of the command as part of a "help" command. If the extension doesn't list the command in its "help" output, **clenv** will try to use its own general-purpose function instead.
+
+The following commands are used by **clenv** when it installs an extension:
  - **clean**
  - **download**
  - **unpack**
@@ -50,5 +52,5 @@ Use this method to manually test an extension in the current Git working directo
 Example: 
 ```bash
 clenv -l aws2050 || ../clenv -n aws2050
-DEBUG=1 CLENV_HTTP_PATH=file://`pwd`/.. clenv -I aws-cli-v2=2.0.50 aws2050
+DEBUG=1 CLENV_HTTP_PATH=file://`pwd`/.. clenv -E aws-cli-v2=2.0.50 -e aws2050 aws
 ```
