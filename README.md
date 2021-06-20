@@ -68,6 +68,7 @@
            -E EXT[=V]              Use (optional) version V of extension EXT
            -e ENVIRON              Use environment ENVIRON
            -r FILE                 Install a list of extensions from FILE
+           -X CMD [ARG ..]         (internal function) Run command for an extention
            -W                      Disables wrapper mode
            -f                      Force mode
            -V                      Version of clenv

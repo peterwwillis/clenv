@@ -23,7 +23,7 @@ Opts:
 	-E EXT[=V] 	 	Use (optional) version V of extension EXT
 	-e ENVIRON		Use environment ENVIRON
 	-r FILE			Install a list of extensions from FILE
-    -X CMD [ARG ..]		(internal function) Run command for an extention
+	-X CMD [ARG ..]		(internal function) Run command for an extention
 	-W			Disables wrapper mode
 	-f			Force mode
  	-V			Version of clenv
@@ -119,10 +119,10 @@ _ext_clean_install () {
 _ext_clean () {
     _echo_err "$CLENV_E_NAME: Removing temporary download files"; 
     if _ext_help_grep "clean"; then _clenv_ext_run "clean"
-    else rm -rf "$CLENV_E_INSTDIR/download/" ; fi
+    else rm -rf "${CLENV_E_INSTDIR:?}/download/" ; fi
 }
 _ext_install_local () {
-    _echo_err "$CLENV_E_NAME: Installing symlink";
+    _echo_err "$CLENV_E_NAME: Installing locally";
     if [ $# -lt 1 ] && _ext_help_grep "install-local" ; then _clenv_ext_run "install-local"
     else  
         mkdir -p "$CLENV_E_INSTDIR/bin"
