@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.1.1] - [2021-06-20]
+
+### Fixed
+ - Add extra path for Ansible extension
+
+---
+
 ## [2.1.0] - 2021-06-20
 
 ### Added
