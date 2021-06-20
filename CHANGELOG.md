@@ -1,5 +1,21 @@
 # Changelog
 
+## [2.1.0] - 2021-06-20
+
+### Added
+ - Common code from extensions incorporated into clenv functions
+ - '-X' option to call internal clenv functions
+ - More docs on how extensions work
+
+### Changed
+ - Refactored extension code
+ - Refactored test code
+
+### Fixed
+ - GitHub Actions container fixed to run Ansible install
+
+---
+
 ## [2.0.0] - 2021-06-19
 
 ### Added
