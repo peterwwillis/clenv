@@ -12,7 +12,7 @@
  - *Extensions* to automate downloading & installing any application
  - Pin versions with `.EXTENSION-version` files
  - Wrappers in `~/.clenv/.bin` allow your shell to automatically find installed applications
- - Small codebase (~160 lines shell script for `cliv`)
+ - Small codebase (~220 lines shell script for `clenv`)
  - Customize environments to your needs
 
 # Quick start
@@ -146,8 +146,8 @@ and a command to run.
    ```bash
    $ clenv -e some-aws-env aws --version
    ```
-Remember: `cliv` uses the `.env` file in the *Environment* to set the *$PATH* to
-include `~/.cliv/some-aws-env/bin/`. If the file you want to execute isn't in that
+Remember: `clenv` uses the `.env` file in the *Environment* to set the *$PATH* to
+include `~/.clenv/some-aws-env/bin/`. If the file you want to execute isn't in that
 directory, you'll have to modify the `.env` to include the path to your
 application in your *Environment*.
 

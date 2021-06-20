@@ -7,30 +7,24 @@ CLENV_E_REV="0.2.0"
 CLENV_E_BIN_NAME="${CLENV_E_BIN_NAME:-$CLENV_E_NAME}"
 CLENV_E_DLFILE="${CLENV_E_DLFILE:-$CLENV_E_NAME}"
 CLENV_E_INSTDIR="${CLENV_E_INSTDIR:-$(pwd)}"
-
 CLENV_E_PLATFORM="${CLENV_E_PLATFORM:-aws}"
 CLENV_E_OS="${CLENV_E_OS:-linux}"
 CLENV_E_ARCH="${CLENV_E_ARCH:-amd64}"
-
 CLENV_E_GHREPOAPI="https://api.github.com/repos/mikefarah/$CLENV_E_BIN_NAME"
 CLENV_E_BASEURL="https://github.com/mikefarah/$CLENV_E_NAME/releases/download/v%s/$CLENV_E_NAME""_%s_%s"
+export CLENV_E_NAME CLENV_E_REV CLENV_E_BIN_NAME CLENV_E_DLFILE
 
 ### Core functions
 _ext_versions () {  clenv -X versions_ghtags "$CLENV_E_GHREPOAPI" ;  }
-_ext_url () {  printf "$BASEURL\n" "$CLENV_E_VERSION" "$CLENV_E_OS" "$CLENV_E_ARCH" ;  }
-_ext_unpack () {
-    mkdir -p "$CLENV_E_INSTDIR/usr/bin"
-    chmod 755 "$CLENV_E_INSTDIR/download/$CLENV_E_DLFILE"
-    mv "$CLENV_E_INSTDIR/download/$CLENV_E_DLFILE" "$CLENV_E_INSTDIR/usr/bin/$CLENV_E_BIN_NAME"
-}
+_ext_url () {  printf "$CLENV_E_BASEURL\n" "$CLENV_E_VERSION" "$CLENV_E_OS" "$CLENV_E_ARCH" ;  }
+
 
 ### The rest of this doesn't need to be modified
 _ext_variables () { set | grep '^CLENV_E_' ; }
 _ext_help () {
     printf "Usage: $0 CMD\n\nCommands:\n%s\n" "$(grep -e "^_ext_.* ()" "$0" | awk '{print $1}' | sed -e 's/_ext_//;s/^/  /g' | tr _ -)"
-    exit 0
 }
-if [ $# -lt 1 ] ; then  _ext_help
+if [ $# -lt 1 ] ; then  _ext_help ; exit 1
 else cmd="$1"; shift; func="_ext_$(printf "%s\n" "$cmd" | tr - _)"
     if [ -n "${CLENV_DIR:-}" -a -n "${CLENV_E_ENVIRON:-}" ] ; then 
         [ -d "$CLENV_DIR/$CLENV_E_ENVIRON" ] && cd "$CLENV_DIR/$CLENV_E_ENVIRON"
