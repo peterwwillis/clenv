@@ -3,7 +3,7 @@
 set -u
 
 # Must pass file paths ending in '.t'
-_fail=0 _pass=0
+_fail=0 _pass=0 _failedtests=""
 for i in "$@" ; do
     tmp="$(mktemp -d)"
     export CLENV_HTTP_PATH="file://`pwd`"
@@ -16,9 +16,9 @@ for i in "$@" ; do
         if ! _t_$t ; then
             echo "$0: $ext_name: Test $t failed"
             fail=$(($fail+1))
+            _failedtests="$_failedtests $ext_name:$t"
             pwd
             ls -la *
-            #tree -a $CLENV_DIR *
         else
             echo "$0: $ext_name: Test $t succeeded"
             pass=$(($pass+1))
@@ -33,6 +33,6 @@ done
 
 echo "$0: Passed $_pass tests"
 if [ $_fail -gt 0 ] ; then
-    echo "$0: Failed $_fail tests"
+    echo "$0: Failed $_fail tests: $_failedtests"
     exit 1
 fi

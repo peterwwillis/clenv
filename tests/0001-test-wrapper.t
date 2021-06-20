@@ -3,12 +3,12 @@
 set -u
 
 # Test wrapper-in-wrapper
-_t_1 () {
+_t_wrapper_in_wrapper () {
     # Install environments
-    CLENV_E_BIN_NAME=foo clenv -I test test-env-1
-    CLENV_E_BIN_NAME=bar clenv -I test test-env-2
+    CLENV_E_BIN_NAME=foo clenv -E test -e test-env-1
+    CLENV_E_BIN_NAME=bar clenv -E test -e test-env-2
     export PATH="$CLENV_DIR/.bin:$PATH"
     foo bar
 }
 
-ext_tests="1"
+ext_tests="wrapper_in_wrapper"
