@@ -121,9 +121,6 @@ _ext_clean () {
     if _ext_help_grep "clean"; then _clenv_ext_run "clean"
     else rm -rf "$CLENV_E_INSTDIR/download/" ; fi
 }
-_ext_install_global () {
-    _echo_err "$CLENV_E_NAME: Installing globally" ; _clenv_ext_run "install-global"; 
-}
 _ext_install_local () {
     _echo_err "$CLENV_E_NAME: Installing symlink";
     if [ $# -lt 1 ] && _ext_help_grep "install-local" ; then _clenv_ext_run "install-local"
