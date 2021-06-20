@@ -21,7 +21,7 @@
    ```bash
    $ sudo curl -fsSL -o /usr/local/bin/clenv https://raw.githubusercontent.com/peterwwillis/clenv/v2.1.0/clenv \
      && sudo chmod +x /usr/local/bin/clenv \
-     && echo "8bb81fc76119b27087d9527270f478dda04d5701fb1d514f7304790644039ca4  /usr/local/bin/clenv" | sha256sum -c \
+     && echo "e31f53beffd9438c8cf5bebcaa9023b5ec5c5c19e33a291d277ef2d4ff2502aa  /usr/local/bin/clenv" | sha256sum -c \
      || { echo "FAILED CHECKSUM: REMOVING clenv" && sudo rm -f /usr/local/bin/clenv ; }
    /usr/local/bin/clenv: OK
    ```
