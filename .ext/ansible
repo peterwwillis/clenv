@@ -26,6 +26,7 @@ _ext_download () {
     _detect_python
     mkdir -p "$CLENV_E_INSTDIR"
     $PYTHON -m $PYMOD --clear "$CLENV_E_INSTDIR/usr/"
+    "$CLENV_E_INSTDIR/usr/bin/pip" install -U pip
     "$CLENV_E_INSTDIR/usr/bin/pip" install "ansible==$CLENV_E_VERSION"
 }
 _ext_unpack () { return 0 ; }
