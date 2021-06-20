@@ -32,15 +32,13 @@ _ext_unpack () { return 0 ; }
 _ext_install_local () {
     "$CLENV_E_INSTDIR/usr/bin/pip" install -U pip
     "$CLENV_E_INSTDIR/usr/bin/pip" install "ansible==$CLENV_E_VERSION"
+    # Add the 'bin/ symlink so _ext_test works
     mkdir -p "$CLENV_E_INSTDIR/bin"
-    for app in ansible ansible-config ansible-connection ansible-console ansible-doc \
-               ansible-galaxy ansible-inventory ansible-playbook ansible-pull \
-               ansible-test ansible-vault
-    do
-        if [ -h "$CLENV_E_INSTDIR/usr/bin/$app" -o -e "$CLENV_E_INSTDIR/usr/bin/$app" ] ; then
-            ln -sf "$CLENV_E_INSTDIR/usr/bin/$app" "$CLENV_E_INSTDIR/bin/$app"
-        fi
-    done
+    if [ -h "$CLENV_E_INSTDIR/usr/bin/$CLENV_E_BIN_NAME" -o -e "$CLENV_E_INSTDIR/usr/bin/$CLENV_E_BIN_NAME" ] ; then
+        ln -sf "$CLENV_E_INSTDIR/usr/bin/$CLENV_E_BIN_NAME" "$CLENV_E_INSTDIR/bin/$CLENV_E_BIN_NAME"
+    fi
+    # Add the '/usr/bin/' folder so we can use the python, pip, ansible-* files
+    printf "pmunge \"$CLENV_E_INSTDIR/usr/bin\"\n" >> "$CLENV_E_INSTDIR/.env"
 }
 
 
