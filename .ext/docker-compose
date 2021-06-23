@@ -9,7 +9,7 @@ CLENV_E_DLFILE="${CLENV_E_DLFILE:-$CLENV_E_NAME}"
 CLENV_E_INSTDIR="${CLENV_E_INSTDIR:-$(pwd)}"
 CLENV_E_OS="${CLENV_E_OS:-Linux}"
 CLENV_E_ARCH="${CLENV_E_ARCH:-x86_64}"
-CLENV_E_GHREPOAPI="https://api.github.com/repos/docker/$CLENV_E_BIN_NAME"
+CLENV_E_GHREPOAPI="https://api.github.com/repos/docker/compose"
 CLENV_E_BASEURL="https://github.com/docker/compose/releases/download/%s/$CLENV_E_NAME-%s-%s"
 export CLENV_E_NAME CLENV_E_REV CLENV_E_BIN_NAME CLENV_E_DLFILE
 
