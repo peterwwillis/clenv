@@ -20,7 +20,7 @@ _detect_python () {
     elif $PYTHON -c 'import venv'       ; then PYMOD="venv"
     else echo "$0: Error: please install Python module virtualenv or venv"; exit 1; fi
 }
-_ext_versions () {  clenv -X versions_pypi "$CLENV_E_BASEURL/json" ;  }
+_ext_versions () {  clenv -X versions_pypi "$CLENV_E_BASEURL/json" | grep -e "^[0-9]\+\.[0-9]\+\.[0-9]\+$" ;  }
 _ext_url () { printf "$CLENV_E_BASEURL\n" ; }
 _ext_download () {
     _detect_python

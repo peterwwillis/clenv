@@ -162,16 +162,27 @@ _ext_download () {
     fi
 }
 _ext_versions () {  _clenv_ext_run "versions" ; }
-_ext_versions_ghtags () {  next_url="$1/tags"; 
-    while [ -n "$next_url" ] ; do output="$(curl -ifsSL "$next_url")"
-        printf "%s\n" "$output" | awk -F '"' '/"name":/{print $4}' | sed -e 's/^v//'
+_ext_versions_gh () {
+    # Warning: this excludes 'rc' versions
+    next_url="$1"; while [ -n "$next_url" ] ; do output="$(curl -ifsSL "$next_url")"
+        printf "%s\n" "$output" | awk -F '"' "/\"$2\":/{print \$4}" | sed -e 's/^v//'
         next_url="$(printf "%s\n" "$output" | grep '^link:' \
             | sed -e 's/link: //; s/, /\n/g; s/[<>]//g; s/; rel/ rel/g; s/\(https:\/\/[^ ]\+\) rel="\([a-z]\+\)"/\2 \1/g' \
             | awk '/next / { print $2}')"
     done
 }
-_ext_versions_pypi () { # Warning: this only matches "N.N.N" versions
-    curl -fsSL "$1" | sed -e 's/"\([0-9]\+\.[0-9]\+\.[0-9]\+\)"/\nVERSION=\1\n/g' | grep ^VERSION= | sed -e 's/VERSION=//g' | tac
+_ext_versions_ghtags () {  _ext_versions_gh "$1/tags" "name" ;  }
+_ext_versions_ghreleases () {  _ext_versions_gh "$1/releases" "tag_name" ; }
+_ext_versions_pypi () {
+    if command -v python >/dev/null ; then PYTHON="${PYTHON:-python}";
+    elif command -v python3 >/dev/null ; then PYTHON="${PYTHON:-python3}"; fi
+    curl -fsSL "$1" | {
+        if command -v $PYTHON >/dev/null && $PYTHON -c 'import sys,json,collections;' ; then
+            $PYTHON -c 'import sys,json,collections; j=(json.loads(sys.stdin.read(), object_pairs_hook=collections.OrderedDict))["releases"]; print("\n".join([k for k in j.keys()]))' | tac
+        elif command -v jq >/dev/null ; then jq -r '.releases | keys | .[]' | tac
+        else grep -e '"[0-9]\+.*: \[' | sed -e 's/^[[:space:]]\+"\(.*\)": \[/\1/g' | tac
+        fi ;
+    }
 }
 _ext_versions_hc () {
     curl -fsSL "$1" | grep -e "<a href=\"/$CLENV_E_NAME/" | grep -v alpha | cut -d \" -f 2 | cut -d / -f 3 | sed -e 's/^v//'
