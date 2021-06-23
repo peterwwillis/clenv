@@ -1,6 +1,6 @@
 # Changelog
 
-## [2.1.2] - [2021-06-23]
+## [2.1.2] - 2021-06-23
 ### Added
  - Add a 'versions' test for each extension
 ### Changed
@@ -10,7 +10,7 @@
 
 ---
 
-## [2.1.1] - [2021-06-20]
+## [2.1.1] - 2021-06-20
 
 ### Fixed
  - Add extra path for Ansible extension
