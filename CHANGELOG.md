@@ -1,5 +1,15 @@
 # Changelog
 
+## [2.1.2] - [2021-06-23]
+### Added
+ - Add a 'versions' test for each extension
+### Changed
+ - DRYed some redundant test code into test.sh
+### Fixed
+ - Fixed the docker-compose extension to enable retrieving versions
+
+---
+
 ## [2.1.1] - [2021-06-20]
 
 ### Fixed
@@ -13,24 +23,20 @@
  - Common code from extensions incorporated into clenv functions
  - '-X' option to call internal clenv functions
  - More docs on how extensions work
-
 ### Changed
  - Refactored extension code
  - Refactored test code
-
 ### Fixed
  - GitHub Actions container fixed to run Ansible install
 
 ---
 
 ## [2.0.0] - 2021-06-19
-
 ### Added
  - Add ansible extension
  - Add '-q' mode to silence output
  - Add '-e' option
  - Add '-r' option
-
 ### Changed
  - Apply fewer permissions changes
  - Rename aws-cli extension to aws
@@ -40,7 +46,6 @@
  - Wrapper mode enabled by default; '-W' now disables
  - If version passed to '-E', don't check for version file
  - Updated docs
-
 ### Fixed
  - Fix an indefinite loop
  - Fix a version detection bug
@@ -50,17 +55,14 @@
 
 
 ## [1.3.0] - 2021-06-17
-
 ### Added
  - Test extension and core tests, including a test of the wrapper functionality.
  - GitHub Actions/Workflow to run CI tests on pull requests
-
 ### Changed
  - '-W' wrapper mode now requires an extension name. If the execution function
    is eventually run, that requires the environment name (and optional commands).
  - Each extension's binary file and wrapper names can now be overridden by passing
    *$CLENV_E_BIN_FILE*.
-
 ### Fixed
  - Wrapper mode would result in an infinite loop if one wrapper called another
    wrapper.
@@ -70,7 +72,6 @@
 ---
 
 ## [1.2.0] - 2021-06-16
-
 ### Added
  - `ADDME.md` (feature requests)
  - More documentation of how *Extensions* work
@@ -96,10 +97,8 @@
 ### Added
  - Terraformer extension and test
  - Some docs on the version wrapper functionality
-
 ### Changed
  - Tests are refactored to be a little simpler
  - Renamed project from cliv to clenv
-
 ### Fixed
  - Wrapper functionality should work better now (but still isn't 100% - see FIXME.md)
