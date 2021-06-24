@@ -13,7 +13,9 @@ jobs:
       - name: Checkout git
         uses: actions/checkout@v2
 
-      - name: Test pull-request
+      - name: Run test suite
         uses: ./.github/actions/test-with-docker
         env:
           DEBUG: 1
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
