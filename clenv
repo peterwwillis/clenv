@@ -165,7 +165,7 @@ _ext_versions () {  _clenv_ext_run "versions" ; }
 _ext_versions_gh () {
     [ -n "${GITHUB_TOKEN:-}" ] && CURL_OPTS="${CURL_OPTS:-} -H \"Authorization: token $GITHUB_TOKEN\""
     # Warning: this excludes 'rc' versions
-    next_url="$1"; while [ -n "$next_url" ] ; do output="$(eval curl -ifsSL ${CURL_OPTS} "$next_url")"
+    next_url="$1"; while [ -n "$next_url" ] ; do output="$(eval curl -ifsSL ${CURL_OPTS:-} "$next_url")"
         printf "%s\n" "$output" | awk -F '"' "/\"$2\":/{print \$4}" | sed -e 's/^v//'
         next_url="$(printf "%s\n" "$output" | grep '^link:' \
             | sed -e 's/link: //; s/, /\n/g; s/[<>]//g; s/; rel/ rel/g; s/\(https:\/\/[^ ]\+\) rel="\([a-z]\+\)"/\2 \1/g' \
