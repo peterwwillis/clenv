@@ -6,7 +6,7 @@
 
  - A POSIX shell
  - Standard Unix-y tools (mkdir, env, chmod, basename, etc)
- - `curl` or `wget` (if you use *Extensions*)
+ - `curl` (if you use *Extensions*, which you probably want to)
 
 # Features
  - *Extensions* to automate downloading & installing any application
@@ -21,7 +21,7 @@
    ```bash
    $ sudo curl -fsSL -o /usr/local/bin/clenv https://raw.githubusercontent.com/peterwwillis/clenv/v2.1.2/clenv \
      && sudo chmod +x /usr/local/bin/clenv \
-     && echo "35b919e382070a64c30cefbfe29f306bb2a1ae726c8c11b7506124c1241aca24  /usr/local/bin/clenv" | sha256sum -c \
+     && echo "f1f7f4c6fe0d709d1a3eb38a91c2f9b46e9ab4eced6beaaad9c4ef92b664de40  /usr/local/bin/clenv" | sha256sum -c \
      || { echo "FAILED CHECKSUM: REMOVING clenv" && sudo rm -f /usr/local/bin/clenv ; }
    /usr/local/bin/clenv: OK
    ```
@@ -122,7 +122,7 @@ variable `CLENV_QUIET=1`.
 
 ### Using Extensions
 
-**clenv** will download *Extensions* with `curl` or `wget` from a URL
+**clenv** will download *Extensions* with `curl` from a URL
 `$CLENV_HTTP_PATH/.ext/EXTENSION`. Override *$CLENV_HTTP_PATH* if you want
 to provide your own *Extension* path or URL.
 
