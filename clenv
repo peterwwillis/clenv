@@ -4,7 +4,7 @@
 set -eu
 [ "${DEBUG:-0}" = "1" ] && set -x
 
-CLENV_VER="2.1.2"
+CLENV_VER="2.2.0"
 CLENV_HTTP_PATH="${CLENV_HTTP_PATH:-https://raw.githubusercontent.com/peterwwillis/clenv/v$CLENV_VER}"
 HOME="${HOME:-$(getent passwd $(id -u) | cut -d : -f 6)}"
 export CLENV_DIR="${CLENV_DIR:-$HOME/.clenv}"
@@ -50,9 +50,9 @@ _clenv_ext_install () {
     export CLENV_E_NAME="$ext" CLENV_E_ENVIRON="$environ" CLENV_E_INSTDIR="$CLENV_DIR/$environ"
     if [ "$CLENV_FORCE" = "1" ] || [ ! -e "$CLENV_DIR/.ext/$CLENV_E_NAME" ] ; then
         _echo_err "Installing extention '$CLENV_E_NAME'"
-        if   command -v curl >/dev/null ; then  curl -fsSL -o "$CLENV_DIR/.ext/$CLENV_E_NAME" "$CLENV_HTTP_PATH/.ext/$CLENV_E_NAME"
-        elif command -v wget >/dev/null ; then  wget -O "$CLENV_DIR/.ext/$CLENV_E_NAME" "$CLENV_HTTP_PATH/.ext/$CLENV_E_NAME"
-        else _err "Please install 'curl' or 'wget'." ; fi
+        if   command -v curl >/dev/null ; then  
+            eval curl -fsSL ${CURL_OPTS:-} -o "$CLENV_DIR/.ext/$CLENV_E_NAME" "$CLENV_HTTP_PATH/.ext/$CLENV_E_NAME"
+        else _err "Please install 'curl'." ; fi
         chmod +x "$CLENV_DIR/.ext/$CLENV_E_NAME"
     fi
     [ -z "${CLENV_E_VERSION:-}" ]        && CLENV_E_VERSION="latest"
@@ -158,13 +158,14 @@ _ext_download () {
     if _ext_help_grep "download" ; then _clenv_ext_run "download"
     else 
         mkdir -p "$CLENV_E_INSTDIR/download"
-        curl -fSL "$(_ext_url)" -o "$CLENV_E_INSTDIR/download/$CLENV_E_DLFILE"
+        eval curl -fSL ${CURL_OPTS:-} "$(_ext_url)" -o "$CLENV_E_INSTDIR/download/$CLENV_E_DLFILE"
     fi
 }
 _ext_versions () {  _clenv_ext_run "versions" ; }
 _ext_versions_gh () {
+    [ -n "${GITHUB_TOKEN:-}" ] && CURL_OPTS="${CURL_OPTS:-} -H \"Authorization: token $GITHUB_TOKEN\""
     # Warning: this excludes 'rc' versions
-    next_url="$1"; while [ -n "$next_url" ] ; do output="$(curl -ifsSL "$next_url")"
+    next_url="$1"; while [ -n "$next_url" ] ; do output="$(eval curl -ifsSL ${CURL_OPTS} "$next_url")"
         printf "%s\n" "$output" | awk -F '"' "/\"$2\":/{print \$4}" | sed -e 's/^v//'
         next_url="$(printf "%s\n" "$output" | grep '^link:' \
             | sed -e 's/link: //; s/, /\n/g; s/[<>]//g; s/; rel/ rel/g; s/\(https:\/\/[^ ]\+\) rel="\([a-z]\+\)"/\2 \1/g' \
@@ -176,7 +177,7 @@ _ext_versions_ghreleases () {  _ext_versions_gh "$1/releases" "tag_name" ; }
 _ext_versions_pypi () {
     if command -v python >/dev/null ; then PYTHON="${PYTHON:-python}";
     elif command -v python3 >/dev/null ; then PYTHON="${PYTHON:-python3}"; fi
-    curl -fsSL "$1" | {
+    eval curl -fsSL ${CURL_OPTS:-} "$1" | {
         if command -v $PYTHON >/dev/null && $PYTHON -c 'import sys,json,collections;' ; then
             $PYTHON -c 'import sys,json,collections; j=(json.loads(sys.stdin.read(), object_pairs_hook=collections.OrderedDict))["releases"]; print("\n".join([k for k in j.keys()]))' | tac
         elif command -v jq >/dev/null ; then jq -r '.releases | keys | .[]' | tac
@@ -185,7 +186,7 @@ _ext_versions_pypi () {
     }
 }
 _ext_versions_hc () {
-    curl -fsSL "$1" | grep -e "<a href=\"/$CLENV_E_NAME/" | grep -v alpha | cut -d \" -f 2 | cut -d / -f 3 | sed -e 's/^v//'
+    eval curl -fsSL ${CURL_OPTS:-} "$1" | grep -e "<a href=\"/$CLENV_E_NAME/" | grep -v alpha | cut -d \" -f 2 | cut -d / -f 3 | sed -e 's/^v//'
 }
 
 
