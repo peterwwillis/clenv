@@ -1,5 +1,18 @@
 # Changelog
 
+## [2.2.0] - 2021-06-24
+### Added
+ - Add a `_ext_versions_ghreleases` function to get GitHub releases rather than tags
+### Changed
+ - If the environment variable `GITHUB_TOKEN` was set and is not empty, pass
+   the Authorization: header to `curl` queries when getting tags or revisions
+   from GitHub API. This will fix running into limits when running tests.
+ - Stop checking for `wget`, only use `curl`
+ - Modify the `_ext_versions_pypi` function to attempt to use either python or jq
+   to parse versions via JSON. If that fails, use grep and sed.
+
+---
+
 ## [2.1.2] - 2021-06-23
 ### Added
  - Add a 'versions' test for each extension
