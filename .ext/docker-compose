@@ -15,7 +15,7 @@ export CLENV_E_NAME CLENV_E_REV CLENV_E_BIN_NAME CLENV_E_DLFILE
 
 ### Core functions
 _ext_versions () {  clenv -X versions_ghreleases "$CLENV_E_GHREPOAPI" | grep -v 'rc' ;  }
-_ext_url () { printf "$CLENV_E_BASEURL\n" "$CLENV_E_VERSION" "$CLENV_E_OS" "$CLENV_E_ARCH" ; }
+_ext_url () { printf "$CLENV_E_BASEURL\n" "${CLENV_E_VERSION:-$1}" "${CLENV_E_OS:-$2}" "${CLENV_E_ARCH:-$3}" ; }
 
 
 ### The rest of this doesn't need to be modified
