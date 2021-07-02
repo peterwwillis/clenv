@@ -1,6 +1,6 @@
 # About
 
-**clenv** is a tool to manage and run arbitrary applications in individual environments. Inspired by programs like `rbenv`, `tfenv`, `virtualenv`, etc.
+**clenv** is a tool to manage arbitrary applications (and versions) in individual environments. Inspired by programs like `rbenv`, `tfenv`, `virtualenv`, etc.
 
 # Requirements
 
@@ -123,10 +123,10 @@ Each *Environment* has at least two files:
 
 ### What are Extensions?
 
-*Extensions* are programs that can download and install a program for you. 
 Normally you might use your operating system's package manager to install a 
-program, but sometimes those packages don't exist (or are out of date). 
-*Extensions* sort of fill that void.
+program, but sometimes those packages don't exist or are out of date. 
+*Extensions* fill that void by automating the process of downloading, installing
+and running specific versions of programs.
 
 For convenience, *Extensions* also install a wrapper for your program in a common
 directory (`$HOME/.clenv/.bin/`) that you can add to your `$PATH`. This way you
