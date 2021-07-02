@@ -195,26 +195,6 @@ If you *don't* pass a version with `-E`, and a `.EXTENSION-version` file is foun
 **clenv** will make an *Environment* named `$EXTENSION=$VERSION`. This happens
 automatically whether you're calling `clenv` directly, or using the `~/.clenv/.bin/`
 wrapper. (To disable it completely, use the `-W` option)
-   ```bash
-   $ echo "2.0.50" > .aws-version
-   $ aws
-   clenv: Looking for '/home/vagrant/.aws-version'
-   clenv: Found '/home/vagrant/.aws-version' = '2.0.50'
-   clenv: Creating new environment '/home/vagrant/.clenv/aws=2.0.50'
-   clenv: Loading extension 'aws' version '2.0.50'
-   clenv: aws: Removing temporary download files
-   clenv: aws: Downloading artifact
-     % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
-                                    Dload  Upload   Total   Spent    Left  Speed
-   100 32.2M  100 32.2M    0     0  9667k      0  0:00:03  0:00:03 --:--:-- 9664k
-   clenv: aws: Unpacking to '/home/vagrant/.clenv/aws=2.0.50'
-   clenv: aws: Installing symlink
-   clenv: aws: Testing
-   clenv: aws: Removing temporary download files
-   clenv: aws: Installing wrapper
-   clenv: Executing /home/vagrant/.clenv/aws=2.0.50/bin/aws
-   aws-cli/2.0.50 Python/3.7.3 Linux/4.15.0-135-generic exe/x86_64.ubuntu.18
-   ```
 
 
 ### Manually setting up an *Environment*
