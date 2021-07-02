@@ -1,28 +1,31 @@
 # About
 
-This directory contains the *Extensions* for `clenv`. They are currently
-implemented as shell scripts, but any executable file can be an *Extension*.
-Each *Extension* takes environment variables and command-line arguments and is 
-responsible for installing and running programs in an *Environment*.
+This directory contains the *Extensions* for `clenv`.
 
-However, since many of the functions of *Extensions* are the same, a lot of
-common code is kept in **clenv**. **clenv** will run the *Extension* with a 
-`help` command, and the output of that command tells **clenv** what functions
-the *Extension* provides. If it doesn't provide a function **clenv** wants, then
-**clenv** will attempt to use its own internal funtion.
+They are currently implemented as shell scripts, but any executable file can be
+an *Extension*. Each *Extension* takes environment variables and command-line 
+arguments and is called by **clenv**.
 
-To facilitate this, the *Extension* needs to provide a `variables` command, which
-outputs variables **clenv** might need for these internal functions. The
-*Extension* should also export these variables if it calls **clenv** with the 
-`-X` option. The `-X` option allows calling **clenv** functions that start with
-`_ext_`, and optionally passing arguments to that function.
+*Extensions* can provide their own functions to perform each of the steps of
+downloading, installing, and running programs. However, since most *Extensions*
+perform nearly-identical functions, **clenv** has its own default functions
+to run if the *Extension* doesn't provide them. This allows the *Extension* to
+implement a bare-minimum of functionality (making it easier to make new *Extensions*).
 
-So, in general, *Extensions* should support a range of commands in order to
-install and run programs. But in practice, they can allow **clenv** to use its
-default functions, as long as the right variables are provided from the *Extension*.
+**clenv** will run the *Extension* with a `help` command, and the output of that
+command tells **clenv** what functions the *Extension* provides. The *Extension* 
+must also provide a `variables` command to be used with the **clenv** internal
+functions.
 
-Extensions assume they are running in an *Environment* directory. They will change to
-a `$CLENV_E_INSTDIR` directory (default is `$CLENV_DIR/$CLENV_E_ENVIRON`) first if those environment variables are set.
+The *Extension* should export variables as environment variables if it calls
+**clenv** with the `-X` option. The `-X` option calls **clenv** functions that
+start with `_ext_` (and optionally passes arguments to the function). It's not
+unusual for **clenv** to call an *Extension*, for the *Extension* to then call
+**clenv**, and for **clenv** to again call the *Extension*.
+
+Extensions assume they are running in an *Environment* directory. They will 
+change to a `$CLENV_E_INSTDIR` directory (default: `$CLENV_DIR/$CLENV_E_ENVIRON`)
+first if those environment variables are set.
 
 ---
 
@@ -41,6 +44,8 @@ The following environment variables are defined by *Extensions*:
  - **CLENV_E_DLFILE:** The file name of the file downloaded by the *Extension*. In practice it doesn't really matter what the value is, but the *Extension* controls it just in case. If the extension isn't downloading a file (say, when installing Python modules with `pip`) this isn't used.
  - **CLENV_E_OS:** (optional) The name of an operating system. Only used to specify what file to download, if the program has OS-specific downloads.
  - **CLENV_E_ARCH:** (optional) The name of a CPU architecture. Only used to specify what file to download, if the program has Archtecture-specific downloads.
+ - **CLENV_E_BASEURL:** (optional) The URL used to download artifacts, if downloading them with `curl`. Typically a `printf`-statement to be used with **CLENV_E_BASEURL_ARGS**.
+ - **CLENV_E_BASEURL_ARGS:** (optional) Arguments to pass to **CLENV_E_BASEURL** when creating the url to download an artifact. Can have variables which will be interpolated at run-time.
 
 Extensions may define other variables as well but it won't matter to **clenv**.
 
@@ -59,6 +64,8 @@ The following commands **MAY** be available in the *Extension* (they are called 
  - **clean**
  - **download**
  - **unpack**
+ - **url**
+ - **latest**
  - **install-local**
  - **test**
  - **install-wrapper**
