@@ -101,7 +101,6 @@ _clenv_wrapper () {
     then  cwd="$(pwd)"
           while [ ! "$(dirname "$cwd")" = "/" ]
           do
-                _echo_err "Looking for '$cwd/.$CLENV_E_NAME-version'"
                 if    [ -r "$cwd/.$CLENV_E_NAME-version" ]
                 then  CLENV_E_VERSION="$(cat "$cwd/.$CLENV_E_NAME-version")"
                       _echo_err "Found '$cwd/.$CLENV_E_NAME-version' = '$CLENV_E_VERSION'"
