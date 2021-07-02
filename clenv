@@ -19,6 +19,7 @@ Opts:
 	-h			This screen
 	-i			Clear environment variables. Must be first argument
 	-l [ENVIRON]		List environments
+	-L [EXT]		List remote extensions
 	-n ENVIRON		Create a new environment ENVIRON
 	-E EXT[=V] 	 	Use (optional) version V of extension EXT
 	-e ENVIRON		Use environment ENVIRON
@@ -38,6 +39,17 @@ _clenv_list () {
     do  [ -d "$CLENV_DIR/$(basename "$d")" ] && basename "$d"
     done
 }
+_clenv_listext () {
+    if    [ $# -gt 0 ]
+    then  CLENV_E_NAME="$1"
+          _clenv_ext_download
+          _ext_versions
+    else  [ ! -r "$CLENV_DIR/.CHECKSUMS.s256" -o "$CLENV_FORCE" = "1" ] && eval curl -fsSL ${CURL_OPTS:-} -o "$CLENV_DIR/.CHECKSUMS.s256" "$CLENV_HTTP_PATH/.CHECKSUMS.s256"
+          {    [ -r "$CLENV_DIR/.CHECKSUMS.s256" ] && grep -e "  .ext/.*\.ex$" "$CLENV_DIR/.CHECKSUMS.s256" | sed -e 's/^.*  \.ext\/\([^\/]\+\)\.ex$/\1/'
+               [ -d "$CLENV_DIR/.ext/" ] && { ls "$CLENV_DIR/.ext/" | sed -e 's/\.ex$//g' ; }
+          } | sort | uniq
+    fi
+}
 _clenv_new () {
     _env="$1"; shift
     [ -d "$CLENV_DIR/$_env" ] && [ ! "$CLENV_FORCE" = "1" ] && _err "Environment '$CLENV_DIR/$_env' already exists"
@@ -46,20 +58,20 @@ _clenv_new () {
     printf "%s\n" 'pmunge () { if ! echo "$PATH"|/bin/grep -Eq "(^|:)$1($|:)"; then if [ "${2:-}" = "after" ]; then PATH="$PATH:$1"; else PATH="$1:$PATH"; fi;fi; }' >> "$CLENV_DIR/$_env/.env"
     printf "%s\n" 'pmunge "'"$CLENV_DIR/$_env/bin"'"' >> "$CLENV_DIR/$_env/.env"
 }
-_clenv_ext_run () {  "$CLENV_DIR/.ext/$CLENV_E_NAME" "$@"; }
+_clenv_ext_run () {  "$CLENV_DIR/.ext/$CLENV_E_NAME.ex" "$@"; }
+_clenv_ext_download () {
+    if    [ "$CLENV_FORCE" = "1" ] || [ ! -e "$CLENV_DIR/.ext/$CLENV_E_NAME.ex" ]
+    then  _echo_err "Installing extention '$CLENV_E_NAME'"
+          eval curl -fsSL ${CURL_OPTS:-} -o "$CLENV_DIR/.ext/$CLENV_E_NAME.ex" "$CLENV_HTTP_PATH/.ext/$CLENV_E_NAME.ex"
+          chmod +x "$CLENV_DIR/.ext/$CLENV_E_NAME.ex"
+    fi
+}
 _clenv_ext_install () {
     ext="${1%%=*}" ver="${1#*=}" environ="${2:-}"
     if [ $# -lt 2 -o -z "$environ" ] ; then  shift 1; environ="$ext";        else shift 2;  fi
     if [ ! "$ver" = "$ext" ]         ; then  export CLENV_E_VERSION="$ver";                 fi
     export CLENV_E_NAME="$ext" CLENV_E_ENVIRON="$environ" CLENV_E_INSTDIR="$CLENV_DIR/$environ"
-    if    [ "$CLENV_FORCE" = "1" ] || [ ! -e "$CLENV_DIR/.ext/$CLENV_E_NAME" ]
-    then  _echo_err "Installing extention '$CLENV_E_NAME'"
-          if    command -v curl >/dev/null
-          then  eval curl -fsSL ${CURL_OPTS:-} -o "$CLENV_DIR/.ext/$CLENV_E_NAME" "$CLENV_HTTP_PATH/.ext/$CLENV_E_NAME"
-          else  _err "Please install 'curl'."
-          fi
-          chmod +x "$CLENV_DIR/.ext/$CLENV_E_NAME"
-    fi
+    _clenv_ext_download
     [ -z "${CLENV_E_VERSION:-}" ]        && CLENV_E_VERSION="latest"
     [ "$CLENV_E_VERSION" = "latest" ]    && CLENV_E_VERSION="$(_ext_latest)"
     export CLENV_E_VERSION
@@ -117,21 +129,21 @@ _ext_help_grep () {
 }
 _ext_variables () {  eval $(_clenv_ext_run variables) ;  }
 _ext_test () {
-    _echo_err "$CLENV_E_NAME: Testing"; 
+    _echo_err "$CLENV_E_NAME: Testing"
     if    _ext_help_grep "test"
     then  _clenv_ext_run "test"
     else  "$CLENV_E_INSTDIR/bin/$CLENV_E_BIN_NAME" --version 2>/dev/null 1>/dev/null
     fi
 }
 _ext_clean_install () {
-    _echo_err "$CLENV_E_NAME: Removing '$CLENV_E_INSTDIR'"; 
+    _echo_err "$CLENV_E_NAME: Removing '$CLENV_E_INSTDIR'"
     if    _ext_help_grep "clean-install"
     then  _clenv_ext_run "clean-install"
     else  rm -rf "${CLENV_E_INSTDIR:?}/bin/" "${CLENV_E_INSTDIR:?}/usr/" "${CLENV_E_INSTDIR:?}/.env"
     fi
 }
 _ext_clean () {
-    _echo_err "$CLENV_E_NAME: Removing temporary download files"; 
+    _echo_err "$CLENV_E_NAME: Removing temporary download files"
     if    _ext_help_grep "clean"
     then  _clenv_ext_run "clean"
     else  rm -rf "${CLENV_E_INSTDIR:?}/download/"
@@ -164,7 +176,7 @@ _ext_url () {
     else  eval printf "$CLENV_E_BASEURL\\\n" "$CLENV_E_BASEURL_ARGS"
     fi
 }
-_ext_unpack () { 
+_ext_unpack () {
     _echo_err "$CLENV_E_NAME: Unpacking to '$CLENV_E_INSTDIR'"
     if    _ext_help_grep "unpack"
     then  _clenv_ext_run "unpack"
@@ -194,7 +206,7 @@ _ext_versions_gh () {
     [ -n "${GITHUB_TOKEN:-}" ] && CURL_OPTS="${CURL_OPTS:-} -H \"Authorization: token $GITHUB_TOKEN\""
     next_url="$1"
     while [ -n "$next_url" ]
-    do     
+    do
           output="$(eval curl -ifsSL ${CURL_OPTS:-} "$next_url")"
           printf "%s\n" "$output" | awk -F '"' "/\"$2\":/{print \$4}" | sed -e 's/^v//'
           next_url="$(printf "%s\n" "$output" | grep '^link:' \
@@ -230,11 +242,12 @@ fi
 [ "$1" = "-i" ] && shift 1 && exec env -i "$0" "$@"
 
 CLENV_FORCE=0 CLENV_QUIET="${CLENV_QUIET:-0}"
-while getopts "nlE:e:r:X:WfVq" args
-do  
+while getopts "nlLE:e:r:X:WfVq" args
+do
       case "$args" in
           n)  CLENV_NEW=1 ;;
           l)  CLENV_LIST=1 ;;
+          L)  CLENV_LISTEXT=1 ;;
           E)  CLENV_E_NAME="$OPTARG" ;;
           e)  CLENV_E_ENVIRON="$OPTARG" ;;
           r)  CLENV_REQUIRES="$OPTARG" ;;
@@ -258,11 +271,14 @@ elif  [ ${CLENV_NEW:-0} -eq 1 ]
 then  _clenv_new "$@"
 
 elif  [ ${CLENV_LIST:-0} -eq 1 ]
-then
-      if    [ $# -gt 0 ]
+then  if    [ $# -gt 0 ]
       then  _clenv_list "$@"
       else  _clenv_list "$CLENV_DIR"/*
       fi
+
+elif  [ ${CLENV_LISTEXT:-0} -eq 1 ]
+then  _clenv_listext "$@"
+
 
 elif  [ -n "${CLENV_REQUIRES:-}" ]
 then  while read -r LINE ; do $0 -E "$LINE" ; done < "$CLENV_REQUIRES"

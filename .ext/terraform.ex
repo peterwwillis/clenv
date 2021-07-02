@@ -16,7 +16,7 @@ CLENV_E_BASEURL_ARGS='"${CLENV_E_VERSION}" "${CLENV_E_VERSION}" "${CLENV_E_OS}" 
 export CLENV_E_NAME CLENV_E_REV CLENV_E_BIN_NAME CLENV_E_DLFILE
 
 ### Extension-specific functions
-_ext_versions () {  clenv -E "$CLENV_E_NAME" -X versions_hc "$CLENV_E_HCURL" ;  }
+_ext_versions () {  clenv -E "$CLENV_E_NAME" -X versions_hc "$CLENV_E_HCURL" | grep -v -e "-" ;  }
 _ext_unpack () {  clenv -E "$CLENV_E_NAME" -X unpack_unzip "/usr/bin" ;   }
 
 ### The rest of this doesn't need to be modified
