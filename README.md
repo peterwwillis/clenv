@@ -75,15 +75,7 @@
            -q                      Quiet mode
    ```
 
-Available extensions:
- - **aws**
- - **ansible**
- - **docker-compose**
- - **packer**
- - **saml2aws**
- - **terraform**
- - **terraformer**
- - **yq**
+Available extensions: **ansible** - **aws** - **docker-compose** - **packer** - **saml2aws** - **terraform-docs** - **terraformer** - **terraform** - **terragrunt** - **test** - **tflint** - **tfsec** - **yq**
 
 (Don't see an extension you want? Check out the [.ext/](./.ext/) directory,
 cut me a Pull Request, I'll merge it!)
