@@ -1,6 +1,7 @@
 # About
 
-This directory contains the *Extensions* for `clenv`.
+This directory contains the *Extensions* for `clenv`. They have file extension 
+'.ex'.
 
 They are currently implemented as shell scripts, but any executable file can be
 an *Extension*. Each *Extension* takes environment variables and command-line 
