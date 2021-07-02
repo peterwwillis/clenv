@@ -12,7 +12,7 @@
  - *Extensions* to automate downloading & installing any application
  - Pin versions with `.EXTENSION-version` files
  - Wrappers in `~/.clenv/.bin` allow your shell to automatically find installed applications
- - Small codebase (~220 lines shell script for `clenv`)
+ - Small codebase
  - Customize environments to your needs
 
 # Quick start
@@ -21,7 +21,7 @@
    ```bash
    $ sudo curl -fsSL -o /usr/local/bin/clenv https://raw.githubusercontent.com/peterwwillis/clenv/v2.2.0/clenv \
      && sudo chmod +x /usr/local/bin/clenv \
-     && echo "6bc5e3ce1bf857940b63189c19096e780bf083159bd74880bbf25f873cf55255  /usr/local/bin/clenv" | sha256sum -c \
+     && echo "2c549b44a878445a5b24f8275252d2c1c8f2bcb871aca1e28a9fd8efe43e061e  /usr/local/bin/clenv" | sha256sum -c \
      || { echo "FAILED CHECKSUM: REMOVING clenv" && sudo rm -f /usr/local/bin/clenv ; }
    /usr/local/bin/clenv: OK
    ```

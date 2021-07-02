@@ -1,5 +1,16 @@
 # Changelog
 
+## [2.3.0] - 2021-07-02
+### Added
+ - Added new extensions: terragrunt, tfsec, tflint, terraform-docs
+ - Added new variable *CLENV_E_BASEURL_ARGS* to be used by new internal extension
+   function `_ext_url` (no longer need a dedicated url function in each extension)
+### Changed
+ - Extensions' url command can take options now (to be run outside of clenv)
+ - Reformatted some code just to look pretty
+
+---
+
 ## [2.2.0] - 2021-06-24
 ### Added
  - Add a `_ext_versions_ghreleases` function to get GitHub releases rather than tags
