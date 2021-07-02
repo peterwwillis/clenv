@@ -5,9 +5,13 @@
  - Added new extensions: terragrunt, tfsec, tflint, terraform-docs
  - Added new variable *CLENV_E_BASEURL_ARGS* to be used by new internal extension
    function `_ext_url` (no longer need a dedicated url function in each extension)
+ - Add a '-L' option to list extensions (& versions of extensions)
+ - Add a .CHECKSUMS.s256 manifest with sha256 checksums of all files
+ - Add a release.sh script to help with release process
 ### Changed
  - Extensions' url command can take options now (to be run outside of clenv)
  - Reformatted some code just to look pretty
+ - *Extensions* now use a '.ex' file extension
 
 ---
 
