@@ -12,7 +12,7 @@
  - *Extensions* to automate downloading & installing any application
  - Pin versions with `.EXTENSION-version` files
  - Wrappers in `~/.clenv/.bin` allow your shell to automatically find installed applications
- - Small codebase
+ - Small codebase, minimal dependencies
  - Customize environments to your needs
 
 # Quick start
@@ -30,6 +30,7 @@
    ```bash
    vagrant@devbox:~$ packer --version
    bash: packer: command not found
+   
    vagrant@devbox:~$ clenv packer --version
    clenv: Looking for '/home/vagrant/.packer-version'
    clenv: Creating new environment '/home/vagrant/.clenv/packer'
@@ -46,10 +47,35 @@
    clenv: packer: Installing wrapper
    clenv: Executing /home/vagrant/.clenv/packer/bin/packer
    1.7.3
+
    vagrant@devbox:~$ export PATH=$HOME/.clenv/.bin:$PATH
+
    vagrant@devbox:~$ packer --version
    clenv: Looking for '/home/vagrant/.packer-version'
    clenv: Executing /home/vagrant/.clenv/packer/bin/packer
+   1.7.3
+   ```
+
+3. Pin the version of the *Extension*
+   ```bash
+   vagrant@devbox:~$ echo "1.7.3" > .packer-version
+   vagrant@devbox:~$ packer --version
+   clenv: Looking for '/home/vagrant/.packer-version'
+   clenv: Found '/home/vagrant/.packer-version' = '1.7.3'
+   clenv: Installing extention 'packer'
+   clenv: Creating new environment '/home/vagrant/.clenv/packer=1.7.3'
+   clenv: Loading extension 'packer' version '1.7.3'
+   clenv: packer: Removing temporary download files
+   clenv: packer: Downloading artifact
+     % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                    Dload  Upload   Total   Spent    Left  Speed
+   100 30.2M  100 30.2M    0     0  8123k      0  0:00:03  0:00:03 --:--:-- 8121k
+   clenv: packer: Unpacking to '/home/vagrant/.clenv/packer=1.7.3'
+   clenv: packer: Installing locally
+   clenv: packer: Testing
+   clenv: packer: Removing temporary download files
+   clenv: packer: Installing wrapper
+   clenv: Executing /home/vagrant/.clenv/packer=1.7.3/bin/packer
    1.7.3
    ```
 
@@ -75,41 +101,62 @@
            -q                      Quiet mode
    ```
 
-Available extensions: **ansible** - **aws** - **docker-compose** - **packer** - **saml2aws** - **terraform-docs** - **terraformer** - **terraform** - **terragrunt** - **tflint** - **tfsec** - **yq**
+Available *Extensions*: **ansible** - **aws** - **docker-compose** - **packer** - **saml2aws** - **terraform-docs** - **terraformer** - **terraform** - **terragrunt** - **tflint** - **tfsec** - **yq**
 
-(Don't see an extension you want? Check out the [.ext/](./.ext/) directory,
+(Don't see an *Extension* you want? Check out the [.ext/](./.ext/) directory,
 cut me a Pull Request, I'll merge it!)
 
 ---
 
 ## How it works
 
- - When **clenv** is run with a `CMD`, it looks for an *Environment* with the same name. If found, it loads that *Environment*.
- - If the *Environment* is not found, **clenv** looks for an *Extension* of the same name. If found, it installs an application in a new *Environment*.
- - If no *Extension* is found, **clenv** dies.
+### What are Environments?
+
+*Environments* are basically just directories with a couple files in them. They
+keep some configuration, and any programs you install in them. **clenv** loads 
+the configuration and runs your program.
 
 *Environments* are kept in sub-directories of *$CLENV_DIR* (default: *$HOME/.clenv/*).
 Each *Environment* has at least two files:
  - `bin/` : applications (or symlinks to applications) installed here.
  - `.env` : A shell script to set environment variables at run time.
 
-Applications are automatically installed in *Environments* by using *Extensions*.
-*Extensions* are programs that look up the version of an application, download
-it, install it in an *Environment*, and set up a wrapper in `~/.clenv/.bin/`
-pointing to the *Environment*. Add this directory to your *$PATH* to run those
-wrappers automatically.
+### What are Extensions?
 
-Once an *Environment* is found, the `.env` is loaded from it, the *$PATH* environment
-variable is changed to include the `bin/` directory, and `CMD` and any arguments
-are executed.
+*Extensions* are programs that can download and install a program for you. 
+Normally you might use your operating system's package manager to install a 
+program, but sometimes those packages don't exist (or are out of date). 
+*Extensions* sort of fill that void.
+
+For convenience, *Extensions* also install a wrapper for your program in a common
+directory (`$HOME/.clenv/.bin/`) that you can add to your `$PATH`. This way you
+can automatically run the right version of your program.
 
 If a file `.EXTENSION-version` exists in the current or a parent directory, the
 contents of the file is the version of an *Extension* to install. If you specify
 a version in the `-E` option, this does not happen, and the `-W` option disable
 it entirely.
 
-To silence the normal output of **clenv**, pass the `-q` option, or set environment
-variable `CLENV_QUIET=1`.
+### How do I install and run a program?
+
+When you run a command like `clenv CMD`, this happens:
+
+ 1. **clenv** looks for an *Environment* with the same name (`$CLENV_DIR/CMD`).
+    If found, it will load that *Environment* configuration (`$CLENV_DIR/CMD/.env`).
+    Then it will try to run program `CMD`.
+
+ 2. If the *Environment* was not found, **clenv** looks for an *Extension* of the
+    same name (`$CLENV_HTTP_PATH/.ext/CMD.ex`). If found, it downloads the 
+    *Extension*, uses it to install `CMD` in an *Environment* of the same name,
+    then follows step #1.
+
+ 3. If no *Extension* or *Environment* is found, **clenv** dies.
+    ```bash
+    $ clenv foobar
+    clenv: Looking for '/home/vagrant/.foobar-version'
+    clenv: Installing extention 'foobar'
+    curl: (22) The requested URL returned error: 404
+    ```
 
 
 ### Using Extensions
@@ -172,23 +219,26 @@ wrapper. (To disable it completely, use the `-W` option)
 
 ### Manually setting up an *Environment*
 
+You actually don't need to use *Extensions* at all to take advantage of **clenv**.
+You can manually set up an *Environment* and call programs within it.
+
 1. Create a new *Environment*. For this example we'll call it just "aws",
    but you could also give it a more descriptive name, like "aws=2.0.50".
    ```bash
-   $ clenv -n aws
+   $ clenv -n aws-foo
    ```
 
 2. Manually install an application (like `aws`) in the new `bin/` directory of the new *Environment*
-   (`~/.clenv/aws/bin/`).
+   (`~/.clenv/aws-foo/bin/`).
 
 3. If you want, you can customize the environment used by editing the
-   `~/.clenv/aws/.env` file. `clenv` loads this as a shell script before running
+   `~/.clenv/aws-foo/.env` file. `clenv` loads this as a shell script before running
    your application.
 
 4. Run your application with `clenv`
    ```bash
-   $ clenv -e aws aws --version
-   clenv: Executing /home/vagrant/.clenv/aws/bin/aws
+   $ clenv -e aws-foo aws --version
+   clenv: Executing /home/vagrant/.clenv/aws-foo/bin/aws
    aws-cli/2.0.50 Python/3.7.3 Linux/4.15.0-135-generic exe/x86_64.ubuntu.18
    ```
 
@@ -198,8 +248,48 @@ Let's see the *Environment*s we've created so far:
    ```bash
    $ clenv -l
    aws
+   aws-foo
    aws=2.0.50
    ```
+
+### List extensions
+
+Want to know what extensions are available?
+   ```bash
+   $ clenv -L
+   ansible
+   aws
+   docker-compose
+   packer
+   saml2aws
+   terraform
+   terraform-docs
+   terraformer
+   terragrunt
+   test
+   tflint
+   tfsec
+   yq
+   ```
+How about the available versions of an extension?
+   ```bash
+   $ clenv -L terraform | head
+   1.0.1
+   1.0.0
+   0.15.5
+   0.15.4
+   0.15.3
+   0.15.2
+   0.15.1
+   0.15.0
+   0.14.11
+   0.14.10
+   ```
+
+### Be quiet
+
+To silence the normal output of **clenv**, pass the `-q` option, or set environment
+variable `CLENV_QUIET=1`.
 
 ---
 
