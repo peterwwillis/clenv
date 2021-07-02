@@ -32,7 +32,6 @@
    bash: packer: command not found
    
    vagrant@devbox:~$ clenv packer --version
-   clenv: Looking for '/home/vagrant/.packer-version'
    clenv: Creating new environment '/home/vagrant/.clenv/packer'
    clenv: Loading extension 'packer' version '1.7.3'
    clenv: packer: Removing temporary download files
@@ -51,7 +50,6 @@
    vagrant@devbox:~$ export PATH=$HOME/.clenv/.bin:$PATH
 
    vagrant@devbox:~$ packer --version
-   clenv: Looking for '/home/vagrant/.packer-version'
    clenv: Executing /home/vagrant/.clenv/packer/bin/packer
    1.7.3
    ```
@@ -60,7 +58,6 @@
    ```bash
    vagrant@devbox:~$ echo "1.7.3" > .packer-version
    vagrant@devbox:~$ packer --version
-   clenv: Looking for '/home/vagrant/.packer-version'
    clenv: Found '/home/vagrant/.packer-version' = '1.7.3'
    clenv: Installing extention 'packer'
    clenv: Creating new environment '/home/vagrant/.clenv/packer=1.7.3'
@@ -153,7 +150,6 @@ When you run a command like `clenv CMD`, this happens:
  3. If no *Extension* or *Environment* is found, **clenv** dies.
     ```bash
     $ clenv foobar
-    clenv: Looking for '/home/vagrant/.foobar-version'
     clenv: Installing extention 'foobar'
     curl: (22) The requested URL returned error: 404
     ```
