@@ -2,7 +2,6 @@
 [ "${DEBUG:-0}" = "1" ] && set -x
 set -u
 
-
 ### Common Tests for Extensions
 _t_ext_install () {
     # Test extension install
