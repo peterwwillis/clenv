@@ -9,7 +9,7 @@
  - `curl` (if you use *Extensions*, which you probably want to)
 
 # Features
- - *Extensions* to automate downloading & installing any application
+ - *Extensions* to automate downloading & installing any application (**ansible**, **aws**, **docker-compose**, **packer**, **saml2aws**, **terraform-docs**, **terraformer**, **terraform**, **terragrunt**, **tflint**, **tfsec**, **yq**)
  - Pin versions with `.EXTENSION-version` files
  - Wrappers in `~/.clenv/.bin` allow your shell to automatically find installed applications
  - Small codebase, minimal dependencies
@@ -98,11 +98,6 @@
            -q                      Quiet mode
    ```
 
-Available *Extensions*: **ansible** - **aws** - **docker-compose** - **packer** - **saml2aws** - **terraform-docs** - **terraformer** - **terraform** - **terragrunt** - **tflint** - **tfsec** - **yq**
-
-(Don't see an *Extension* you want? Check out the [.ext/](./.ext/) directory,
-cut me a Pull Request, I'll merge it!)
-
 ---
 
 ## How it works
@@ -133,6 +128,9 @@ If a file `.EXTENSION-version` exists in the current or a parent directory, the
 contents of the file is the version of an *Extension* to install. If you specify
 a version in the `-E` option, this does not happen, and the `-W` option disable
 it entirely.
+
+(Don't see an *Extension* you want? Check out the [.ext/](./.ext/) directory,
+cut me a Pull Request, I'll merge it!)
 
 ### How do I install and run a program?
 
