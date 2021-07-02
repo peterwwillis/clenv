@@ -52,13 +52,13 @@ _clenv_ext_install () {
     if [ $# -lt 2 -o -z "$environ" ] ; then  shift 1; environ="$ext";        else shift 2;  fi
     if [ ! "$ver" = "$ext" ]         ; then  export CLENV_E_VERSION="$ver";                 fi
     export CLENV_E_NAME="$ext" CLENV_E_ENVIRON="$environ" CLENV_E_INSTDIR="$CLENV_DIR/$environ"
-    if [ "$CLENV_FORCE" = "1" ] || [ ! -e "$CLENV_DIR/.ext/$CLENV_E_NAME" ] ; then
-        _echo_err "Installing extention '$CLENV_E_NAME'"
-        if    command -v curl >/dev/null
-        then  eval curl -fsSL ${CURL_OPTS:-} -o "$CLENV_DIR/.ext/$CLENV_E_NAME" "$CLENV_HTTP_PATH/.ext/$CLENV_E_NAME"
-        else  _err "Please install 'curl'."
-        fi
-        chmod +x "$CLENV_DIR/.ext/$CLENV_E_NAME"
+    if    [ "$CLENV_FORCE" = "1" ] || [ ! -e "$CLENV_DIR/.ext/$CLENV_E_NAME" ]
+    then  _echo_err "Installing extention '$CLENV_E_NAME'"
+          if    command -v curl >/dev/null
+          then  eval curl -fsSL ${CURL_OPTS:-} -o "$CLENV_DIR/.ext/$CLENV_E_NAME" "$CLENV_HTTP_PATH/.ext/$CLENV_E_NAME"
+          else  _err "Please install 'curl'."
+          fi
+          chmod +x "$CLENV_DIR/.ext/$CLENV_E_NAME"
     fi
     [ -z "${CLENV_E_VERSION:-}" ]        && CLENV_E_VERSION="latest"
     [ "$CLENV_E_VERSION" = "latest" ]    && CLENV_E_VERSION="$(_ext_latest)"
@@ -85,20 +85,20 @@ _clenv_wrapper () {
     CLENV_E_NAME="${CLENV_E_NAME:-$1}" # default extension name to environment name
     ext="${CLENV_E_NAME%%=*}" ver="${CLENV_E_NAME#*=}"
     [ "$ver" = "$ext" ] || CLENV_E_VERSION="$ver"
-    if [ -z "${CLENV_E_VERSION:-}" ] ; then
-        cwd="$(pwd)"
-        while [ ! "$(dirname "$cwd")" = "/" ]
-        do
-              _echo_err "Looking for '$cwd/.$CLENV_E_NAME-version'"
-              if    [ -r "$cwd/.$CLENV_E_NAME-version" ]
-              then  CLENV_E_VERSION="$(cat "$cwd/.$CLENV_E_NAME-version")"
-                    _echo_err "Found '$cwd/.$CLENV_E_NAME-version' = '$CLENV_E_VERSION'"
-                    break
-              else  cwd="$(dirname "$cwd")"
-              fi
-        done
-        # Wrapper version detection makes an environment of extension name + version
-        [ -n "${CLENV_E_VERSION:-}" ] && CLENV_E_ENVIRON="$CLENV_E_NAME=$CLENV_E_VERSION"
+    if    [ -z "${CLENV_E_VERSION:-}" ]
+    then  cwd="$(pwd)"
+          while [ ! "$(dirname "$cwd")" = "/" ]
+          do
+                _echo_err "Looking for '$cwd/.$CLENV_E_NAME-version'"
+                if    [ -r "$cwd/.$CLENV_E_NAME-version" ]
+                then  CLENV_E_VERSION="$(cat "$cwd/.$CLENV_E_NAME-version")"
+                      _echo_err "Found '$cwd/.$CLENV_E_NAME-version' = '$CLENV_E_VERSION'"
+                      break
+                else  cwd="$(dirname "$cwd")"
+                fi
+          done
+          # Wrapper version detection makes an environment of extension name + version
+          [ -n "${CLENV_E_VERSION:-}" ] && CLENV_E_ENVIRON="$CLENV_E_NAME=$CLENV_E_VERSION"
     fi
     # Try to auto-install extensions in case a new/different version is needed
     _clenv_list "$CLENV_E_ENVIRON" >/dev/null || _clenv_ext_install "$CLENV_E_NAME" "$CLENV_E_ENVIRON"
@@ -118,19 +118,22 @@ _ext_help_grep () {
 _ext_variables () {  eval $(_clenv_ext_run variables) ;  }
 _ext_test () {
     _echo_err "$CLENV_E_NAME: Testing"; 
-    if    _ext_help_grep "test"; then  _clenv_ext_run "test"
+    if    _ext_help_grep "test"
+    then  _clenv_ext_run "test"
     else  "$CLENV_E_INSTDIR/bin/$CLENV_E_BIN_NAME" --version 2>/dev/null 1>/dev/null
     fi
 }
 _ext_clean_install () {
     _echo_err "$CLENV_E_NAME: Removing '$CLENV_E_INSTDIR'"; 
-    if    _ext_help_grep "clean-install"; then _clenv_ext_run "clean-install"
+    if    _ext_help_grep "clean-install"
+    then  _clenv_ext_run "clean-install"
     else  rm -rf "${CLENV_E_INSTDIR:?}/bin/" "${CLENV_E_INSTDIR:?}/usr/" "${CLENV_E_INSTDIR:?}/.env"
     fi
 }
 _ext_clean () {
     _echo_err "$CLENV_E_NAME: Removing temporary download files"; 
-    if    _ext_help_grep "clean"; then _clenv_ext_run "clean"
+    if    _ext_help_grep "clean"
+    then  _clenv_ext_run "clean"
     else  rm -rf "${CLENV_E_INSTDIR:?}/download/"
     fi
 }
@@ -147,8 +150,8 @@ _ext_install_wrapper () {
     if    _ext_help_grep "install-wrapper"
     then  _clenv_ext_run "install-wrapper"
     else  [ -d "$CLENV_DIR/.bin" ] || mkdir -p "$CLENV_DIR/.bin"
-          if [ ! -e "$CLENV_DIR/.bin/$CLENV_E_BIN_NAME" -o "${CLENV_FORCE:-0}" = "1" ] ; then
-              printf "#!/usr/bin/env sh\nexec clenv -E $CLENV_E_NAME -e $CLENV_E_ENVIRON $CLENV_E_BIN_NAME \"\$@\"\n" > "$CLENV_DIR/.bin/$CLENV_E_BIN_NAME"
+          if    [ ! -e "$CLENV_DIR/.bin/$CLENV_E_BIN_NAME" -o "${CLENV_FORCE:-0}" = "1" ]
+          then  printf "#!/usr/bin/env sh\nexec clenv -E $CLENV_E_NAME -e $CLENV_E_ENVIRON $CLENV_E_BIN_NAME \"\$@\"\n" > "$CLENV_DIR/.bin/$CLENV_E_BIN_NAME"
           fi
           [ -x "$CLENV_DIR/.bin/$CLENV_E_BIN_NAME" ] || chmod +x "$CLENV_DIR/.bin/$CLENV_E_BIN_NAME"
     fi
@@ -208,7 +211,8 @@ _ext_versions_pypi () {
     {
         if    command -v $PYTHON >/dev/null && $PYTHON -c 'import sys,json,collections;'
         then  $PYTHON -c 'import sys,json,collections; j=(json.loads(sys.stdin.read(), object_pairs_hook=collections.OrderedDict))["releases"]; print("\n".join([k for k in j.keys()]))' | tac
-        elif  command -v jq >/dev/null ; then jq -r '.releases | keys | .[]' | tac
+        elif  command -v jq >/dev/null
+        then  jq -r '.releases | keys | .[]' | tac
         else  grep -e '"[0-9]\+.*: \[' | sed -e 's/^[[:space:]]\+"\(.*\)": \[/\1/g' | tac
         fi;
     }
@@ -219,9 +223,8 @@ _ext_versions_hc () {
 
 
 ### Main program
-
-if [ $# -lt 1 ] ; then
-    _usage
+if    [ $# -lt 1 ]
+then  _usage
 fi
 
 [ "$1" = "-i" ] && shift 1 && exec env -i "$0" "$@"
