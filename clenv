@@ -61,8 +61,7 @@ _clenv_new () {
 _clenv_ext_run () {  "$CLENV_DIR/.ext/$CLENV_E_NAME.ex" "$@"; }
 _clenv_ext_download () {
     if    [ "$CLENV_FORCE" = "1" ] || [ ! -e "$CLENV_DIR/.ext/$CLENV_E_NAME.ex" ]
-    then  _echo_err "Installing extention '$CLENV_E_NAME'"
-          eval curl -fsSL ${CURL_OPTS:-} -o "$CLENV_DIR/.ext/$CLENV_E_NAME.ex" "$CLENV_HTTP_PATH/.ext/$CLENV_E_NAME.ex"
+    then  eval curl -fsSL ${CURL_OPTS:-} -o "$CLENV_DIR/.ext/$CLENV_E_NAME.ex" "$CLENV_HTTP_PATH/.ext/$CLENV_E_NAME.ex"
           chmod +x "$CLENV_DIR/.ext/$CLENV_E_NAME.ex"
     fi
 }
@@ -71,6 +70,7 @@ _clenv_ext_install () {
     if [ $# -lt 2 -o -z "$environ" ] ; then  shift 1; environ="$ext";        else shift 2;  fi
     if [ ! "$ver" = "$ext" ]         ; then  export CLENV_E_VERSION="$ver";                 fi
     export CLENV_E_NAME="$ext" CLENV_E_ENVIRON="$environ" CLENV_E_INSTDIR="$CLENV_DIR/$environ"
+    _echo_err "Installing extention '$CLENV_E_NAME'"
     _clenv_ext_download
     [ -z "${CLENV_E_VERSION:-}" ]        && CLENV_E_VERSION="latest"
     [ "$CLENV_E_VERSION" = "latest" ]    && CLENV_E_VERSION="$(_ext_latest)"
