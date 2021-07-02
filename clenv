@@ -279,7 +279,6 @@ then  if    [ $# -gt 0 ]
 elif  [ ${CLENV_LISTEXT:-0} -eq 1 ]
 then  _clenv_listext "$@"
 
-
 elif  [ -n "${CLENV_REQUIRES:-}" ]
 then  while read -r LINE ; do $0 -E "$LINE" ; done < "$CLENV_REQUIRES"
 
