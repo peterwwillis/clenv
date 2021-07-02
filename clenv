@@ -4,7 +4,7 @@
 set -eu
 [ "${DEBUG:-0}" = "1" ] && set -x
 
-CLENV_VER="2.2.0"
+CLENV_VER="2.3.0"
 CLENV_HTTP_PATH="${CLENV_HTTP_PATH:-https://raw.githubusercontent.com/peterwwillis/clenv/v$CLENV_VER}"
 HOME="${HOME:-$(getent passwd $(id -u) | cut -d : -f 6)}"
 export CLENV_DIR="${CLENV_DIR:-$HOME/.clenv}"

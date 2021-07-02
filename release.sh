@@ -9,6 +9,7 @@ _bumpver () {
     checksum="$(sha256sum clenv | awk '{print $1}')"
     git checkout -- README.md
     sed -i -e "s/^\([[:space:]]\+&& echo \"\)[0-9a-f]\+  /\1$checksum  /" README.md
+    sed -i -e "s/\(raw\.githubusercontent\.com\/peterwwillis\/clenv\/v\)[0-9.]\+\(\/clenv\)/\1$new_ver\2/g" README.md
 }
 _checksums () {
     sha256sum clenv .ext/*.ex > .CHECKSUMS.s256
@@ -21,6 +22,7 @@ Usage: $0 CMD [..]
 Commands:
   bumpver VERSION
   checksums
+  all VERSION
 EOUSAGE
     exit 1
 fi
@@ -29,4 +31,5 @@ cmd="$1"; shift
 case "$cmd" in
     bumpver)    _bumpver "$@" ;;
     checksums)  _checksums "$@" ;;
+    all)        _bumpver "$1"; _checksums ;;
 esac
