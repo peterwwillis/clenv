@@ -10,7 +10,7 @@ _bumpver () {
     git checkout -- README.md
     sed -i -e "s/^\([[:space:]]\+&& echo \"\)[0-9a-f]\+  /\1$checksum  /" README.md
     sed -i -e "s/\(raw\.githubusercontent\.com\/peterwwillis\/clenv\/v\)[0-9.]\+\(\/clenv\)/\1$new_ver\2/g" README.md
-    extensions="$(ls .ext/*.ex | sed -e 's/^\.ext\/\(.\+\)\.ex$/**\1** - /g' | xargs | sed -e 's/ -$//')"
+    extensions="$(ls .ext/*.ex | grep -ve "test\.ex" | sed -e 's/^\.ext\/\(.\+\)\.ex$/**\1** - /g' | xargs | sed -e 's/ -$//')"
     sed -i -e "s/^\(Available extensions: \).*/\1$extensions/" README.md
 }
 _checksums () {
