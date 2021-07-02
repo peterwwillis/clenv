@@ -32,23 +32,27 @@ first if those environment variables are set.
 
 ## Environment Variables
 
-The following environment variables are passed by `clenv` to *Extensions*:
- - **CLENV_DIR:** The directory which contains the user's `clenv` install files (default: `$HOME/.clenv/`)
- - **CLENV_E_NAME:** The name of the *Extension*.
- - **CLENV_E_ENVIRON:** The *Environment* that the program's files will be installed into.
- - **CLENV_E_INSTDIR:** The path into which the program's files should be installed. `clenv` passes this as `$HOME/.clenv/$CLENV_E_ENVIRON`.
- - **CLENV_E_VERSION:** The version of the program to install.
+Passed from `clenv` to *Extensions*:
 
-The following environment variables are defined by *Extensions*:
- - **CLENV_E_REV:** The revision (version) of the extension. Different than the version of the program it installs.
- - **CLENV_E_BIN_NAME:** The name of the 'binary' (or whatever program) is being installed by the *Extension*. Used by various functions, basically to install wrappers and install files and such. If an extension is installing more than one program into the *Environment*, the *Extension* will probably need to implement its own internal functions (not using the **clenv** internal ones), and this variable wouldn't be used.
- - **CLENV_E_DLFILE:** The file name of the file downloaded by the *Extension*. In practice it doesn't really matter what the value is, but the *Extension* controls it just in case. If the extension isn't downloading a file (say, when installing Python modules with `pip`) this isn't used.
- - **CLENV_E_OS:** (optional) The name of an operating system. Only used to specify what file to download, if the program has OS-specific downloads.
- - **CLENV_E_ARCH:** (optional) The name of a CPU architecture. Only used to specify what file to download, if the program has Archtecture-specific downloads.
- - **CLENV_E_BASEURL:** (optional) The URL used to download artifacts, if downloading them with `curl`. Typically a `printf`-statement to be used with **CLENV_E_BASEURL_ARGS**.
- - **CLENV_E_BASEURL_ARGS:** (optional) Arguments to pass to **CLENV_E_BASEURL** when creating the url to download an artifact. Can have variables which will be interpolated at run-time.
+| Name | Description |
+  --- | ---
+| **CLENV_DIR**         | The directory which contains the user's `clenv` install files (default: `$HOME/.clenv/`) |
+| **CLENV_E_NAME**      | The name of the *Extension*. |
+| **CLENV_E_ENVIRON**   | The *Environment* that the program's files will be installed into. |
+| **CLENV_E_INSTDIR**   | The path into which the program's files should be installed. `clenv` passes this as `$HOME/.clenv/$CLENV_E_ENVIRON`. |
+| **CLENV_E_VERSION**   | The version of the program to install. |
 
-Extensions may define other variables as well but it won't matter to **clenv**.
+Defined by *Extensions*:
+
+| Name | Description |
+  --- | ---
+| **CLENV_E_REV**       | The revision (version) of the extension. Different than the version of the program it installs. |
+| **CLENV_E_BIN_NAME**  | The name of the 'binary' (or whatever program) is being installed by the *Extension*. Used by various functions, basically to install wrappers and install files and such. If an extension is installing more than one program into the *Environment*, the *Extension* will probably need to implement its own internal functions (not using the **clenv** internal ones), and this variable wouldn't be used. |
+| **CLENV_E_DLFILE**    | The file name of the file downloaded by the *Extension*. In practice it doesn't really matter what the value is, but the *Extension* controls it just in case. If the extension isn't downloading a file (say, when installing Python modules with `pip`) this isn't used. |
+| **CLENV_E_OS**        | (optional) The name of an operating system. Only used to specify what file to download, if the program has OS-specific downloads. |
+| **CLENV_E_ARCH**      | (optional) The name of a CPU architecture. Only used to specify what file to download, if the program has Archtecture-specific downloads. |
+| **CLENV_E_BASEURL**   | (optional) The URL used to download artifacts, if downloading them with `curl`. Typically a `printf`-statement to be used with **CLENV_E_BASEURL_ARGS**. |
+| **CLENV_E_BASEURL_ARGS** | (optional) Arguments to pass to **CLENV_E_BASEURL** when creating the url to download an artifact. Can have variables which will be interpolated at run-time. |
 
 ---
 
@@ -83,7 +87,6 @@ make shellcheck
 
 ## Local testing
 Use this method to manually test an extension in the current Git working directory.
-Example: 
 ```bash
-DEBUG=1 CLENV_HTTP_PATH=file://`pwd`/.. clenv -E aws-cli-v2=2.0.50 -e aws2050 aws
+DEBUG=1 CLENV_HTTP_PATH=file://`pwd`/.. clenv -E aws=2.0.50 -e aws2050 aws
 ```
