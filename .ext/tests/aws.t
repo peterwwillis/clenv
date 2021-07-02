@@ -4,7 +4,7 @@ set -u
 
 _t_vers_check () {
     # Test version check
-    result="$(clenv -e "ext-ver-$ext_ver" aws --version)"
+    result="$(clenv -e "ext-ver-$ext_ver" $ext_name --version)"
     if [ $(expr "$result" : "aws-cli/2.2.12 Python/.* exe/.*") -eq 0 ] ; then
         return 1
     fi
