@@ -10,8 +10,10 @@ _bumpver () {
     git checkout -- README.md
     sed -i -e "s/^\([[:space:]]\+&& echo \"\)[0-9a-f]\+  /\1$checksum  /" README.md
     sed -i -e "s/\(raw\.githubusercontent\.com\/peterwwillis\/clenv\/v\)[0-9.]\+\(\/clenv\)/\1$new_ver\2/g" README.md
-    extensions="$(ls .ext/*.ex | grep -ve "test\.ex" | sed -e 's/^\.ext\/\(.\+\)\.ex$/**\1** - /g' | xargs | sed -e 's/ -$//')"
-    sed -i -e "s/^\(Available extensions: \).*/\1$extensions/" README.md
+}
+_extlist () {
+    extensions="$(ls .ext/*.ex | grep -ve "test\.ex" | sed -e 's/^\.ext\/\(.\+\)\.ex$/**\1**, /g' | xargs | sed -e 's/,$//')"
+    sed -i -e "s/\(to automate downloading & installing any application\).*)/\1 ($extensions)/" README.md
 }
 _checksums () {
     sha256sum clenv .ext/*.ex > .CHECKSUMS.s256
@@ -24,6 +26,7 @@ Usage: $0 CMD [..]
 Commands:
   bumpver VERSION
   checksums
+  extlist
   all VERSION
 EOUSAGE
     exit 1
@@ -33,5 +36,7 @@ cmd="$1"; shift
 case "$cmd" in
     bumpver)    _bumpver "$@" ;;
     checksums)  _checksums "$@" ;;
-    all)        _bumpver "$1"; _checksums ;;
+    extlist)    _extlist "$@" ;;
+    all)        _bumpver "$1"; _checksums; _extlist ;;
+    *) echo "Error: bad command"; exit 1 ;;
 esac
