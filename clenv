@@ -78,7 +78,11 @@ _clenv_ext_install () {
     [ -d "$CLENV_DIR/$CLENV_E_ENVIRON" ] || _clenv_new "$CLENV_E_ENVIRON"
     _echo_err "Loading extension '$CLENV_E_NAME' version '$CLENV_E_VERSION'"
     _ext_variables # NOTE: loads whatever CLENV_E_* variables the extension outputs
-    _ext_clean; _ext_download; _ext_unpack; _ext_install_local; _ext_test; _ext_clean; _ext_install_wrapper
+    if    ! { _ext_clean && _ext_download && _ext_unpack && _ext_install_local && _ext_test ; }
+    then  _echo_err "Install failed; removing installed extension"
+          _ext_clean ; _ext_clean_install ; exit 1
+    fi
+    _ext_clean; _ext_install_wrapper
 }
 _clenv_exec () {
   export CLENV_E_ENVIRON="${CLENV_E_ENVIRON:-$1}" # default environment name to command name
@@ -139,6 +143,7 @@ _ext_clean_install () {
     if    _ext_help_grep "clean-install"
     then  _clenv_ext_run "clean-install"
     else  rm -rf "${CLENV_E_INSTDIR:?}/bin/" "${CLENV_E_INSTDIR:?}/usr/" "${CLENV_E_INSTDIR:?}/.env"
+          rmdir "${CLENV_E_INSTDIR}" || true
     fi
 }
 _ext_clean () {
