@@ -8,6 +8,8 @@
  - Update documentation
  - Simplify shellcheck tests
 
+---
+
 ## [2.3.0] - 2021-07-02
 ### Added
  - Added new extensions: terragrunt, tfsec, tflint, terraform-docs
