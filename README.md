@@ -19,9 +19,9 @@
 
 1. Install **cliv**
    ```bash
-   $ sudo curl -fsSL -o /usr/local/bin/cliv https://raw.githubusercontent.com/peterwwillis/cliv/v2.3.0/cliv \
+   $ sudo curl -fsSL -o /usr/local/bin/cliv https://raw.githubusercontent.com/peterwwillis/cliv/v2.3.1/cliv \
      && sudo chmod +x /usr/local/bin/cliv \
-     && echo "63eb86730f46ea61e0224c66744ee8ddf5488890f56baba9631435bc0c607d1a  /usr/local/bin/cliv" | sha256sum -c \
+     && echo "decdab8436730a911ea57c2fc8b46766f84a1a12a8de5a3169e078fd62444569  /usr/local/bin/cliv" | sha256sum -c \
      || { echo "FAILED CHECKSUM: REMOVING cliv" && sudo rm -f /usr/local/bin/cliv ; }
    /usr/local/bin/cliv: OK
    ```
