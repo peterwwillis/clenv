@@ -4,7 +4,7 @@ set -u
 
 _t_vers_check () {
     # Test version check
-    result="$(clenv -e "ext-ver-$ext_ver" $ext_name --version 2>&1 | tail -1)"
+    result="$(cliv -e "ext-ver-$ext_ver" $ext_name --version 2>&1 | tail -1)"
     if [ ! "$result" = "2.30.0" ] ; then
         return 1
     fi

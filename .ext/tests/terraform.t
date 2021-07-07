@@ -4,7 +4,7 @@ set -u
 
 _t_vers_check () {
     # Test version check
-    result="$(clenv -e "ext-ver-$ext_ver" $ext_name --version | head -1)"
+    result="$(cliv -e "ext-ver-$ext_ver" $ext_name --version | head -1)"
     if [ ! "$result" = "Terraform v0.12.31" ] ; then
         return 1
     fi

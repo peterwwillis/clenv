@@ -1,3 +1,3 @@
- - [ ] Implement checking cryptographic signature of clenv
- - [ ] Implement checking cryptographic signature of clenv extensions
+ - [ ] Implement checking cryptographic signature of cliv
+ - [ ] Implement checking cryptographic signature of cliv extensions
  - [ ] Implement checking cryptographic signature of downloads
