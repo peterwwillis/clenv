@@ -9,7 +9,7 @@
  - `curl` (if you use *Extensions*, which you probably want to)
 
 # Features
- - *Extensions* to automate downloading & installing any application (**ansible**, **aws**, **docker-compose**, **packer**, **saml2aws**, **terraform-docs**, **terraformer**, **terraform**, **terragrunt**, **tflint**, **tfsec**, **yq**)
+ - *Extensions* to automate downloading & installing any application (**ansible**, **aws**, **docker-compose**, **eksctl**, **helm**, **istioctl**, **kubectl**, **packer**, **saml2aws**, **terraform-docs**, **terraformer**, **terraform**, **terragrunt**, **tflint**, **tfsec**, **yq**)
  - Pin versions with `.EXTENSION-version` files
  - Wrappers in `~/.clenv/.bin` allow your shell to automatically find installed applications
  - Small codebase, minimal dependencies
