@@ -1,0 +1,290 @@
+#!/usr/bin/env sh
+# cliv - Execute commands using a specific directory of files and variables
+# Copyright (C) 2021 Peter Willis
+set -eu
+[ "${DEBUG:-0}" = "1" ] && set -x
+
+CLIV_VER="2.3.1"
+CLIV_HTTP_PATH="${CLIV_HTTP_PATH:-https://raw.githubusercontent.com/peterwwillis/cliv/v$CLIV_VER}"
+HOME="${HOME:-$(getent passwd $(id -u) | cut -d : -f 6)}"
+export CLIV_DIR="${CLIV_DIR:-$HOME/.cliv}"
+
+### General cliv functions
+
+_usage () {
+    printf "%s\n" "
+Usage: $0 [OPTS]
+       $0 [OPTS] [CMD [ARGS ..]]
+Opts:
+	-h			This screen
+	-i			Clear environment variables. Must be first argument
+	-l [ENVIRON]		List environments
+	-L [EXT]		List remote extensions
+	-n ENVIRON		Create a new environment ENVIRON
+	-E EXT[=V] 	 	Use (optional) version V of extension EXT
+	-e ENVIRON		Use environment ENVIRON
+	-r FILE			Install a list of extensions from FILE
+	-X CMD [ARG ..]		(internal function) Run command for an extention
+	-W			Disables wrapper mode
+	-f			Force mode
+ 	-V			Version of cliv
+	-q			Quiet mode
+"
+  exit 1
+}
+_err () { printf "%s\n" "$0: Error: $*" ; exit 1 ; }
+_echo_err () { [ $CLIV_QUIET -eq 1 ] || printf "%s\n" "$(basename "$0"): $*" 1>&2 ; }
+_cliv_list () {
+    for d in "$@"
+    do  [ -d "$CLIV_DIR/$(basename "$d")" ] && basename "$d"
+    done
+}
+_cliv_listext () {
+    if    [ $# -gt 0 ]
+    then  CLIV_E_NAME="$1"
+          _cliv_ext_download
+          _ext_versions
+    else  [ ! -r "$CLIV_DIR/.CHECKSUMS.s256" -o "$CLIV_FORCE" = "1" ] && eval curl -fsSL ${CURL_OPTS:-} -o "$CLIV_DIR/.CHECKSUMS.s256" "$CLIV_HTTP_PATH/.CHECKSUMS.s256"
+          {    [ -r "$CLIV_DIR/.CHECKSUMS.s256" ] && grep -e "  .ext/.*\.ex$" "$CLIV_DIR/.CHECKSUMS.s256" | sed -e 's/^.*  \.ext\/\([^\/]\+\)\.ex$/\1/'
+               [ -d "$CLIV_DIR/.ext/" ] && { ls "$CLIV_DIR/.ext/" | sed -e 's/\.ex$//g' ; }
+          } | sort | uniq
+    fi
+}
+_cliv_new () {
+    _env="$1"; shift
+    [ -d "$CLIV_DIR/$_env" ] && [ ! "$CLIV_FORCE" = "1" ] && _err "Environment '$CLIV_DIR/$_env' already exists"
+    _echo_err "Creating new environment '$CLIV_DIR/$_env'"
+    mkdir -p "$CLIV_DIR/$_env/bin"
+    printf "%s\n" 'pmunge () { if ! echo "$PATH"|/bin/grep -Eq "(^|:)$1($|:)"; then if [ "${2:-}" = "after" ]; then PATH="$PATH:$1"; else PATH="$1:$PATH"; fi;fi; }' >> "$CLIV_DIR/$_env/.env"
+    printf "%s\n" 'pmunge "'"$CLIV_DIR/$_env/bin"'"' >> "$CLIV_DIR/$_env/.env"
+}
+_cliv_ext_run () {  "$CLIV_DIR/.ext/$CLIV_E_NAME.ex" "$@"; }
+_cliv_ext_download () {
+    if    [ "$CLIV_FORCE" = "1" ] || [ ! -e "$CLIV_DIR/.ext/$CLIV_E_NAME.ex" ]
+    then  eval curl -fsSL ${CURL_OPTS:-} -o "$CLIV_DIR/.ext/$CLIV_E_NAME.ex" "$CLIV_HTTP_PATH/.ext/$CLIV_E_NAME.ex"
+          chmod +x "$CLIV_DIR/.ext/$CLIV_E_NAME.ex"
+    fi
+}
+_cliv_ext_install () {
+    ext="${1%%=*}" ver="${1#*=}" environ="${2:-}"
+    if [ $# -lt 2 -o -z "$environ" ] ; then  shift 1; environ="$ext";        else shift 2;  fi
+    if [ ! "$ver" = "$ext" ]         ; then  export CLIV_E_VERSION="$ver";                 fi
+    export CLIV_E_NAME="$ext" CLIV_E_ENVIRON="$environ" CLIV_E_INSTDIR="$CLIV_DIR/$environ"
+    _echo_err "Installing extention '$CLIV_E_NAME'"
+    _cliv_ext_download
+    [ -z "${CLIV_E_VERSION:-}" ]        && CLIV_E_VERSION="latest"
+    [ "$CLIV_E_VERSION" = "latest" ]    && CLIV_E_VERSION="$(_ext_latest)"
+    export CLIV_E_VERSION
+    [ -d "$CLIV_DIR/$CLIV_E_ENVIRON" ] || _cliv_new "$CLIV_E_ENVIRON"
+    _echo_err "Loading extension '$CLIV_E_NAME' version '$CLIV_E_VERSION'"
+    _ext_variables # NOTE: loads whatever CLIV_E_* variables the extension outputs
+    _ext_clean; _ext_download; _ext_unpack; _ext_install_local; _ext_test; _ext_clean; _ext_install_wrapper
+}
+_cliv_exec () {
+  export CLIV_E_ENVIRON="${CLIV_E_ENVIRON:-$1}" # default environment name to command name
+  [ ${CLIV_WRAPPER:-1} -eq 1 ]        && _cliv_wrapper "$CLIV_E_ENVIRON"
+  [ -d "$CLIV_DIR/$CLIV_E_ENVIRON" ] || _err "No environment '$CLIV_DIR/$CLIV_E_ENVIRON' found"
+  if    [ -r "$CLIV_DIR/$CLIV_E_ENVIRON/.env" ]
+  then  set -a;  . "$CLIV_DIR/$CLIV_E_ENVIRON/.env"
+  else  _echo_err "Warning: no '$CLIV_DIR/$CLIV_E_ENVIRON/.env' found"
+  fi
+  _echo_err "Executing $(which "$1")"
+  # unset variables to prevents infinite loops
+  unset CLIV_E_ENVIRON CLIV_E_VERSION CLIV_E_NAME CLIV_FORCE
+  exec env "$@"
+}
+_cliv_wrapper () {
+    CLIV_E_NAME="${CLIV_E_NAME:-$1}" # default extension name to environment name
+    ext="${CLIV_E_NAME%%=*}" ver="${CLIV_E_NAME#*=}"
+    [ "$ver" = "$ext" ] || CLIV_E_VERSION="$ver"
+    if    [ -z "${CLIV_E_VERSION:-}" ]
+    then  cwd="$(pwd)"
+          while [ ! "$(dirname "$cwd")" = "/" ]
+          do
+                if    [ -r "$cwd/.$CLIV_E_NAME-version" ]
+                then  CLIV_E_VERSION="$(cat "$cwd/.$CLIV_E_NAME-version")"
+                      _echo_err "Found '$cwd/.$CLIV_E_NAME-version' = '$CLIV_E_VERSION'"
+                      break
+                else  cwd="$(dirname "$cwd")"
+                fi
+          done
+          # Wrapper version detection makes an environment of extension name + version
+          [ -n "${CLIV_E_VERSION:-}" ] && CLIV_E_ENVIRON="$CLIV_E_NAME=$CLIV_E_VERSION"
+    fi
+    # Try to auto-install extensions in case a new/different version is needed
+    _cliv_list "$CLIV_E_ENVIRON" >/dev/null || _cliv_ext_install "$CLIV_E_NAME" "$CLIV_E_ENVIRON"
+}
+
+
+### Extension functions
+
+CLIV_EXT_HELP=""
+_ext_help_grep () {
+    CLIV_EXT_HELP="${CLIV_EXT_HELP:-$(_cliv_ext_run help)}"
+    if    [ $(expr "$CLIV_EXT_HELP" : ".*  $*") -ne 0 ]
+    then  return 0
+    else  return 1
+    fi
+}
+_ext_variables () {  eval $(_cliv_ext_run variables) ;  }
+_ext_test () {
+    _echo_err "$CLIV_E_NAME: Testing"
+    if    _ext_help_grep "test"
+    then  _cliv_ext_run "test"
+    else  "$CLIV_E_INSTDIR/bin/$CLIV_E_BIN_NAME" --version 2>/dev/null 1>/dev/null
+    fi
+}
+_ext_clean_install () {
+    _echo_err "$CLIV_E_NAME: Removing '$CLIV_E_INSTDIR'"
+    if    _ext_help_grep "clean-install"
+    then  _cliv_ext_run "clean-install"
+    else  rm -rf "${CLIV_E_INSTDIR:?}/bin/" "${CLIV_E_INSTDIR:?}/usr/" "${CLIV_E_INSTDIR:?}/.env"
+    fi
+}
+_ext_clean () {
+    _echo_err "$CLIV_E_NAME: Removing temporary download files"
+    if    _ext_help_grep "clean"
+    then  _cliv_ext_run "clean"
+    else  rm -rf "${CLIV_E_INSTDIR:?}/download/"
+    fi
+}
+_ext_install_local () {
+    _echo_err "$CLIV_E_NAME: Installing locally";
+    if    [ $# -lt 1 ] && _ext_help_grep "install-local"
+    then  _cliv_ext_run "install-local"
+    else  mkdir -p "$CLIV_E_INSTDIR/bin"
+          ln -sf "$CLIV_E_INSTDIR/${1:-/usr/bin/$CLIV_E_BIN_NAME}" "$CLIV_E_INSTDIR/bin/$CLIV_E_BIN_NAME"
+    fi
+}
+_ext_install_wrapper () {
+    _echo_err "$CLIV_E_NAME: Installing wrapper"
+    if    _ext_help_grep "install-wrapper"
+    then  _cliv_ext_run "install-wrapper"
+    else  [ -d "$CLIV_DIR/.bin" ] || mkdir -p "$CLIV_DIR/.bin"
+          if    [ ! -e "$CLIV_DIR/.bin/$CLIV_E_BIN_NAME" -o "${CLIV_FORCE:-0}" = "1" ]
+          then  printf "#!/usr/bin/env sh\nexec cliv -E $CLIV_E_NAME -e $CLIV_E_ENVIRON $CLIV_E_BIN_NAME \"\$@\"\n" > "$CLIV_DIR/.bin/$CLIV_E_BIN_NAME"
+          fi
+          [ -x "$CLIV_DIR/.bin/$CLIV_E_BIN_NAME" ] || chmod +x "$CLIV_DIR/.bin/$CLIV_E_BIN_NAME"
+    fi
+}
+_ext_latest () {  _ext_versions | head -1 ; }
+_ext_url () {
+    export CLIV_E_VERSION="${CLIV_E_VERSION:-$(_ext_latest)}" # pass version to extension
+    if    _ext_help_grep "url"
+    then  _cliv_ext_run "url"
+    else  eval printf "$CLIV_E_BASEURL\\\n" "$CLIV_E_BASEURL_ARGS"
+    fi
+}
+_ext_unpack () {
+    _echo_err "$CLIV_E_NAME: Unpacking to '$CLIV_E_INSTDIR'"
+    if    _ext_help_grep "unpack"
+    then  _cliv_ext_run "unpack"
+    else  mkdir -p "$CLIV_E_INSTDIR/usr/bin"
+          chmod +x "$CLIV_E_INSTDIR/download/$CLIV_E_DLFILE"
+          mv "$CLIV_E_INSTDIR/download/$CLIV_E_DLFILE" "$CLIV_E_INSTDIR/usr/bin/$CLIV_E_BIN_NAME"
+    fi
+}
+_ext_unpack_unzip () {
+    mkdir -p "$CLIV_E_INSTDIR/$1"
+    unzip -q -o -d "$CLIV_E_INSTDIR/$1" "$CLIV_E_INSTDIR/download/$CLIV_E_DLFILE"
+}
+_ext_unpack_untar () {
+    mkdir -p "$CLIV_E_INSTDIR/$1"
+    tar -C "$CLIV_E_INSTDIR/$1" -xf "$CLIV_E_INSTDIR/download/$CLIV_E_DLFILE"
+}
+_ext_download () {
+    _echo_err "$CLIV_E_NAME: Downloading artifact";
+    if    _ext_help_grep "download"
+    then  _cliv_ext_run "download"
+    else  mkdir -p "$CLIV_E_INSTDIR/download"
+          eval curl -fSL ${CURL_OPTS:-} "$(_ext_url)" -o "$CLIV_E_INSTDIR/download/$CLIV_E_DLFILE"
+    fi
+}
+_ext_versions () {  _cliv_ext_run "versions" ; }
+_ext_versions_gh () {
+    [ -n "${GITHUB_TOKEN:-}" ] && CURL_OPTS="${CURL_OPTS:-} -H \"Authorization: token $GITHUB_TOKEN\""
+    next_url="$1"
+    while [ -n "$next_url" ]
+    do
+          output="$(eval curl -ifsSL ${CURL_OPTS:-} "$next_url")"
+          printf "%s\n" "$output" | awk -F '"' "/\"$2\":/{print \$4}" | sed -e 's/^v//'
+          next_url="$(printf "%s\n" "$output" | grep '^link:' \
+              | sed -e 's/link: //; s/, /\n/g; s/[<>]//g; s/; rel/ rel/g; s/\(https:\/\/[^ ]\+\) rel="\([a-z]\+\)"/\2 \1/g' \
+              | awk '/next / { print $2}')"
+    done
+}
+_ext_versions_ghtags () {  _ext_versions_gh "$1/tags" "name" ;  }
+_ext_versions_ghreleases () {  _ext_versions_gh "$1/releases" "tag_name" ; }
+_ext_versions_pypi () {
+    [ -z "${PYTHON:-}" ] && command -v python3 >/dev/null && PYTHON="python3"
+    [ -z "${PYTHON:-}" ] && command -v python  >/dev/null && PYTHON="python"
+    eval curl -fsSL ${CURL_OPTS:-} "$1" | \
+    {
+        if    command -v $PYTHON >/dev/null && $PYTHON -c 'import sys,json,collections;'
+        then  $PYTHON -c 'import sys,json,collections; j=(json.loads(sys.stdin.read(), object_pairs_hook=collections.OrderedDict))["releases"]; print("\n".join([k for k in j.keys()]))' | tac
+        elif  command -v jq >/dev/null
+        then  jq -r '.releases | keys | .[]' | tac
+        else  grep -e '"[0-9]\+.*: \[' | sed -e 's/^[[:space:]]\+"\(.*\)": \[/\1/g' | tac
+        fi;
+    }
+}
+_ext_versions_hc () {
+    eval curl -fsSL ${CURL_OPTS:-} "$1" | grep -e "<a href=\"/$CLIV_E_NAME/" | grep -v alpha | cut -d \" -f 2 | cut -d / -f 3 | sed -e 's/^v//'
+}
+
+
+### Main program
+if    [ $# -lt 1 ]
+then  _usage
+fi
+
+[ "$1" = "-i" ] && shift 1 && exec env -i "$0" "$@"
+
+CLIV_FORCE=0 CLIV_QUIET="${CLIV_QUIET:-0}"
+while getopts "nlLE:e:r:X:WfVq" args
+do
+      case "$args" in
+          n)  CLIV_NEW=1 ;;
+          l)  CLIV_LIST=1 ;;
+          L)  CLIV_LISTEXT=1 ;;
+          E)  CLIV_E_NAME="$OPTARG" ;;
+          e)  CLIV_E_ENVIRON="$OPTARG" ;;
+          r)  CLIV_REQUIRES="$OPTARG" ;;
+          X)  CLIV_XCALL="$OPTARG" ;;
+          W)  CLIV_WRAPPER=0 ;;
+          f)  export CLIV_FORCE=1 ;;
+          V)  echo "cliv v$CLIV_VER" ; exit 0 ;;
+          q)  CLIV_QUIET=1 ;;
+      esac
+done
+shift $(($OPTIND-1))
+
+for  d in "$CLIV_DIR" "$CLIV_DIR/.bin" "$CLIV_DIR/.ext"
+do   [ -d "$d" ] || mkdir -p "$d"
+done
+
+if    [ -n "${CLIV_XCALL:-}" ]
+then  _ext_"$CLIV_XCALL" "$@"
+
+elif  [ ${CLIV_NEW:-0} -eq 1 ]
+then  _cliv_new "$@"
+
+elif  [ ${CLIV_LIST:-0} -eq 1 ]
+then  if    [ $# -gt 0 ]
+      then  _cliv_list "$@"
+      else  _cliv_list "$CLIV_DIR"/*
+      fi
+
+elif  [ ${CLIV_LISTEXT:-0} -eq 1 ]
+then  _cliv_listext "$@"
+
+elif  [ -n "${CLIV_REQUIRES:-}" ]
+then  while read -r LINE ; do $0 -E "$LINE" ; done < "$CLIV_REQUIRES"
+
+elif  [ $# -lt 1 -a -n "${CLIV_E_NAME:-}" ]
+then  _cliv_ext_install "$CLIV_E_NAME" "${CLIV_E_ENVIRON:-}"
+
+elif  [ $# -gt 0 ]
+then  _cliv_exec "$@"
+
+fi
