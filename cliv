@@ -4,7 +4,7 @@
 set -eu
 [ "${DEBUG:-0}" = "1" ] && set -x
 
-CLIV_VER="2.3.1"
+CLIV_VER="2.4.0"
 CLIV_HTTP_PATH="${CLIV_HTTP_PATH:-https://raw.githubusercontent.com/peterwwillis/cliv/v$CLIV_VER}"
 HOME="${HOME:-$(getent passwd $(id -u) | cut -d : -f 6)}"
 export CLIV_DIR="${CLIV_DIR:-$HOME/.cliv}"

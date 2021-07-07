@@ -1,5 +1,11 @@
 # Changelog
 
+## [2.4.0] - 2021-07-07
+### Added
+ - New extensions: kubectl, eksctl, helm, istioctl
+
+---
+
 ## [2.3.1] - 2021-07-04
 ### Changed
  - Renamed the project *back* to cliv, because there is already a project
