@@ -5,7 +5,7 @@
       Otherwise you just keep running sub-tests you know probably won't work.
 - [x] Write tests for the wrapper mode.
       - Needs to test one wrapper-application calling another wrapper-application
-- [ ] Fix extensions to not overwrite '.bin' wrapper if it already exists.
+- [x] Fix extensions to not overwrite '.bin' wrapper if it already exists.
       (*unless* $CLIV_FORCE=1)
-- [ ] Fix extensions to not try to remove $CLIV_E_INSTDIR as that might be the
+- [x] Fix extensions to not try to remove $CLIV_E_INSTDIR as that might be the
       current directory if otherwise unspecified
