@@ -118,20 +118,21 @@ Each *Environment* has at least two files:
 
 Normally you might use your operating system's package manager to install a 
 program, but sometimes those packages don't exist or are out of date. 
-*Extensions* fill that void by automating the process of downloading, installing
-and running specific versions of programs.
+*Extensions* fill that void by downloading, installing and running specific
+versions of programs. (There is no dependency management, so this is mostly
+for statically-compiled binaries)
 
 For convenience, *Extensions* also install a wrapper for your program in a common
 directory (`$HOME/.cliv/.bin/`) that you can add to your `$PATH`. This way you
 can automatically run the right version of your program.
 
 If a file `.EXTENSION-version` exists in the current or a parent directory, the
-contents of the file is the version of an *Extension* to install. If you specify
-a version in the `-E` option, this does not happen, and the `-W` option disable
-it entirely.
+contents of the file becomes the version of an *Extension* to install. If you
+specify a version in the `-E` option, this does not happen, and the `-W` option
+disables it entirely.
 
 (Don't see an *Extension* you want? Check out the [.ext/](./.ext/) directory,
-cut me a Pull Request, I'll merge it!)
+cut me a Pull Request, I'll merge it! Or create your own via a GitHub repository)
 
 ### How do I install and run a program?
 
@@ -227,17 +228,18 @@ You can manually set up an *Environment* and call programs within it.
    aws-cli/2.0.50 Python/3.7.3 Linux/4.15.0-135-generic exe/x86_64.ubuntu.18
    ```
 
-### List environments
+### List *Environments*
 
-Let's see the *Environment*s we've created so far:
+Let's see the *Environments* we've created so far:
    ```bash
    $ cliv -l
    aws
    aws-foo
    aws=2.0.50
+   cliv-test-ext
    ```
 
-### List extensions
+### List *Extensions*
 
 Want to know what extensions are available?
    ```bash
