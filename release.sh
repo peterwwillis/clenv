@@ -16,7 +16,7 @@ _extlist () {
     sed -i -e "s/\(to automate downloading & installing any application\).*)/\1 ($extensions)/" README.md
 }
 _checksums () {
-    sha256sum cliv .ext/*.ex > .CHECKSUMS.s256
+    sha256sum cliv .ext/*.ex > CHECKSUMS.sha256
 }
 
 if [ $# -lt 1 ] ; then

@@ -28,6 +28,18 @@ Extensions assume they are running in an *Environment* directory. They will
 change to a `$CLIV_E_INSTDIR` directory (default: `$CLIV_DIR/$CLIV_E_ENVIRON`)
 first if those environment variables are set.
 
+**New in cliv 2.4.0:** You can create your own GitHub repository to host your
+*Extension* and pass the repo to **cliv** to install (`cliv -E github.com/someuser/somerepo`).
+Your extension should be named the same as your repository, exist in a folder 
+`.ext/`, and have a file extension `.ex`. The *CLIV_E_NAME* variable should stay
+the same as the repo and extension name, but you can change the *CLIV_E_BIN_NAME*
+variable so that the installed binary/wrapper has a different name. See
+https://github.com/peterwwillis/cliv-test-ext/ for an example. You can specify
+the Git branch or tag to use by putting `@BRANCH` before any `=VERSION` in the
+extension name (`cliv -E github.com/someuser/somerepo@v2.4.0=1.2.3` will install
+version 1.2.3 of the *Extension*'s application after downloading the *Extension*
+from Git branch/tag *v2.4.0*).
+
 ---
 
 ## Environment Variables

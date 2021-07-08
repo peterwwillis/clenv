@@ -3,6 +3,9 @@
 ## [2.4.0] - 2021-07-07
 ### Added
  - New extensions: kubectl, eksctl, helm, istioctl
+ - New feature: install extensions from GitHub repos
+### Changed
+ - Renamed .CHECKSUMS.s256 to CHECKSUMS.sha256
 
 ---
 
