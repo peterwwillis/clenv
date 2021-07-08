@@ -21,7 +21,7 @@
    ```bash
    $ sudo curl -fsSL -o /usr/local/bin/cliv https://raw.githubusercontent.com/peterwwillis/cliv/v2.4.0/cliv \
      && sudo chmod +x /usr/local/bin/cliv \
-     && echo "37c4528482d44c49460345241d581eefc5d01518225690cbc6596d368eb61902  /usr/local/bin/cliv" | sha256sum -c \
+     && echo "3708fa6d60f90d2ca610337260b583afb945de1433344ad20bd06c23ccdebcdc  /usr/local/bin/cliv" | sha256sum -c \
      || { echo "FAILED CHECKSUM: REMOVING cliv" && sudo rm -f /usr/local/bin/cliv ; }
    /usr/local/bin/cliv: OK
    ```
