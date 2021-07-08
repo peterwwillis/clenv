@@ -44,8 +44,8 @@ _cliv_listext () {
     then  CLIV_E_NAME="$1"
           _cliv_ext_download
           _ext_versions
-    else  [ ! -r "$CLIV_DIR/.CHECKSUMS.s256" -o "$CLIV_FORCE" = "1" ] && eval curl -fsSL ${CURL_OPTS:-} -o "$CLIV_DIR/.CHECKSUMS.s256" "$CLIV_HTTP_PATH/.CHECKSUMS.s256"
-          {    [ -r "$CLIV_DIR/.CHECKSUMS.s256" ] && grep -e "  .ext/.*\.ex$" "$CLIV_DIR/.CHECKSUMS.s256" | sed -e 's/^.*  \.ext\/\([^\/]\+\)\.ex$/\1/'
+    else  [ ! -r "$CLIV_DIR/CHECKSUMS.sha256" -o "$CLIV_FORCE" = "1" ] && eval curl -fsSL ${CURL_OPTS:-} -o "$CLIV_DIR/CHECKSUMS.sha256" "$CLIV_HTTP_PATH/CHECKSUMS.sha256"
+          {    [ -r "$CLIV_DIR/CHECKSUMS.sha256" ] && grep -e "  .ext/.*\.ex$" "$CLIV_DIR/CHECKSUMS.sha256" | sed -e 's/^.*  \.ext\/\([^\/]\+\)\.ex$/\1/'
                [ -d "$CLIV_DIR/.ext/" ] && { ls "$CLIV_DIR/.ext/" | sed -e 's/\.ex$//g' ; }
           } | sort | uniq
     fi
@@ -60,14 +60,21 @@ _cliv_new () {
 }
 _cliv_ext_run () {  "$CLIV_DIR/.ext/$CLIV_E_NAME.ex" "$@"; }
 _cliv_ext_download () {
+    cliv_http_ext_path="$CLIV_HTTP_PATH"
     if    [ "$CLIV_FORCE" = "1" ] || [ ! -e "$CLIV_DIR/.ext/$CLIV_E_NAME.ex" ]
-    then  eval curl -fsSL ${CURL_OPTS:-} -o "$CLIV_DIR/.ext/$CLIV_E_NAME.ex" "$CLIV_HTTP_PATH/.ext/$CLIV_E_NAME.ex"
+    then  if    [ -n "${ghrepo:-}" ]
+          then  [ -z "${ghbranch:-}" ] && ghbranch="$(eval curl -fsSL ${CURL_OPTS:-} https://api.github.com/repos/$ghrepo | grep -e "^[[:space:]]*\"default_branch\":" | sed -e 's/^[[:space:]]*"default_branch": "\([^"]\+\)".*/\1/')"
+                cliv_http_ext_path="https://raw.githubusercontent.com/$ghrepo/$ghbranch"
+          fi
+          eval curl -fsSL ${CURL_OPTS:-} -o "$CLIV_DIR/.ext/$CLIV_E_NAME.ex" "$cliv_http_ext_path/.ext/$CLIV_E_NAME.ex"
           chmod +x "$CLIV_DIR/.ext/$CLIV_E_NAME.ex"
     fi
 }
 _cliv_ext_install () {
     ext="${1%%=*}" ver="${1#*=}" environ="${2:-}"
-    if [ $# -lt 2 -o -z "$environ" ] ; then  shift 1; environ="$ext";        else shift 2;  fi
+    [ "${ext%%/*}" = "github.com" ] && ghrepo="${ext#github.com/}" && ghrepo="${ghrepo%%=*}" && ghbranch="${ghrepo##*@}" && ghrepo="${ghrepo%@*}" && ext="${ghrepo##*/}" && [ "$ver" = "$1" ] && ver="latest"
+    [ -n "${ghbranch:-}" -a -n "${ghrepo:-}" ] && [ "${ghbranch:-}" = "${ghrepo:-}" ] && ghbranch=""
+    if [ $# -lt 2 -o -z "$environ" ] ; then  shift 1; environ="$ext";       else shift 2;  fi
     if [ ! "$ver" = "$ext" ]         ; then  export CLIV_E_VERSION="$ver";                 fi
     export CLIV_E_NAME="$ext" CLIV_E_ENVIRON="$environ" CLIV_E_INSTDIR="$CLIV_DIR/$environ"
     _echo_err "Installing extention '$CLIV_E_NAME'"

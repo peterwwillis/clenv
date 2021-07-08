@@ -156,7 +156,7 @@ When you run a command like `cliv CMD`, this happens:
 ### Using Extensions
 
 **cliv** will download *Extensions* with `curl` from a URL
-`$CLIV_HTTP_PATH/.ext/EXTENSION`. Override *$CLIV_HTTP_PATH* if you want
+`$CLIV_HTTP_PATH/.ext/EXTENSION.ex`. Override *$CLIV_HTTP_PATH* if you want
 to provide your own *Extension* path or URL.
 
 You can also put extensions directly into your `~/.cliv/.ext/` directory.
@@ -189,6 +189,16 @@ If you *don't* pass a version with `-E`, and a `.EXTENSION-version` file is foun
 **cliv** will make an *Environment* named `$EXTENSION=$VERSION`. This happens
 automatically whether you're calling `cliv` directly, or using the `~/.cliv/.bin/`
 wrapper. (To disable it completely, use the `-W` option)
+
+**New in cliv 2.4.0:** You can now specify a GitHub repository as an *Extension*
+name, and the tag/branch with '@BRANCH'. Example:
+   ```bash
+   $ cliv -E github.com/peterwwillis/cliv-test-ext
+   $ cliv -E github.com/peterwwillis/cliv-test-ext@v2.4.0
+   $ cliv -E github.com/peterwwillis/cliv-test-ext=4.9.6
+   $ cliv -E github.com/peterwwillis/cliv-test-ext@v2.4.0=4.9.6
+   ```
+See [.ext/README.md](./ext/README.md) for details about how to create these extensions.
 
 
 ### Manually setting up an *Environment*
