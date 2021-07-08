@@ -18,9 +18,9 @@ export CLIV_E_NAME CLIV_E_REV CLIV_E_BIN_NAME CLIV_E_DLFILE
 ### Extension-specific functions
 _ext_versions () {
     CLIV_E_OS="$(echo $CLIV_E_OS | awk '{ print toupper(substr($0, 1, 1)) substr($0, 2) }')" \
-        CLIV -E "$CLIV_E_NAME" -X versions_ghreleases "$CLIV_E_GHREPOAPI" | grep -v -e "-rc\|alpha\|beta" | grep -e "^[0-9]"
+        cliv -E "$CLIV_E_NAME" -X versions_ghreleases "$CLIV_E_GHREPOAPI" | grep -v -e "-rc\|alpha\|beta" | grep -e "^[0-9]"
 }
-_ext_unpack () {  CLIV -E "$CLIV_E_NAME" -X unpack_untar "/usr/bin" ;  }
+_ext_unpack () {  cliv -E "$CLIV_E_NAME" -X unpack_untar "/usr/bin" ;  }
 _ext_test () {  "$CLIV_E_INSTDIR/bin/$CLIV_E_BIN_NAME" version 2>/dev/null 1>/dev/null ;  }
 
 ### The rest of this doesn't need to be modified
