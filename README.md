@@ -200,7 +200,7 @@ name, and the tag/branch with '@BRANCH'. Example:
    $ cliv -E github.com/peterwwillis/cliv-test-ext=4.9.6
    $ cliv -E github.com/peterwwillis/cliv-test-ext@v2.4.0=4.9.6
    ```
-See [.ext/README.md](./ext/README.md) for details about how to create these extensions.
+See [.ext/README.md](./.ext/README.md) for details about how to create these extensions.
 
 
 ### Manually setting up an *Environment*
