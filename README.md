@@ -9,7 +9,8 @@
  - `curl` (if you use *Extensions*, which you probably want to)
 
 # Features
- - *Extensions* to automate downloading & installing any application (**ansible**, **aws**, **docker-compose**, **eksctl**, **helm**, **istioctl**, **kubectl**, **packer**, **saml2aws**, **terraform-docs**, **terraformer**, **terraform**, **terragrunt**, **tflint**, **tfsec**, **yq**)
+ - Use *Extensions* to automate downloading & installing any application (**ansible**, **aws**, **docker-compose**, **eksctl**, **helm**, **istioctl**, **kubectl**, **packer**, **saml2aws**, **terraform-docs**, **terraformer**, **terraform**, **terragrunt**, **tflint**, **tfsec**, **yq**)
+ - Install custom *Extensions* from GitHub (`cliv -E github.com/foo/bar`)
  - Pin versions with `.EXTENSION-version` files
  - Wrappers in `~/.cliv/.bin` allow your shell to automatically find installed applications
  - Small codebase, minimal dependencies
