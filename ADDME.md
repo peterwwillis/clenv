@@ -1,3 +1,4 @@
  - [ ] Implement checking cryptographic signature of cliv
  - [ ] Implement checking cryptographic signature of cliv extensions
  - [ ] Implement checking cryptographic signature of downloads
+ - [ ] Add a test for the GitHub custom extension installer
