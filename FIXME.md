@@ -9,3 +9,5 @@
       (*unless* $CLIV_FORCE=1)
 - [x] Fix extensions to not try to remove $CLIV_E_INSTDIR as that might be the
       current directory if otherwise unspecified
+- [ ] Apparently if 'unzip' does not exist on the host, cliv is not exiting with
+      an error code properly.
