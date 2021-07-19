@@ -27,12 +27,12 @@ _ext_download () {
     _detect_python
     mkdir -p "$CLIV_E_INSTDIR"
     $PYTHON -m $PYMOD --clear "$CLIV_E_INSTDIR/usr/"
-    "$CLIV_E_INSTDIR/usr/bin/pip" download pip "ansible==$CLIV_E_VERSION"
+    "$CLIV_E_INSTDIR/usr/bin/pip" download pip "$CLIV_E_NAME==$CLIV_E_VERSION"
 }
 _ext_unpack () { return 0 ; }
 _ext_install_local () {
     "$CLIV_E_INSTDIR/usr/bin/pip" install -U pip
-    "$CLIV_E_INSTDIR/usr/bin/pip" install "ansible==$CLIV_E_VERSION"
+    "$CLIV_E_INSTDIR/usr/bin/pip" install "$CLIV_E_NAME==$CLIV_E_VERSION"
     # Add the 'bin/ symlink so _ext_test works
     mkdir -p "$CLIV_E_INSTDIR/bin"
     if    [ -h "$CLIV_E_INSTDIR/usr/bin/$CLIV_E_BIN_NAME" -o -e "$CLIV_E_INSTDIR/usr/bin/$CLIV_E_BIN_NAME" ]
