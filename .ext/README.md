@@ -50,7 +50,7 @@ Passed from `cliv` to *Extensions*:
   --- | ---
 | **CLIV_DIR**         | The directory which contains the user's `cliv` install files (default: `$HOME/.cliv/`) |
 | **CLIV_E_NAME**      | The name of the *Extension*. |
-| **CLIV_E_ENVIRON**   | The *Environment* that the program's files will be installed into. |
+| **CLIV_E_ENVIRON**   | The *Environment* that the program's files will be installed into. The default is `$CLIV_E_NAME=$CLIV_E_VERSION`, but this can be overridden and set to any arbitrary string. |
 | **CLIV_E_INSTDIR**   | The path into which the program's files should be installed. `cliv` passes this as `$HOME/.cliv/$CLIV_E_ENVIRON`. |
 | **CLIV_E_VERSION**   | The version of the program to install. |
 

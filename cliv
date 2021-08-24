@@ -76,12 +76,12 @@ _cliv_ext_install () {
     [ -n "${ghbranch:-}" -a -n "${ghrepo:-}" ] && [ "${ghbranch:-}" = "${ghrepo:-}" ] && ghbranch=""
     if [ $# -lt 2 -o -z "$environ" ] ; then  shift 1; environ="$ext";       else shift 2;  fi
     if [ ! "$ver" = "$ext" ]         ; then  export CLIV_E_VERSION="$ver";                 fi
-    export CLIV_E_NAME="$ext" CLIV_E_ENVIRON="$environ" CLIV_E_INSTDIR="$CLIV_DIR/$environ"
+    export CLIV_E_NAME="$ext"
     _echo_err "Installing extention '$CLIV_E_NAME'"
     _cliv_ext_download
     [ -z "${CLIV_E_VERSION:-}" ]        && CLIV_E_VERSION="latest"
     [ "$CLIV_E_VERSION" = "latest" ]    && CLIV_E_VERSION="$(_ext_latest)"
-    export CLIV_E_VERSION
+    export CLIV_E_VERSION CLIV_E_ENVIRON="$CLIV_E_NAME=$CLIV_E_VERSION" CLIV_E_INSTDIR="$CLIV_DIR/$CLIV_E_NAME=$CLIV_E_VERSION"
     [ -d "$CLIV_DIR/$CLIV_E_ENVIRON" ] || _cliv_new "$CLIV_E_ENVIRON"
     _echo_err "Loading extension '$CLIV_E_NAME' version '$CLIV_E_VERSION'"
     _ext_variables # NOTE: loads whatever CLIV_E_* variables the extension outputs
