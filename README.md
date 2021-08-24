@@ -88,9 +88,11 @@
            -h                      This screen
            -i                      Clear environment variables. Must be first argument
            -l [ENVIRON]            List environments
+           -L [EXT]                List remote extensions
            -n ENVIRON              Create a new environment ENVIRON
            -E EXT[=V]              Use (optional) version V of extension EXT
            -e ENVIRON              Use environment ENVIRON
+           -D EXT=V                Make version V the default wrapper for EXT
            -r FILE                 Install a list of extensions from FILE
            -X CMD [ARG ..]         (internal function) Run command for an extention
            -W                      Disables wrapper mode
@@ -126,10 +128,19 @@ For convenience, *Extensions* also install a wrapper for your program in a commo
 directory (`$HOME/.cliv/.bin/`) that you can add to your `$PATH`. This way you
 can automatically run the right version of your program.
 
-If a file `.EXTENSION-version` exists in the current or a parent directory, the
-contents of the file becomes the version of an *Extension* to install. If you
-specify a version in the `-E` option, this does not happen, and the `-W` option
-disables it entirely.
+Since there is only one wrapper for all the possible *Environments* of an 
+*Extension* (only one '~/.cliv/.bin/terraform' for all the installed versions of
+Terraform) you can choose which *Environment* the wrapper runs in two ways:
+
+1. The *Extension* installs a wrapper that points to a specific *Environment*. You
+   can change the default *Environment* used by the wrapper using the `-D` option,
+   like`cliv -D terraform=0.12.31`. (Note that you must already have an
+   *Environment* called "terraform=0.12.31" in this example)
+
+2. If a file `.EXTENSION-version` exists in the current or a parent directory, the
+   contents of the file becomes the version of an *Extension* to install. If you
+   specify a version in the `-E` option, this does not happen, and the `-W` option
+   disables it entirely.
 
 (Don't see an *Extension* you want? Check out the [.ext/](./.ext/) directory,
 cut me a Pull Request, I'll merge it! Or create your own via a GitHub repository)

@@ -23,6 +23,7 @@ Opts:
 	-n ENVIRON		Create a new environment ENVIRON
 	-E EXT[=V] 	 	Use (optional) version V of extension EXT
 	-e ENVIRON		Use environment ENVIRON
+	-D EXT=V		Make version V the default wrapper for EXT
 	-r FILE			Install a list of extensions from FILE
 	-X CMD [ARG ..]		(internal function) Run command for an extention
 	-W			Disables wrapper mode
@@ -99,6 +100,14 @@ _cliv_exec () {
   # unset variables to prevents infinite loops
   unset CLIV_E_ENVIRON CLIV_E_VERSION CLIV_E_NAME CLIV_FORCE
   exec env "$@"
+}
+_cliv_default_wrapper () {
+    CLIV_E_ENVIRON="${CLIV_E_ENVIRON:-$1}"
+    ext="${CLIV_E_ENVIRON%%=*}" ver="${CLIV_E_ENVIRON#*=}"
+    CLIV_E_NAME="$ext"
+    [ "$ver" = "$ext" ] || CLIV_E_VERSION="$ver"
+    _ext_variables # NOTE: loads whatever CLIV_E_* variables the extension outputs
+    CLIV_FORCE=1 _ext_install_wrapper "$CLIV_E_ENVIRON"
 }
 _cliv_wrapper () {
     CLIV_E_NAME="${CLIV_E_NAME:-$1}" # default extension name to environment name
@@ -204,7 +213,9 @@ _ext_download () {
     if    _ext_help_grep "download"
     then  _cliv_ext_run "download"
     else  mkdir -p "$CLIV_E_INSTDIR/download"
-          eval curl -fSL ${CURL_OPTS:-} "$(_ext_url)" -o "$CLIV_E_INSTDIR/download/$CLIV_E_DLFILE"
+          if    [ ! -e "$CLIV_E_INSTDIR/download/$CLIV_E_DLFILE" ] || [ "${CLIV_FORCE:-0}" = "1" ]
+          then  eval curl -fSL ${CURL_OPTS:-} "$(_ext_url)" -o "$CLIV_E_INSTDIR/download/$CLIV_E_DLFILE"
+          fi
     fi
 }
 _ext_versions () {  _cliv_ext_run "versions" ; }
@@ -248,7 +259,7 @@ fi
 [ "$1" = "-i" ] && shift 1 && exec env -i "$0" "$@"
 
 CLIV_FORCE=0 CLIV_QUIET="${CLIV_QUIET:-0}"
-while getopts "nlLE:e:r:X:WfVq" args
+while getopts "nlLE:e:D:r:X:WfVq" args
 do
       case "$args" in
           n)  CLIV_NEW=1 ;;
@@ -256,6 +267,7 @@ do
           L)  CLIV_LISTEXT=1 ;;
           E)  CLIV_E_NAME="$OPTARG" ;;
           e)  CLIV_E_ENVIRON="$OPTARG" ;;
+          D)  CLIV_E_ENVIRON="$OPTARG" ; CLIV_DEFAULT_WRAPPER=1 ;;
           r)  CLIV_REQUIRES="$OPTARG" ;;
           X)  CLIV_XCALL="$OPTARG" ;;
           W)  CLIV_WRAPPER=0 ;;
@@ -272,6 +284,9 @@ done
 
 if    [ -n "${CLIV_XCALL:-}" ]
 then  _ext_"$CLIV_XCALL" "$@"
+
+elif  [ "${CLIV_DEFAULT_WRAPPER:-0}" = "1" ]
+then  _cliv_default_wrapper
 
 elif  [ ${CLIV_NEW:-0} -eq 1 ]
 then  _cliv_new "$@"
