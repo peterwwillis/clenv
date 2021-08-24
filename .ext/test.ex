@@ -12,10 +12,10 @@ CLIV_E_INSTDIR="${CLIV_E_INSTDIR:-$(pwd)}"
 export CLIV_E_NAME CLIV_E_REV CLIV_E_BIN_NAME CLIV_E_DLFILE
 
 ### Extension-specific functions
-_ext_versions () {  echo "1.0.0";  }
+_ext_versions () {  echo "2.0.0" ; echo "1.0.0" ; }
 _ext_download () {
     mkdir -p "$CLIV_E_INSTDIR/download"
-    printf '#!/usr/bin/env sh\necho "running test ($$) - $*"\n[ "${1:-}" = "--version" ] && exec echo Version 1.0.0\n[ $# -gt 0 ] && exec "$@"\nexit 0\n' > "$CLIV_E_INSTDIR/download/$CLIV_E_DLFILE"
+    printf '#!/usr/bin/env sh\necho "running test ($$) - $*"\n[ "${1:-}" = "--version" ] && exec echo Version '"$CLIV_E_VERSION"'\n[ $# -gt 0 ] && exec "$@"\nexit 0\n' > "$CLIV_E_INSTDIR/download/$CLIV_E_DLFILE"
 }
 
 ### The rest of this doesn't need to be modified

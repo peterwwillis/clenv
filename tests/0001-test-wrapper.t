@@ -11,4 +11,14 @@ _t_wrapper_in_wrapper () {
     foo bar
 }
 
-ext_tests="wrapper_in_wrapper"
+# Test switching default version
+_t_wrapper_switch_default () {
+    cliv -E test -e test=1.0.0
+    cliv -E test -e test=2.0.0
+    cliv -D test=1.0.0
+    cliv test --version | grep -e "^Version 1.0.0"
+    cliv -D test=2.0.0
+    cliv test --version | grep -e "^Version 2.0.0"
+}
+
+ext_tests="wrapper_in_wrapper wrapper_switch_default"

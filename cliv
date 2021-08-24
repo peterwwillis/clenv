@@ -106,6 +106,7 @@ _cliv_default_wrapper () {
     ext="${CLIV_E_ENVIRON%%=*}" ver="${CLIV_E_ENVIRON#*=}"
     CLIV_E_NAME="$ext"
     [ "$ver" = "$ext" ] || CLIV_E_VERSION="$ver"
+    _echo_err "Switching default environment for extension $ext to $CLIV_E_ENVIRON"
     _ext_variables # NOTE: loads whatever CLIV_E_* variables the extension outputs
     CLIV_FORCE=1 _ext_install_wrapper "$CLIV_E_ENVIRON"
 }
