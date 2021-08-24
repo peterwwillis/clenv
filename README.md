@@ -133,9 +133,18 @@ Since there is only one wrapper for all the possible *Environments* of an
 Terraform) you can choose which *Environment* the wrapper runs in two ways:
 
 1. The *Extension* installs a wrapper that points to a specific *Environment*. You
-   can change the default *Environment* used by the wrapper using the `-D` option,
-   like`cliv -D terraform=0.12.31`. (Note that you must already have an
-   *Environment* called "terraform=0.12.31" in this example)
+   can change the default *Environment* used by the wrapper using the `-D` option.
+   ```
+   vagrant@devbox $ terraform --version
+   cliv: Executing /home/vagrant/.cliv/terraform=0.11.15/bin/terraform
+   Terraform v0.11.15
+   vagrant@devbox $ cliv -D terraform=0.12.31
+   cliv: Switching default environment for extension terraform to terraform=0.12.31
+   cliv: terraform: Installing wrapper
+   vagrant@devbox $ terraform --version
+   cliv: Executing /home/vagrant/.cliv/terraform=0.12.31/bin/terraform
+   Terraform v0.12.31
+   ```
 
 2. If a file `.EXTENSION-version` exists in the current or a parent directory, the
    contents of the file becomes the version of an *Extension* to install. If you

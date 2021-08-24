@@ -1,5 +1,15 @@
 # Changelog
 
+## [2.5.0] - 2021-08-24
+### Added
+ - New extensions: ydiff, kind
+ - New feature: '-D' option to switch default environment for an extension
+### Changed
+ - All new installed environments now have the version in the environment name
+   to make it easier to switch the default environment.
+
+---
+
 ## [2.4.0] - 2021-07-07
 ### Added
  - New extensions: kubectl, eksctl, helm, istioctl
