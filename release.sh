@@ -18,6 +18,11 @@ _extlist () {
 _checksums () {
     sha256sum cliv .ext/*.ex > CHECKSUMS.sha256
 }
+_signatures () {
+    for i in cliv .ext/*.ex ; do
+        gpg -s -a -b -o $i.asc $i
+    done
+}
 
 if [ $# -lt 1 ] ; then
     cat <<EOUSAGE
@@ -27,6 +32,7 @@ Commands:
   bumpver VERSION
   checksums
   extlist
+  signatures
   all VERSION
 EOUSAGE
     exit 1
@@ -35,8 +41,12 @@ fi
 cmd="$1"; shift
 case "$cmd" in
     bumpver)    _bumpver "$@" ;;
-    checksums)  _checksums "$@" ;;
-    extlist)    _extlist "$@" ;;
-    all)        _bumpver "$1"; _checksums; _extlist ;;
+    checksums)  _checksums ;;
+    extlist)    _extlist ;;
+    signatures) _signatures ;;
+    all)        _bumpver "$1" ;
+                _checksums ; 
+                _extlist ;
+                _signatures ;;
     *) echo "Error: bad command"; exit 1 ;;
 esac
