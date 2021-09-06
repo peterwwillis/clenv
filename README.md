@@ -293,6 +293,43 @@ How about the available versions of an extension?
    0.14.10
    ```
 
+
+### Cryptographically verifying signatures
+
+To ensure the **cliv** tool and extensions are genuine and not modified by an attacker,
+you can use GPG or other OpenPGP tools to verify the authenticity of the files. These
+authenticated files can then be used to authenticate your downloaded/installed programs.
+
+First, install GnuPG (`gpg`).
+
+Second, import the public key used to sign the release files. If you don't know what
+public key was used (or are wary of trusting one listed here for fear an attacker might
+have replaced the fingerprint ID) you can search for the keys using the e-mail address
+of the author:
+```
+$ gpg --keyserver keyserver.ubuntu.com --search-keys peterwwillis@gmail.com
+gpg: data source: http://162.213.33.9:11371
+(1)	Peter Willis (mobile key 1) <peterwwillis@gmail.com>
+	  4096 bit RSA key CD7E9DBA8044A099, created: 2017-06-07
+Keys 1-1 of 1 for "peterwwillis@gmail.com".  Enter number(s), N)ext, or Q)uit > q
+gpg: error searching keyserver: Operation cancelled
+gpg: keyserver search failed: Operation cancelled
+```
+Verify that the key fingerprint shown matches the fingerprint used to sign GitHub
+commits. Then import the key fingerprint:
+```
+$ gpg --keyserver keyserver.ubuntu.com --recv-keys CD7E9DBA8044A099
+gpg: key CD7E9DBA8044A099: public key "Peter Willis (mobile key 1) <peterwwillis@gmail.com>" imported
+gpg: Total number processed: 1
+gpg:               imported: 1
+```
+
+Now you can manually verify the `*.asc` files were signed by that key:
+```
+$ for i in *.asc .ext/*.asc ; do gpg --verify $i ; done
+```
+
+
 ### Be quiet
 
 To silence the normal output of **cliv**, pass the `-q` option, or set environment

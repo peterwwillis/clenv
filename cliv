@@ -69,6 +69,14 @@ _cliv_ext_download () {
           fi
           eval curl -fsSL ${CURL_OPTS:-} -o "$CLIV_DIR/.ext/$CLIV_E_NAME.ex" "$cliv_http_ext_path/.ext/$CLIV_E_NAME.ex"
           chmod +x "$CLIV_DIR/.ext/$CLIV_E_NAME.ex"
+          if eval curl -fsSL ${CURL_OPTS:-} -o "$CLIV_DIR/.ext/$CLIV_E_NAME.ex.asc" "$cliv_http_ext_path/.ext/$CLIV_E_NAME.ex.asc" ; then
+               if command -v gpg 2>/dev/null 1>/dev/null && ! gpg --verify "$CLIV_DIR/.ext/$CLIV_E_NAME.ex.asc" ; then
+                   _echo_err "Error: validation of '$CLIV_E_NAME.ex.asc' failed! Make sure you import the public key first and try again."
+                   rm -rf "$CLIV_DIR/.ext/$CLIV_E_NAME.ex.asc" "$CLIV_DIR/.ext/$CLIV_E_NAME.ex"
+                   exit 1
+               fi
+          else _echo_err "Error downloading signature file '$CLIV_E_NAME.ex.asc'; not verifying extension signature!"
+          fi
     fi
 }
 _cliv_ext_install () {
