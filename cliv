@@ -268,9 +268,10 @@ fi
 [ "$1" = "-i" ] && shift 1 && exec env -i "$0" "$@"
 
 CLIV_FORCE=0 CLIV_QUIET="${CLIV_QUIET:-0}"
-while getopts "nlLE:e:D:r:X:WfVq" args
+while getopts "hnlLE:e:D:r:X:WfVq" args
 do
       case "$args" in
+          h)  _usage ;;
           n)  CLIV_NEW=1 ;;
           l)  CLIV_LIST=1 ;;
           L)  CLIV_LISTEXT=1 ;;
