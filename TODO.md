@@ -6,6 +6,9 @@
       a version already installed. Currently how the 'default' one works and 'pinned' versions work are different
       in ways that are probably not intuitive and definitely wasteful.
 
+- [ ] Do not re-install an extension/version if it's already installed, unless '-f' option is provided.
+      (currently it will keep re-installing (ex. `cliv -E packer`), wasting bandwidth/time)
+
 - [ ] Verify signatures
   - [ ] Implement checking cryptographic signature of cliv
   - [ ] Implement checking cryptographic signature of cliv extensions
