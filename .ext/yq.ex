@@ -16,7 +16,7 @@ CLIV_E_BASEURL_ARGS='"${CLIV_E_VERSION}" "${CLIV_E_OS}" "${CLIV_E_ARCH}"'
 export CLIV_E_NAME CLIV_E_REV CLIV_E_BIN_NAME CLIV_E_DLFILE
 
 ### Extension-specific functions
-_ext_versions () {  cliv -E "$CLIV_E_NAME" -X versions_ghtags "$CLIV_E_GHREPOAPI" ;  }
+_ext_versions () {  cliv -E "$CLIV_E_NAME" -X versions_ghtags "$CLIV_E_GHREPOAPI" | grep -e "^[0-9]";  }
 
 ### The rest of this doesn't need to be modified
 _ext_variables () { set | grep '^CLIV_E_' ; }
