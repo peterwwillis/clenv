@@ -20,3 +20,7 @@
   - [ ] Implement checking cryptographic signature of cliv extensions
   - [ ] Implement checking cryptographic signature of downloads
   - [ ] Add a test for the GitHub custom extension installer
+
+ - [ ] Fix bug: Downloading envs versus running them.
+       If you run 'cliv -E terraform=1.1.2 terraform --help' it will run the correct terraform environment.
+       If you run 'cliv -E terraform=1.1.2 ./some_script.sh', it will download Terraform again, even if it already exists in the environment.
