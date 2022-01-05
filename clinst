@@ -49,7 +49,7 @@ _clinst_listext () {
           _clinst_ext_download
           _ext_versions
     else  [ ! -r "$CLINST_DIR/CHECKSUMS.sha256" -o "$CLINST_FORCE" = "1" ] && eval curl -fsSL ${CURL_OPTS:-} -o "$CLINST_DIR/CHECKSUMS.sha256" "$CLINST_HTTP_PATH/CHECKSUMS.sha256"
-          {    [ -r "$CLINST_DIR/CHECKSUMS.sha256" ] && grep -e "  $CLINST_EXT_DIR_NAME/.*\.ex$" "$CLINST_DIR/CHECKSUMS.sha256" | sed -e "s/^.*  \$CLINST_EXT_DIR_NAME\/\([^\/]\+\)\.ex$/\1/"
+          {    [ -r "$CLINST_DIR/CHECKSUMS.sha256" ] && grep -e "  $CLINST_EXT_DIR_NAME/.*\.ex$" "$CLINST_DIR/CHECKSUMS.sha256"  | sed -e "s/.*$CLINST_EXT_DIR_NAME\///; s/\.ex$//"
                [ -d "$CLINST_EXT_DIR/" ] && { ls "$CLINST_EXT_DIR/" | sed -e 's/\.ex$//g' ; }
           } | sort | uniq
     fi
