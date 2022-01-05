@@ -12,14 +12,14 @@ _bumpver () {
     sed -i -e "s/\(raw\.githubusercontent\.com\/peterwwillis\/cliv\/v\)[0-9.]\+\(\/cliv\)/\1$new_ver\2/g" README.md
 }
 _extlist () {
-    extensions="$(ls .ext/*.ex | grep -ve "test\.ex" | sed -e 's/^\.ext\/\(.\+\)\.ex$/**\1**, /g' | xargs | sed -e 's/,$//')"
+    extensions="$(ls .clext/*.ex | grep -ve "test\.ex" | sed -e 's/^\.clext\/\(.\+\)\.ex$/**\1**, /g' | xargs | sed -e 's/,$//')"
     sed -i -e "s/\(to automate downloading & installing any application\).*)/\1 ($extensions)/" README.md
 }
 _checksums () {
-    sha256sum cliv .ext/*.ex > CHECKSUMS.sha256
+    sha256sum cliv .clext/*.ex > CHECKSUMS.sha256
 }
 _signatures () {
-    for i in cliv .ext/*.ex ; do
+    for i in cliv .clext/*.ex ; do
         gpg -s -a -b -o $i.asc $i
     done
 }

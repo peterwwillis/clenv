@@ -31,7 +31,7 @@ first if those environment variables are set.
 **New in cliv 2.4.0:** You can create your own GitHub repository to host your
 *Extension* and pass the repo to **cliv** to install (`cliv -E github.com/someuser/somerepo`).
 Your extension should be named the same as your repository, exist in a folder 
-`.ext/`, and have a file extension `.ex`. The *CLIV_E_NAME* variable should stay
+`.clext/`, and have a file extension `.ex`. The *CLIV_E_NAME* variable should stay
 the same as the repo and extension name, but you can change the *CLIV_E_BIN_NAME*
 variable so that the installed binary/wrapper has a different name. See
 https://github.com/peterwwillis/cliv-test-ext/ for an example. You can specify
@@ -100,5 +100,5 @@ make shellcheck
 ## Local testing
 Use this method to manually test an extension in the current Git working directory.
 ```bash
-DEBUG=1 CLIV_HTTP_PATH=file://`pwd`/.. cliv -E aws=2.0.50 -e aws2050 aws
+DEBUG=1 CLIV_HTTP_PATH=file://`pwd`/.. cliv -f -E aws=2.0.50 -e aws2050 aws
 ```

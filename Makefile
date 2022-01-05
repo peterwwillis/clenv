@@ -4,7 +4,7 @@ test: test-main test-extensions
 
 test-extensions:
 	export PATH="`pwd`:$$PATH" ; \
-    ./test.sh .ext/tests/*.t
+    ./test.sh .clext/tests/*.t
 
 test-main:
 	export PATH="`pwd`:$$PATH" ; \

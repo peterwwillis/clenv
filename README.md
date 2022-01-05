@@ -9,7 +9,7 @@
  - `curl` (if you use *Extensions*, which you probably want to)
 
 # Features
- - Use *Extensions* to automate downloading & installing any application (**ansible**, **aws**, **docker-compose**, **eksctl**, **helm**, **istioctl**, **kubectl**, **packer**, **saml2aws**, **terraform-docs**, **terraformer**, **terraform**, **terragrunt**, **tflint**, **tfsec**, **yq**)
+ - Use *Extensions* to automate downloading & installing any application (**ansible**, **aws**, **docker-compose**, **eksctl**, **helm**, **istioctl**, **kind**, **krew**, **kubectl**, **packer**, **saml2aws**, **terraform-docs**, **terraformer**, **terraform**, **terraform_landscape**, **terragrunt**, **tflint**, **tfsec**, **ydiff**, **yq**)
  - Install custom *Extensions* from GitHub (`cliv -E github.com/foo/bar`)
  - Pin versions with `.EXTENSION-version` files
  - Wrappers in `~/.cliv/.bin` allow your shell to automatically find installed applications
@@ -20,9 +20,9 @@
 
 1. Install **cliv**
    ```bash
-   $ sudo curl -fsSL -o /usr/local/bin/cliv https://raw.githubusercontent.com/peterwwillis/cliv/v2.4.0/cliv \
+   $ sudo curl -fsSL -o /usr/local/bin/cliv https://raw.githubusercontent.com/peterwwillis/cliv/v3.0.0/cliv \
      && sudo chmod +x /usr/local/bin/cliv \
-     && echo "3708fa6d60f90d2ca610337260b583afb945de1433344ad20bd06c23ccdebcdc  /usr/local/bin/cliv" | sha256sum -c \
+     && echo "e8a600cca7c68f72ff2412a1d1aae3e1ca1ff7da0c28884a2739343e7164cf82  /usr/local/bin/cliv" | sha256sum -c \
      || { echo "FAILED CHECKSUM: REMOVING cliv" && sudo rm -f /usr/local/bin/cliv ; }
    /usr/local/bin/cliv: OK
    ```
