@@ -4,10 +4,13 @@
 set -eu
 [ "${DEBUG:-0}" = "1" ] && set -x
 
-CLINST_VER="3.0.0"
-CLINST_HTTP_PATH="${CLINST_HTTP_PATH:-https://raw.githubusercontent.com/peterwwillis/clinst/v$CLINST_VER}"
+CLINST_VER="${CLINST_VER:-v3.0.0}"
+CLINST_HTTP_PATH="${CLINST_HTTP_PATH:-https://raw.githubusercontent.com/peterwwillis/clinst/$CLINST_VER}"
 HOME="${HOME:-$(getent passwd $(id -u) | cut -d : -f 6)}"
 export CLINST_DIR="${CLINST_DIR:-$HOME/.clinst}"
+export CLINST_BIN_DIR="${CLINST_BIN_DIR:-$CLINST_DIR/.bin}"
+export CLINST_EXT_DIR_NAME="${CLINST_EXT_DIR_NAME:-.clext}"
+export CLINST_EXT_DIR="${CLINST_EXT_DIR:-$CLINST_DIR/$CLINST_EXT_DIR_NAME}"
 
 ### General clinst functions
 
@@ -46,8 +49,8 @@ _clinst_listext () {
           _clinst_ext_download
           _ext_versions
     else  [ ! -r "$CLINST_DIR/CHECKSUMS.sha256" -o "$CLINST_FORCE" = "1" ] && eval curl -fsSL ${CURL_OPTS:-} -o "$CLINST_DIR/CHECKSUMS.sha256" "$CLINST_HTTP_PATH/CHECKSUMS.sha256"
-          {    [ -r "$CLINST_DIR/CHECKSUMS.sha256" ] && grep -e "  .ext/.*\.ex$" "$CLINST_DIR/CHECKSUMS.sha256" | sed -e 's/^.*  \.ext\/\([^\/]\+\)\.ex$/\1/'
-               [ -d "$CLINST_DIR/.ext/" ] && { ls "$CLINST_DIR/.ext/" | sed -e 's/\.ex$//g' ; }
+          {    [ -r "$CLINST_DIR/CHECKSUMS.sha256" ] && grep -e "  $CLINST_EXT_DIR_NAME/.*\.ex$" "$CLINST_DIR/CHECKSUMS.sha256" | sed -e "s/^.*  \$CLINST_EXT_DIR_NAME\/\([^\/]\+\)\.ex$/\1/"
+               [ -d "$CLINST_EXT_DIR/" ] && { ls "$CLINST_EXT_DIR/" | sed -e 's/\.ex$//g' ; }
           } | sort | uniq
     fi
 }
@@ -59,20 +62,20 @@ _clinst_new () {
     printf "%s\n" 'pmunge () { if ! echo "$PATH"|/bin/grep -Eq "(^|:)$1($|:)"; then if [ "${2:-}" = "after" ]; then PATH="$PATH:$1"; else PATH="$1:$PATH"; fi;fi; }' >> "$CLINST_DIR/$_env/.env"
     printf "%s\n" 'pmunge "'"$CLINST_DIR/$_env/bin"'"' >> "$CLINST_DIR/$_env/.env"
 }
-_clinst_ext_run () {  "$CLINST_DIR/.ext/$CLINST_E_NAME.ex" "$@"; }
+_clinst_ext_run () {  "$CLINST_EXT_DIR/$CLINST_E_NAME.ex" "$@"; }
 _clinst_ext_download () {
     clinst_http_ext_path="$CLINST_HTTP_PATH"
-    if    [ "$CLINST_FORCE" = "1" ] || [ ! -e "$CLINST_DIR/.ext/$CLINST_E_NAME.ex" ]
+    if    [ "$CLINST_FORCE" = "1" ] || [ ! -e "$CLINST_EXT_DIR/$CLINST_E_NAME.ex" ]
     then  if    [ -n "${ghrepo:-}" ]
           then  [ -z "${ghbranch:-}" ] && ghbranch="$(eval curl -fsSL ${CURL_OPTS:-} https://api.github.com/repos/$ghrepo | grep -e "^[[:space:]]*\"default_branch\":" | sed -e 's/^[[:space:]]*"default_branch": "\([^"]\+\)".*/\1/')"
                 clinst_http_ext_path="https://raw.githubusercontent.com/$ghrepo/$ghbranch"
           fi
-          eval curl -fsSL ${CURL_OPTS:-} -o "$CLINST_DIR/.ext/$CLINST_E_NAME.ex" "$clinst_http_ext_path/.ext/$CLINST_E_NAME.ex"
-          chmod +x "$CLINST_DIR/.ext/$CLINST_E_NAME.ex"
-          if eval curl -fsSL ${CURL_OPTS:-} -o "$CLINST_DIR/.ext/$CLINST_E_NAME.ex.asc" "$clinst_http_ext_path/.ext/$CLINST_E_NAME.ex.asc" ; then
-               if command -v gpg 2>/dev/null 1>/dev/null && ! gpg --verify "$CLINST_DIR/.ext/$CLINST_E_NAME.ex.asc" ; then
+          eval curl -fsSL ${CURL_OPTS:-} -o "$CLINST_EXT_DIR/$CLINST_E_NAME.ex" "$clinst_http_ext_path/$CLINST_EXT_DIR_NAME/$CLINST_E_NAME.ex"
+          chmod +x "$CLINST_EXT_DIR/$CLINST_E_NAME.ex"
+          if eval curl -fsSL ${CURL_OPTS:-} -o "$CLINST_EXT_DIR/$CLINST_E_NAME.ex.asc" "$clinst_http_ext_path/$CLINST_EXT_DIR_NAME/$CLINST_E_NAME.ex.asc" ; then
+               if command -v gpg 2>/dev/null 1>/dev/null && ! gpg --verify "$CLINST_EXT_DIR/$CLINST_E_NAME.ex.asc" ; then
                    _echo_err "Error: validation of '$CLINST_E_NAME.ex.asc' failed! Make sure you import the public key first and try again."
-                   rm -rf "$CLINST_DIR/.ext/$CLINST_E_NAME.ex.asc" "$CLINST_DIR/.ext/$CLINST_E_NAME.ex"
+                   rm -rf "$CLINST_EXT_DIR/$CLINST_E_NAME.ex.asc" "$CLINST_EXT_DIR/$CLINST_E_NAME.ex"
                    exit 1
                fi
           else _echo_err "Error downloading signature file '$CLINST_E_NAME.ex.asc'; not verifying extension signature!"
@@ -185,11 +188,11 @@ _ext_install_wrapper () {
     _echo_err "$CLINST_E_NAME: Installing wrapper"
     if    _ext_help_grep "install-wrapper"
     then  _clinst_ext_run "install-wrapper"
-    else  [ -d "$CLINST_DIR/.bin" ] || mkdir -p "$CLINST_DIR/.bin"
-          if    [ ! -e "$CLINST_DIR/.bin/$CLINST_E_BIN_NAME" -o "${CLINST_FORCE:-0}" = "1" ]
-          then  printf "#!/usr/bin/env sh\nexec clinst -E $CLINST_E_NAME -e $CLINST_E_ENVIRON $CLINST_E_BIN_NAME \"\$@\"\n" > "$CLINST_DIR/.bin/$CLINST_E_BIN_NAME"
+    else  [ -d "$CLINST_BIN_DIR" ] || mkdir -p "$CLINST_BIN_DIR"
+          if    [ ! -e "$CLINST_BIN_DIR/$CLINST_E_BIN_NAME" -o "${CLINST_FORCE:-0}" = "1" ]
+          then  printf "#!/usr/bin/env sh\nexec clinst -E $CLINST_E_NAME -e $CLINST_E_ENVIRON $CLINST_E_BIN_NAME \"\$@\"\n" > "$CLINST_BIN_DIR/$CLINST_E_BIN_NAME"
           fi
-          [ -x "$CLINST_DIR/.bin/$CLINST_E_BIN_NAME" ] || chmod +x "$CLINST_DIR/.bin/$CLINST_E_BIN_NAME"
+          [ -x "$CLINST_BIN_DIR/$CLINST_E_BIN_NAME" ] || chmod +x "$CLINST_BIN_DIR/$CLINST_E_BIN_NAME"
     fi
 }
 _ext_latest () {  _ext_versions | head -1 ; }
@@ -282,13 +285,13 @@ do
           X)  CLINST_XCALL="$OPTARG" ;;
           W)  CLINST_WRAPPER=0 ;;
           f)  export CLINST_FORCE=1 ;;
-          V)  echo "clinst v$CLINST_VER" ; exit 0 ;;
+          V)  echo "clinst $CLINST_VER" ; exit 0 ;;
           q)  CLINST_QUIET=1 ;;
       esac
 done
 shift $(($OPTIND-1))
 
-for  d in "$CLINST_DIR" "$CLINST_DIR/.bin" "$CLINST_DIR/.ext"
+for  d in "$CLINST_DIR" "$CLINST_BIN_DIR" "$CLINST_EXT_DIR"
 do   [ -d "$d" ] || mkdir -p "$d"
 done
 

@@ -151,7 +151,7 @@ Terraform) you can choose which *Environment* the wrapper runs in two ways:
    specify a version in the `-E` option, this does not happen, and the `-W` option
    disables it entirely.
 
-(Don't see an *Extension* you want? Check out the [.ext/](./.ext/) directory,
+(Don't see an *Extension* you want? Check out the [.clext/](./.clext/) directory,
 cut me a Pull Request, I'll merge it! Or create your own via a GitHub repository)
 
 ### How do I install and run a program?
@@ -163,7 +163,7 @@ When you run a command like `clinst CMD`, this happens:
     Then it will try to run program `CMD`.
 
  2. If the *Environment* was not found, **clinst** looks for an *Extension* of the
-    same name (`$CLINST_HTTP_PATH/.ext/CMD.ex`). If found, it downloads the 
+    same name (`$CLINST_HTTP_PATH/.clext/CMD.ex`). If found, it downloads the 
     *Extension*, uses it to install `CMD` in an *Environment* of the same name,
     then follows step #1.
 
@@ -178,10 +178,10 @@ When you run a command like `clinst CMD`, this happens:
 ### Using Extensions
 
 **clinst** will download *Extensions* with `curl` from a URL
-`$CLINST_HTTP_PATH/.ext/EXTENSION.ex`. Override *$CLINST_HTTP_PATH* if you want
+`$CLINST_HTTP_PATH/.clext/EXTENSION.ex`. Override *$CLINST_HTTP_PATH* if you want
 to provide your own *Extension* path or URL.
 
-You can also put extensions directly into your `~/.clinst/.ext/` directory.
+You can also put extensions directly into your `~/.clinst/.clext/` directory.
 These are not overwritten unless you pass the `-f` option to **clinst**.
 
 By default, *Extensions* and *Environments* use the same name as a `CMD`. But
@@ -220,7 +220,7 @@ name, and the tag/branch with '@BRANCH'. Example:
    $ clinst -E github.com/peterwwillis/clinst-test-ext=4.9.6
    $ clinst -E github.com/peterwwillis/clinst-test-ext@v2.4.0=4.9.6
    ```
-See [.ext/README.md](./.ext/README.md) for details about how to create these extensions.
+See [.clext/README.md](./.clext/README.md) for details about how to create these extensions.
 
 
 ### Manually setting up an *Environment*
@@ -326,7 +326,7 @@ gpg:               imported: 1
 
 Now you can manually verify the `*.asc` files were signed by that key:
 ```
-$ for i in *.asc .ext/*.asc ; do gpg --verify $i ; done
+$ for i in *.asc .clext/*.asc ; do gpg --verify $i ; done
 ```
 
 
@@ -339,4 +339,4 @@ variable `CLINST_QUIET=1`.
 
 ## Testing
 
-Run `make` in this directory to run all the tests. See [.ext/tests/](./.ext/tests/) for details.
+Run `make` in this directory to run all the tests. See [.clext/tests/](./.clext/tests/) for details.

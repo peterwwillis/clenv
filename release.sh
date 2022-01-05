@@ -5,7 +5,8 @@ set -eu
 _bumpver () {
     new_ver="$1"
     git checkout -- clinst
-    sed -i -e "s/^CLINST_VER=.*/CLINST_VER=\"$new_ver\"/" clinst
+    # CLINST_VER="${CLINST_VER:-v3.0.0}"
+    sed -i -e "s/^CLINST_VER=.*/CLINST_VER=\"\${CLINST_VER:-v$new_ver}\"/" clinst
     checksum="$(sha256sum clinst | awk '{print $1}')"
     git checkout -- README.md
     sed -i -e "s/^\([[:space:]]\+&& echo \"\)[0-9a-f]\+  /\1$checksum  /" README.md
