@@ -4,22 +4,22 @@ set -eu
 
 _bumpver () {
     new_ver="$1"
-    git checkout -- cliv
-    sed -i -e "s/^CLIV_VER=.*/CLIV_VER=\"$new_ver\"/" cliv
-    checksum="$(sha256sum cliv | awk '{print $1}')"
+    git checkout -- clinst
+    sed -i -e "s/^CLINST_VER=.*/CLINST_VER=\"$new_ver\"/" clinst
+    checksum="$(sha256sum clinst | awk '{print $1}')"
     git checkout -- README.md
     sed -i -e "s/^\([[:space:]]\+&& echo \"\)[0-9a-f]\+  /\1$checksum  /" README.md
-    sed -i -e "s/\(raw\.githubusercontent\.com\/peterwwillis\/cliv\/v\)[0-9.]\+\(\/cliv\)/\1$new_ver\2/g" README.md
+    sed -i -e "s/\(raw\.githubusercontent\.com\/peterwwillis\/clinst\/v\)[0-9.]\+\(\/clinst\)/\1$new_ver\2/g" README.md
 }
 _extlist () {
     extensions="$(ls .clext/*.ex | grep -ve "test\.ex" | sed -e 's/^\.clext\/\(.\+\)\.ex$/**\1**, /g' | xargs | sed -e 's/,$//')"
     sed -i -e "s/\(to automate downloading & installing any application\).*)/\1 ($extensions)/" README.md
 }
 _checksums () {
-    sha256sum cliv .clext/*.ex > CHECKSUMS.sha256
+    sha256sum clinst .clext/*.ex > CHECKSUMS.sha256
 }
 _signatures () {
-    for i in cliv .clext/*.ex ; do
+    for i in clinst .clext/*.ex ; do
         gpg -s -a -b -o $i.asc $i
     done
 }

@@ -1,0 +1,322 @@
+#!/usr/bin/env sh
+# clinst - Execute commands using a specific directory of files and variables
+# Copyright (C) 2021-2022 Peter Willis
+set -eu
+[ "${DEBUG:-0}" = "1" ] && set -x
+
+CLINST_VER="3.0.0"
+CLINST_HTTP_PATH="${CLINST_HTTP_PATH:-https://raw.githubusercontent.com/peterwwillis/clinst/v$CLINST_VER}"
+HOME="${HOME:-$(getent passwd $(id -u) | cut -d : -f 6)}"
+export CLINST_DIR="${CLINST_DIR:-$HOME/.clinst}"
+
+### General clinst functions
+
+_usage () {
+    printf "%s\n" "
+Usage: $0 [OPTS]
+       $0 [OPTS] [CMD [ARGS ..]]
+Opts:
+	-h			This screen
+	-i			Clear environment variables. Must be first argument
+	-l [ENVIRON]		List environments
+	-L [EXT]		List remote extensions
+	-n ENVIRON		Create a new environment ENVIRON
+	-E EXT[=V] 	 	Use (optional) version V of extension EXT
+	-e ENVIRON		Use environment ENVIRON
+	-D EXT=V		Make version V the default wrapper for EXT
+	-r FILE			Install a list of extensions from FILE
+	-X CMD [ARG ..]		(internal function) Run command for an extention
+	-W			Disables wrapper mode
+	-f			Force mode
+ 	-V			Version of clinst
+	-q			Quiet mode
+"
+  exit 1
+}
+_err () { printf "%s\n" "$0: Error: $*" ; exit 1 ; }
+_echo_err () { [ $CLINST_QUIET -eq 1 ] || printf "%s\n" "$(basename "$0"): $*" 1>&2 ; }
+_clinst_list () {
+    for d in "$@"
+    do  [ -d "$CLINST_DIR/$(basename "$d")" ] && basename "$d"
+    done
+}
+_clinst_listext () {
+    if    [ $# -gt 0 ]
+    then  CLINST_E_NAME="$1"
+          _clinst_ext_download
+          _ext_versions
+    else  [ ! -r "$CLINST_DIR/CHECKSUMS.sha256" -o "$CLINST_FORCE" = "1" ] && eval curl -fsSL ${CURL_OPTS:-} -o "$CLINST_DIR/CHECKSUMS.sha256" "$CLINST_HTTP_PATH/CHECKSUMS.sha256"
+          {    [ -r "$CLINST_DIR/CHECKSUMS.sha256" ] && grep -e "  .ext/.*\.ex$" "$CLINST_DIR/CHECKSUMS.sha256" | sed -e 's/^.*  \.ext\/\([^\/]\+\)\.ex$/\1/'
+               [ -d "$CLINST_DIR/.ext/" ] && { ls "$CLINST_DIR/.ext/" | sed -e 's/\.ex$//g' ; }
+          } | sort | uniq
+    fi
+}
+_clinst_new () {
+    _env="$1"; shift
+    [ -d "$CLINST_DIR/$_env" ] && [ ! "$CLINST_FORCE" = "1" ] && _err "Environment '$CLINST_DIR/$_env' already exists"
+    _echo_err "Creating new environment '$CLINST_DIR/$_env'"
+    mkdir -p "$CLINST_DIR/$_env/bin"
+    printf "%s\n" 'pmunge () { if ! echo "$PATH"|/bin/grep -Eq "(^|:)$1($|:)"; then if [ "${2:-}" = "after" ]; then PATH="$PATH:$1"; else PATH="$1:$PATH"; fi;fi; }' >> "$CLINST_DIR/$_env/.env"
+    printf "%s\n" 'pmunge "'"$CLINST_DIR/$_env/bin"'"' >> "$CLINST_DIR/$_env/.env"
+}
+_clinst_ext_run () {  "$CLINST_DIR/.ext/$CLINST_E_NAME.ex" "$@"; }
+_clinst_ext_download () {
+    clinst_http_ext_path="$CLINST_HTTP_PATH"
+    if    [ "$CLINST_FORCE" = "1" ] || [ ! -e "$CLINST_DIR/.ext/$CLINST_E_NAME.ex" ]
+    then  if    [ -n "${ghrepo:-}" ]
+          then  [ -z "${ghbranch:-}" ] && ghbranch="$(eval curl -fsSL ${CURL_OPTS:-} https://api.github.com/repos/$ghrepo | grep -e "^[[:space:]]*\"default_branch\":" | sed -e 's/^[[:space:]]*"default_branch": "\([^"]\+\)".*/\1/')"
+                clinst_http_ext_path="https://raw.githubusercontent.com/$ghrepo/$ghbranch"
+          fi
+          eval curl -fsSL ${CURL_OPTS:-} -o "$CLINST_DIR/.ext/$CLINST_E_NAME.ex" "$clinst_http_ext_path/.ext/$CLINST_E_NAME.ex"
+          chmod +x "$CLINST_DIR/.ext/$CLINST_E_NAME.ex"
+          if eval curl -fsSL ${CURL_OPTS:-} -o "$CLINST_DIR/.ext/$CLINST_E_NAME.ex.asc" "$clinst_http_ext_path/.ext/$CLINST_E_NAME.ex.asc" ; then
+               if command -v gpg 2>/dev/null 1>/dev/null && ! gpg --verify "$CLINST_DIR/.ext/$CLINST_E_NAME.ex.asc" ; then
+                   _echo_err "Error: validation of '$CLINST_E_NAME.ex.asc' failed! Make sure you import the public key first and try again."
+                   rm -rf "$CLINST_DIR/.ext/$CLINST_E_NAME.ex.asc" "$CLINST_DIR/.ext/$CLINST_E_NAME.ex"
+                   exit 1
+               fi
+          else _echo_err "Error downloading signature file '$CLINST_E_NAME.ex.asc'; not verifying extension signature!"
+          fi
+    fi
+}
+_clinst_ext_install () {
+    ext="${1%%=*}" ver="${1#*=}" environ="${2:-}"
+    [ "${ext%%/*}" = "github.com" ] && ghrepo="${ext#github.com/}" && ghrepo="${ghrepo%%=*}" && ghbranch="${ghrepo##*@}" && ghrepo="${ghrepo%@*}" && ext="${ghrepo##*/}" && [ "$ver" = "$1" ] && ver="latest"
+    [ -n "${ghbranch:-}" -a -n "${ghrepo:-}" ] && [ "${ghbranch:-}" = "${ghrepo:-}" ] && ghbranch=""
+    if [ $# -lt 2 -o -z "$environ" ] ; then  shift 1; environ="$ext";       else shift 2;  fi
+    if [ ! "$ver" = "$ext" ]         ; then  export CLINST_E_VERSION="$ver";                 fi
+    export CLINST_E_NAME="$ext"
+    _echo_err "Installing extention '$CLINST_E_NAME'"
+    _clinst_ext_download
+    [ -z "${CLINST_E_VERSION:-}" ]        && CLINST_E_VERSION="latest"
+    [ "$CLINST_E_VERSION" = "latest" ]    && CLINST_E_VERSION="$(_ext_latest)"
+    export CLINST_E_VERSION CLINST_E_ENVIRON="$CLINST_E_NAME=$CLINST_E_VERSION" CLINST_E_INSTDIR="$CLINST_DIR/$CLINST_E_NAME=$CLINST_E_VERSION"
+    [ -d "$CLINST_DIR/$CLINST_E_ENVIRON" ] || _clinst_new "$CLINST_E_ENVIRON"
+    _echo_err "Loading extension '$CLINST_E_NAME' version '$CLINST_E_VERSION'"
+    _ext_variables # NOTE: loads whatever CLINST_E_* variables the extension outputs
+    _ext_clean; _ext_download; _ext_unpack; _ext_install_local; _ext_test; _ext_clean; _ext_install_wrapper
+}
+_clinst_exec () {
+  export CLINST_E_ENVIRON="${CLINST_E_ENVIRON:-$1}" # default environment name to command name
+  [ ${CLINST_WRAPPER:-1} -eq 1 ]        && _clinst_wrapper "$CLINST_E_ENVIRON"
+  [ -d "$CLINST_DIR/$CLINST_E_ENVIRON" ] || _err "No environment '$CLINST_DIR/$CLINST_E_ENVIRON' found"
+  if    [ -r "$CLINST_DIR/$CLINST_E_ENVIRON/.env" ]
+  then  set -a;  . "$CLINST_DIR/$CLINST_E_ENVIRON/.env"
+  else  _echo_err "Warning: no '$CLINST_DIR/$CLINST_E_ENVIRON/.env' found"
+  fi
+  _echo_err "Executing $(which "$1")"
+  # unset variables to prevents infinite loops
+  unset CLINST_E_ENVIRON CLINST_E_VERSION CLINST_E_NAME CLINST_FORCE
+  exec env "$@"
+}
+_clinst_default_wrapper () {
+    CLINST_E_ENVIRON="${CLINST_E_ENVIRON:-$1}"
+    ext="${CLINST_E_ENVIRON%%=*}" ver="${CLINST_E_ENVIRON#*=}"
+    CLINST_E_NAME="$ext"
+    [ "$ver" = "$ext" ] || CLINST_E_VERSION="$ver"
+    _echo_err "Switching default environment for extension $ext to $CLINST_E_ENVIRON"
+    _ext_variables # NOTE: loads whatever CLINST_E_* variables the extension outputs
+    CLINST_FORCE=1 _ext_install_wrapper "$CLINST_E_ENVIRON"
+}
+_clinst_wrapper () {
+    CLINST_E_NAME="${CLINST_E_NAME:-$1}" # default extension name to environment name
+    ext="${CLINST_E_NAME%%=*}" ver="${CLINST_E_NAME#*=}"
+    [ "$ver" = "$ext" ] || CLINST_E_VERSION="$ver"
+    if    [ -z "${CLINST_E_VERSION:-}" ]
+    then  cwd="$(pwd)"
+          while [ ! "$(dirname "$cwd")" = "/" ]
+          do
+                if    [ -r "$cwd/.$CLINST_E_NAME-version" ]
+                then  CLINST_E_VERSION="$(cat "$cwd/.$CLINST_E_NAME-version")"
+                      _echo_err "Found '$cwd/.$CLINST_E_NAME-version' = '$CLINST_E_VERSION'"
+                      break
+                else  cwd="$(dirname "$cwd")"
+                fi
+          done
+          # Wrapper version detection makes an environment of extension name + version
+          [ -n "${CLINST_E_VERSION:-}" ] && CLINST_E_ENVIRON="$CLINST_E_NAME=$CLINST_E_VERSION"
+    fi
+    # Try to auto-install extensions in case a new/different version is needed
+    _clinst_list "$CLINST_E_ENVIRON" >/dev/null || _clinst_ext_install "$CLINST_E_NAME" "$CLINST_E_ENVIRON"
+}
+
+
+### Extension functions
+
+CLINST_EXT_HELP=""
+_ext_help_grep () {
+    CLINST_EXT_HELP="${CLINST_EXT_HELP:-$(_clinst_ext_run help)}"
+    if    [ $(expr "$CLINST_EXT_HELP" : ".*  $*") -ne 0 ]
+    then  return 0
+    else  return 1
+    fi
+}
+_ext_variables () {  eval $(_clinst_ext_run variables) ;  }
+_ext_test () {
+    _echo_err "$CLINST_E_NAME: Testing"
+    if    _ext_help_grep "test"
+    then  _clinst_ext_run "test"
+    else  "$CLINST_E_INSTDIR/bin/$CLINST_E_BIN_NAME" --version 2>/dev/null 1>/dev/null
+    fi
+}
+_ext_clean_install () {
+    _echo_err "$CLINST_E_NAME: Removing '$CLINST_E_INSTDIR'"
+    if    _ext_help_grep "clean-install"
+    then  _clinst_ext_run "clean-install"
+    else  rm -rf "${CLINST_E_INSTDIR:?}/bin/" "${CLINST_E_INSTDIR:?}/usr/" "${CLINST_E_INSTDIR:?}/.env"
+    fi
+}
+_ext_clean () {
+    _echo_err "$CLINST_E_NAME: Removing temporary download files"
+    if    _ext_help_grep "clean"
+    then  _clinst_ext_run "clean"
+    else  rm -rf "${CLINST_E_INSTDIR:?}/download/"
+    fi
+}
+_ext_install_local () {
+    _echo_err "$CLINST_E_NAME: Installing locally";
+    if    [ $# -lt 1 ] && _ext_help_grep "install-local"
+    then  _clinst_ext_run "install-local"
+    else  mkdir -p "$CLINST_E_INSTDIR/bin"
+          ln -sf "$CLINST_E_INSTDIR/${1:-/usr/bin/$CLINST_E_BIN_NAME}" "$CLINST_E_INSTDIR/bin/$CLINST_E_BIN_NAME"
+    fi
+}
+_ext_install_wrapper () {
+    _echo_err "$CLINST_E_NAME: Installing wrapper"
+    if    _ext_help_grep "install-wrapper"
+    then  _clinst_ext_run "install-wrapper"
+    else  [ -d "$CLINST_DIR/.bin" ] || mkdir -p "$CLINST_DIR/.bin"
+          if    [ ! -e "$CLINST_DIR/.bin/$CLINST_E_BIN_NAME" -o "${CLINST_FORCE:-0}" = "1" ]
+          then  printf "#!/usr/bin/env sh\nexec clinst -E $CLINST_E_NAME -e $CLINST_E_ENVIRON $CLINST_E_BIN_NAME \"\$@\"\n" > "$CLINST_DIR/.bin/$CLINST_E_BIN_NAME"
+          fi
+          [ -x "$CLINST_DIR/.bin/$CLINST_E_BIN_NAME" ] || chmod +x "$CLINST_DIR/.bin/$CLINST_E_BIN_NAME"
+    fi
+}
+_ext_latest () {  _ext_versions | head -1 ; }
+_ext_url () {
+    export CLINST_E_VERSION="${CLINST_E_VERSION:-$(_ext_latest)}" # pass version to extension
+    if    _ext_help_grep "url"
+    then  _clinst_ext_run "url"
+    else  eval printf "$CLINST_E_BASEURL\\\n" "$CLINST_E_BASEURL_ARGS"
+    fi
+}
+_ext_unpack () {
+    _echo_err "$CLINST_E_NAME: Unpacking to '$CLINST_E_INSTDIR'"
+    if    _ext_help_grep "unpack"
+    then  _clinst_ext_run "unpack"
+    else  mkdir -p "$CLINST_E_INSTDIR/usr/bin"
+          chmod +x "$CLINST_E_INSTDIR/download/$CLINST_E_DLFILE"
+          mv "$CLINST_E_INSTDIR/download/$CLINST_E_DLFILE" "$CLINST_E_INSTDIR/usr/bin/$CLINST_E_BIN_NAME"
+    fi
+}
+_ext_unpack_unzip () {
+    mkdir -p "$CLINST_E_INSTDIR/$1"
+    unzip -q -o -d "$CLINST_E_INSTDIR/$1" "$CLINST_E_INSTDIR/download/$CLINST_E_DLFILE"
+}
+_ext_unpack_untar () {
+    mkdir -p "$CLINST_E_INSTDIR/$1"
+    tar -C "$CLINST_E_INSTDIR/$1" -xf "$CLINST_E_INSTDIR/download/$CLINST_E_DLFILE"
+}
+_ext_download () {
+    _echo_err "$CLINST_E_NAME: Downloading artifact";
+    if    _ext_help_grep "download"
+    then  _clinst_ext_run "download"
+    else  mkdir -p "$CLINST_E_INSTDIR/download"
+          if    [ ! -e "$CLINST_E_INSTDIR/download/$CLINST_E_DLFILE" ] || [ "${CLINST_FORCE:-0}" = "1" ]
+          then  eval curl -fSL ${CURL_OPTS:-} "$(_ext_url)" -o "$CLINST_E_INSTDIR/download/$CLINST_E_DLFILE"
+          fi
+    fi
+}
+_ext_versions () {  _clinst_ext_run "versions" ; }
+_ext_versions_gh () {
+    [ -n "${GITHUB_TOKEN:-}" ] && CURL_OPTS="${CURL_OPTS:-} -H \"Authorization: token $GITHUB_TOKEN\""
+    next_url="$1"
+    while [ -n "$next_url" ]
+    do
+          output="$(eval curl -ifsSL ${CURL_OPTS:-} "$next_url")"
+          printf "%s\n" "$output" | awk -F '"' "/\"$2\":/{print \$4}" | sed -e 's/^v//'
+          next_url="$(printf "%s\n" "$output" | grep '^link:' \
+              | sed -e 's/link: //; s/, /\n/g; s/[<>]//g; s/; rel/ rel/g; s/\(https:\/\/[^ ]\+\) rel="\([a-z]\+\)"/\2 \1/g' \
+              | awk '/next / { print $2}')"
+    done
+}
+_ext_versions_ghtags () {  _ext_versions_gh "$1/tags" "name" ;  }
+_ext_versions_ghreleases () {  _ext_versions_gh "$1/releases" "tag_name" ; }
+_ext_versions_pypi () {
+    [ -z "${PYTHON:-}" ] && command -v python3 >/dev/null && PYTHON="python3"
+    [ -z "${PYTHON:-}" ] && command -v python  >/dev/null && PYTHON="python"
+    eval curl -fsSL ${CURL_OPTS:-} "$1" | \
+    {
+        if    command -v $PYTHON >/dev/null && $PYTHON -c 'import sys,json,collections;'
+        then  $PYTHON -c 'import sys,json,collections; j=(json.loads(sys.stdin.read(), object_pairs_hook=collections.OrderedDict))["releases"]; print("\n".join([k for k in j.keys()]))' | tac
+        elif  command -v jq >/dev/null
+        then  jq -r '.releases | keys | .[]' | tac
+        else  grep -e '"[0-9]\+.*: \[' | sed -e 's/^[[:space:]]\+"\(.*\)": \[/\1/g' | tac
+        fi;
+    }
+}
+_ext_versions_hc () {
+    eval curl -fsSL ${CURL_OPTS:-} "$1" | grep -e "<a href=\"/$CLINST_E_NAME/" | grep -v alpha | cut -d \" -f 2 | cut -d / -f 3 | sed -e 's/^v//'
+}
+
+
+### Main program
+if    [ $# -lt 1 ]
+then  _usage
+fi
+
+[ "$1" = "-i" ] && shift 1 && exec env -i "$0" "$@"
+
+CLINST_FORCE=0 CLINST_QUIET="${CLINST_QUIET:-0}"
+while getopts "hnlLE:e:D:r:X:WfVq" args
+do
+      case "$args" in
+          h)  _usage ;;
+          n)  CLINST_NEW=1 ;;
+          l)  CLINST_LIST=1 ;;
+          L)  CLINST_LISTEXT=1 ;;
+          E)  CLINST_E_NAME="$OPTARG" ;;
+          e)  CLINST_E_ENVIRON="$OPTARG" ;;
+          D)  CLINST_E_ENVIRON="$OPTARG" ; CLINST_DEFAULT_WRAPPER=1 ;;
+          r)  CLINST_REQUIRES="$OPTARG" ;;
+          X)  CLINST_XCALL="$OPTARG" ;;
+          W)  CLINST_WRAPPER=0 ;;
+          f)  export CLINST_FORCE=1 ;;
+          V)  echo "clinst v$CLINST_VER" ; exit 0 ;;
+          q)  CLINST_QUIET=1 ;;
+      esac
+done
+shift $(($OPTIND-1))
+
+for  d in "$CLINST_DIR" "$CLINST_DIR/.bin" "$CLINST_DIR/.ext"
+do   [ -d "$d" ] || mkdir -p "$d"
+done
+
+if    [ -n "${CLINST_XCALL:-}" ]
+then  _ext_"$CLINST_XCALL" "$@"
+
+elif  [ "${CLINST_DEFAULT_WRAPPER:-0}" = "1" ]
+then  _clinst_default_wrapper
+
+elif  [ ${CLINST_NEW:-0} -eq 1 ]
+then  _clinst_new "$@"
+
+elif  [ ${CLINST_LIST:-0} -eq 1 ]
+then  if    [ $# -gt 0 ]
+      then  _clinst_list "$@"
+      else  _clinst_list "$CLINST_DIR"/*
+      fi
+
+elif  [ ${CLINST_LISTEXT:-0} -eq 1 ]
+then  _clinst_listext "$@"
+
+elif  [ -n "${CLINST_REQUIRES:-}" ]
+then  while read -r LINE ; do $0 -E "$LINE" ; done < "$CLINST_REQUIRES"
+
+elif  [ $# -lt 1 -a -n "${CLINST_E_NAME:-}" ]
+then  _clinst_ext_install "$CLINST_E_NAME" "${CLINST_E_ENVIRON:-}"
+
+elif  [ $# -gt 0 ]
+then  _clinst_exec "$@"
+
+fi

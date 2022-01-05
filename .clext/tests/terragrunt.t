@@ -4,7 +4,7 @@ set -u
 
 _t_vers_check () {
     # Test version check
-    result="$(cliv -e "ext-ver-$ext_ver" $ext_name --version | head -1)"
+    result="$(clinst -e "ext-ver-$ext_ver" $ext_name --version | head -1)"
     if [ ! "$result" = "terragrunt version v0.31.0" ] ; then
         return 1
     fi

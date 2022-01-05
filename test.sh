@@ -5,7 +5,7 @@ set -u
 ### Common Tests for Extensions
 _t_ext_install () {
     # Test extension install
-    if ! cliv -f -E "$ext_name=$ext_ver" -e "ext-ver-$ext_ver" ; then
+    if ! clinst -f -E "$ext_name=$ext_ver" -e "ext-ver-$ext_ver" ; then
         return 1
     fi
 }
@@ -14,7 +14,7 @@ _t_versions () {
     # NOTE: This MUST be run AFTER the 'Text extension install' test, as that 
     # will actually download the extension that we run in this test.
     # Confirm the 'ext_tests=' in each '*.t' !
-    cliv -E "$ext_name" -X versions >/dev/null
+    clinst -E "$ext_name" -X versions >/dev/null
 }
 
 ### Main test.sh
@@ -24,10 +24,10 @@ _main () {
     for i in "$@" ; do
         ext_name="$(basename "$i" .t)"
         tmp="$(mktemp -d)"
-        export CLIV_HTTP_PATH="file://`pwd`"
-        export CLIV_DIR="$tmp"
+        export CLINST_HTTP_PATH="file://`pwd`"
+        export CLINST_DIR="$tmp"
         # Variables seen by *.t: $ext_name , $tmp
-        # Environment variables exported: CLIV_HTTP_PATH, CLIV_DIR
+        # Environment variables exported: CLINST_HTTP_PATH, CLINST_DIR
         . "$i"
         fail=0 pass=0
         for t in $ext_tests ; do

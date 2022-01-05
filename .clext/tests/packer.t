@@ -4,7 +4,7 @@ set -u
 
 _t_vers_check () {
     # Test version check
-    result="$(cliv -e "ext-ver-$ext_ver" $ext_name --version)"
+    result="$(clinst -e "ext-ver-$ext_ver" $ext_name --version)"
     if [ ! "$result" = "1.7.3" ] ; then
         return 1
     fi

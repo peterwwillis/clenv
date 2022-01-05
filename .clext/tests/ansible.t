@@ -4,7 +4,7 @@ set -u
 
 _t_vers_check () {
     # Test version check
-    result="$(cliv -e "ext-ver-$ext_ver" $ext_name --version 2>/dev/null | head -1 | awk '{print $1}')"
+    result="$(clinst -e "ext-ver-$ext_ver" $ext_name --version 2>/dev/null | head -1 | awk '{print $1}')"
     if [ ! "$result" = "ansible" ] ; then
         return 1
     fi

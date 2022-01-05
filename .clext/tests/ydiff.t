@@ -4,7 +4,7 @@ set -u
 
 _t_vers_check () {
     # Test version check
-    result="$(cliv -e "ext-ver-$ext_ver" $ext_name --version 2>/dev/null)"
+    result="$(clinst -e "ext-ver-$ext_ver" $ext_name --version 2>/dev/null)"
     if [ ! "$result" = "$ext_name $ext_ver" ] ; then
         return 1
     fi

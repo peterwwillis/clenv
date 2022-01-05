@@ -1,6 +1,6 @@
 # About
 
-**cliv** is a tool to manage arbitrary applications (and versions) in individual environments. Inspired by programs like `rbenv`, `tfenv`, `virtualenv`, etc.
+**clinst** is a tool to manage arbitrary applications (and versions) in individual environments. Inspired by programs like `rbenv`, `tfenv`, `virtualenv`, etc.
 
 # Requirements
 
@@ -10,21 +10,21 @@
 
 # Features
  - Use *Extensions* to automate downloading & installing any application (**ansible**, **aws**, **docker-compose**, **eksctl**, **helm**, **istioctl**, **kind**, **krew**, **kubectl**, **packer**, **saml2aws**, **terraform-docs**, **terraformer**, **terraform**, **terraform_landscape**, **terragrunt**, **tflint**, **tfsec**, **ydiff**, **yq**)
- - Install custom *Extensions* from GitHub (`cliv -E github.com/foo/bar`)
+ - Install custom *Extensions* from GitHub (`clinst -E github.com/foo/bar`)
  - Pin versions with `.EXTENSION-version` files
- - Wrappers in `~/.cliv/.bin` allow your shell to automatically find installed applications
+ - Wrappers in `~/.clinst/.bin` allow your shell to automatically find installed applications
  - Small codebase, minimal dependencies
  - Customize environments to your needs
 
 # Quick start
 
-1. Install **cliv**
+1. Install **clinst**
    ```bash
-   $ sudo curl -fsSL -o /usr/local/bin/cliv https://raw.githubusercontent.com/peterwwillis/cliv/v3.0.0/cliv \
-     && sudo chmod +x /usr/local/bin/cliv \
-     && echo "e8a600cca7c68f72ff2412a1d1aae3e1ca1ff7da0c28884a2739343e7164cf82  /usr/local/bin/cliv" | sha256sum -c \
-     || { echo "FAILED CHECKSUM: REMOVING cliv" && sudo rm -f /usr/local/bin/cliv ; }
-   /usr/local/bin/cliv: OK
+   $ sudo curl -fsSL -o /usr/local/bin/clinst https://raw.githubusercontent.com/peterwwillis/clinst/v3.0.0/clinst \
+     && sudo chmod +x /usr/local/bin/clinst \
+     && echo "e8a600cca7c68f72ff2412a1d1aae3e1ca1ff7da0c28884a2739343e7164cf82  /usr/local/bin/clinst" | sha256sum -c \
+     || { echo "FAILED CHECKSUM: REMOVING clinst" && sudo rm -f /usr/local/bin/clinst ; }
+   /usr/local/bin/clinst: OK
    ```
 
 2. Install and run an application with an *Extension*
@@ -32,26 +32,26 @@
    vagrant@devbox:~$ packer --version
    bash: packer: command not found
    
-   vagrant@devbox:~$ cliv packer --version
-   cliv: Creating new environment '/home/vagrant/.cliv/packer'
-   cliv: Loading extension 'packer' version '1.7.3'
-   cliv: packer: Removing temporary download files
-   cliv: packer: Downloading artifact
+   vagrant@devbox:~$ clinst packer --version
+   clinst: Creating new environment '/home/vagrant/.clinst/packer'
+   clinst: Loading extension 'packer' version '1.7.3'
+   clinst: packer: Removing temporary download files
+   clinst: packer: Downloading artifact
      % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
                                     Dload  Upload   Total   Spent    Left  Speed
    100 30.2M  100 30.2M    0     0  10.6M      0  0:00:02  0:00:02 --:--:-- 10.6M
-   cliv: packer: Unpacking to '/home/vagrant/.cliv/packer'
-   cliv: packer: Installing symlink
-   cliv: packer: Testing
-   cliv: packer: Removing temporary download files
-   cliv: packer: Installing wrapper
-   cliv: Executing /home/vagrant/.cliv/packer/bin/packer
+   clinst: packer: Unpacking to '/home/vagrant/.clinst/packer'
+   clinst: packer: Installing symlink
+   clinst: packer: Testing
+   clinst: packer: Removing temporary download files
+   clinst: packer: Installing wrapper
+   clinst: Executing /home/vagrant/.clinst/packer/bin/packer
    1.7.3
 
-   vagrant@devbox:~$ export PATH=$HOME/.cliv/.bin:$PATH
+   vagrant@devbox:~$ export PATH=$HOME/.clinst/.bin:$PATH
 
    vagrant@devbox:~$ packer --version
-   cliv: Executing /home/vagrant/.cliv/packer/bin/packer
+   clinst: Executing /home/vagrant/.clinst/packer/bin/packer
    1.7.3
    ```
 
@@ -59,21 +59,21 @@
    ```bash
    vagrant@devbox:~$ echo "1.7.3" > .packer-version
    vagrant@devbox:~$ packer --version
-   cliv: Found '/home/vagrant/.packer-version' = '1.7.3'
-   cliv: Installing extention 'packer'
-   cliv: Creating new environment '/home/vagrant/.cliv/packer=1.7.3'
-   cliv: Loading extension 'packer' version '1.7.3'
-   cliv: packer: Removing temporary download files
-   cliv: packer: Downloading artifact
+   clinst: Found '/home/vagrant/.packer-version' = '1.7.3'
+   clinst: Installing extention 'packer'
+   clinst: Creating new environment '/home/vagrant/.clinst/packer=1.7.3'
+   clinst: Loading extension 'packer' version '1.7.3'
+   clinst: packer: Removing temporary download files
+   clinst: packer: Downloading artifact
      % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
                                     Dload  Upload   Total   Spent    Left  Speed
    100 30.2M  100 30.2M    0     0  8123k      0  0:00:03  0:00:03 --:--:-- 8121k
-   cliv: packer: Unpacking to '/home/vagrant/.cliv/packer=1.7.3'
-   cliv: packer: Installing locally
-   cliv: packer: Testing
-   cliv: packer: Removing temporary download files
-   cliv: packer: Installing wrapper
-   cliv: Executing /home/vagrant/.cliv/packer=1.7.3/bin/packer
+   clinst: packer: Unpacking to '/home/vagrant/.clinst/packer=1.7.3'
+   clinst: packer: Installing locally
+   clinst: packer: Testing
+   clinst: packer: Removing temporary download files
+   clinst: packer: Installing wrapper
+   clinst: Executing /home/vagrant/.clinst/packer=1.7.3/bin/packer
    1.7.3
    ```
 
@@ -82,8 +82,8 @@
 # Usage
 
    ```bash
-   Usage: cliv [OPTS]
-          cliv [OPTS] [CMD [ARGS ..]]
+   Usage: clinst [OPTS]
+          clinst [OPTS] [CMD [ARGS ..]]
    Opts:
            -h                      This screen
            -i                      Clear environment variables. Must be first argument
@@ -97,7 +97,7 @@
            -X CMD [ARG ..]         (internal function) Run command for an extention
            -W                      Disables wrapper mode
            -f                      Force mode
-           -V                      Version of cliv
+           -V                      Version of clinst
            -q                      Quiet mode
    ```
 
@@ -108,10 +108,10 @@
 ### What are Environments?
 
 *Environments* are basically just directories with a couple files in them. They
-keep some configuration, and any programs you install in them. **cliv** loads 
+keep some configuration, and any programs you install in them. **clinst** loads 
 the configuration and runs your program.
 
-*Environments* are kept in sub-directories of *$CLIV_DIR* (default: *$HOME/.cliv/*).
+*Environments* are kept in sub-directories of *$CLINST_DIR* (default: *$HOME/.clinst/*).
 Each *Environment* has at least two files:
  - `bin/` : applications (or symlinks to applications) installed here.
  - `.env` : A shell script to set environment variables at run time.
@@ -125,24 +125,24 @@ versions of programs. (There is no dependency management, so this is mostly
 for statically-compiled binaries)
 
 For convenience, *Extensions* also install a wrapper for your program in a common
-directory (`$HOME/.cliv/.bin/`) that you can add to your `$PATH`. This way you
+directory (`$HOME/.clinst/.bin/`) that you can add to your `$PATH`. This way you
 can automatically run the right version of your program.
 
 Since there is only one wrapper for all the possible *Environments* of an 
-*Extension* (only one '~/.cliv/.bin/terraform' for all the installed versions of
+*Extension* (only one '~/.clinst/.bin/terraform' for all the installed versions of
 Terraform) you can choose which *Environment* the wrapper runs in two ways:
 
 1. The *Extension* installs a wrapper that points to a specific *Environment*. You
    can change the default *Environment* used by the wrapper using the `-D` option.
    ```
    vagrant@devbox $ terraform --version
-   cliv: Executing /home/vagrant/.cliv/terraform=0.11.15/bin/terraform
+   clinst: Executing /home/vagrant/.clinst/terraform=0.11.15/bin/terraform
    Terraform v0.11.15
-   vagrant@devbox $ cliv -D terraform=0.12.31
-   cliv: Switching default environment for extension terraform to terraform=0.12.31
-   cliv: terraform: Installing wrapper
+   vagrant@devbox $ clinst -D terraform=0.12.31
+   clinst: Switching default environment for extension terraform to terraform=0.12.31
+   clinst: terraform: Installing wrapper
    vagrant@devbox $ terraform --version
-   cliv: Executing /home/vagrant/.cliv/terraform=0.12.31/bin/terraform
+   clinst: Executing /home/vagrant/.clinst/terraform=0.12.31/bin/terraform
    Terraform v0.12.31
    ```
 
@@ -156,33 +156,33 @@ cut me a Pull Request, I'll merge it! Or create your own via a GitHub repository
 
 ### How do I install and run a program?
 
-When you run a command like `cliv CMD`, this happens:
+When you run a command like `clinst CMD`, this happens:
 
- 1. **cliv** looks for an *Environment* with the same name (`$CLIV_DIR/CMD`).
-    If found, it will load that *Environment* configuration (`$CLIV_DIR/CMD/.env`).
+ 1. **clinst** looks for an *Environment* with the same name (`$CLINST_DIR/CMD`).
+    If found, it will load that *Environment* configuration (`$CLINST_DIR/CMD/.env`).
     Then it will try to run program `CMD`.
 
- 2. If the *Environment* was not found, **cliv** looks for an *Extension* of the
-    same name (`$CLIV_HTTP_PATH/.ext/CMD.ex`). If found, it downloads the 
+ 2. If the *Environment* was not found, **clinst** looks for an *Extension* of the
+    same name (`$CLINST_HTTP_PATH/.ext/CMD.ex`). If found, it downloads the 
     *Extension*, uses it to install `CMD` in an *Environment* of the same name,
     then follows step #1.
 
- 3. If no *Extension* or *Environment* is found, **cliv** dies.
+ 3. If no *Extension* or *Environment* is found, **clinst** dies.
     ```bash
-    $ cliv foobar
-    cliv: Installing extention 'foobar'
+    $ clinst foobar
+    clinst: Installing extention 'foobar'
     curl: (22) The requested URL returned error: 404
     ```
 
 
 ### Using Extensions
 
-**cliv** will download *Extensions* with `curl` from a URL
-`$CLIV_HTTP_PATH/.ext/EXTENSION.ex`. Override *$CLIV_HTTP_PATH* if you want
+**clinst** will download *Extensions* with `curl` from a URL
+`$CLINST_HTTP_PATH/.ext/EXTENSION.ex`. Override *$CLINST_HTTP_PATH* if you want
 to provide your own *Extension* path or URL.
 
-You can also put extensions directly into your `~/.cliv/.ext/` directory.
-These are not overwritten unless you pass the `-f` option to **cliv**.
+You can also put extensions directly into your `~/.clinst/.ext/` directory.
+These are not overwritten unless you pass the `-f` option to **clinst**.
 
 By default, *Extensions* and *Environments* use the same name as a `CMD`. But
 sometimes this doesn't work well, so all 3 can have different names.
@@ -190,61 +190,61 @@ sometimes this doesn't work well, so all 3 can have different names.
 Use the `-E` option to specify an *Extension* name. If you add `=VERSION` to the
 *Extension* name, it will install that version of the application.
    ```bash
-   $ cliv -E aws=2.0.34
+   $ clinst -E aws=2.0.34
    ```
 This is still using the default *Environment* name (same as the *Extension*
 and `CMD`). To use a custom *Environment* name, pass the `-e` option.
    ```bash
-   $ cliv -E aws=2.0.34 -e some-aws-env
+   $ clinst -E aws=2.0.34 -e some-aws-env
    ```
 To execute a program in this new custom *Environment*, just pass the `-e` option
 and a command to run.
    ```bash
-   $ cliv -e some-aws-env aws --version
+   $ clinst -e some-aws-env aws --version
    ```
-Remember: `cliv` uses the `.env` file in the *Environment* to set the *$PATH* to
-include `~/.cliv/some-aws-env/bin/`. If the file you want to execute isn't in that
+Remember: `clinst` uses the `.env` file in the *Environment* to set the *$PATH* to
+include `~/.clinst/some-aws-env/bin/`. If the file you want to execute isn't in that
 directory, you'll have to modify the `.env` to include the path to your
 application in your *Environment*.
 
 If you *don't* pass a version with `-E`, and a `.EXTENSION-version` file is found,
-**cliv** will make an *Environment* named `$EXTENSION=$VERSION`. This happens
-automatically whether you're calling `cliv` directly, or using the `~/.cliv/.bin/`
+**clinst** will make an *Environment* named `$EXTENSION=$VERSION`. This happens
+automatically whether you're calling `clinst` directly, or using the `~/.clinst/.bin/`
 wrapper. (To disable it completely, use the `-W` option)
 
-**New in cliv 2.4.0:** You can now specify a GitHub repository as an *Extension*
+**New in clinst 2.4.0:** You can now specify a GitHub repository as an *Extension*
 name, and the tag/branch with '@BRANCH'. Example:
    ```bash
-   $ cliv -E github.com/peterwwillis/cliv-test-ext
-   $ cliv -E github.com/peterwwillis/cliv-test-ext@v2.4.0
-   $ cliv -E github.com/peterwwillis/cliv-test-ext=4.9.6
-   $ cliv -E github.com/peterwwillis/cliv-test-ext@v2.4.0=4.9.6
+   $ clinst -E github.com/peterwwillis/clinst-test-ext
+   $ clinst -E github.com/peterwwillis/clinst-test-ext@v2.4.0
+   $ clinst -E github.com/peterwwillis/clinst-test-ext=4.9.6
+   $ clinst -E github.com/peterwwillis/clinst-test-ext@v2.4.0=4.9.6
    ```
 See [.ext/README.md](./.ext/README.md) for details about how to create these extensions.
 
 
 ### Manually setting up an *Environment*
 
-You actually don't need to use *Extensions* at all to take advantage of **cliv**.
+You actually don't need to use *Extensions* at all to take advantage of **clinst**.
 You can manually set up an *Environment* and call programs within it.
 
 1. Create a new *Environment*. For this example we'll call it just "aws",
    but you could also give it a more descriptive name, like "aws=2.0.50".
    ```bash
-   $ cliv -n aws-foo
+   $ clinst -n aws-foo
    ```
 
 2. Manually install an application (like `aws`) in the new `bin/` directory of the new *Environment*
-   (`~/.cliv/aws-foo/bin/`).
+   (`~/.clinst/aws-foo/bin/`).
 
 3. If you want, you can customize the environment used by editing the
-   `~/.cliv/aws-foo/.env` file. `cliv` loads this as a shell script before running
+   `~/.clinst/aws-foo/.env` file. `clinst` loads this as a shell script before running
    your application.
 
-4. Run your application with `cliv`
+4. Run your application with `clinst`
    ```bash
-   $ cliv -e aws-foo aws --version
-   cliv: Executing /home/vagrant/.cliv/aws-foo/bin/aws
+   $ clinst -e aws-foo aws --version
+   clinst: Executing /home/vagrant/.clinst/aws-foo/bin/aws
    aws-cli/2.0.50 Python/3.7.3 Linux/4.15.0-135-generic exe/x86_64.ubuntu.18
    ```
 
@@ -252,18 +252,18 @@ You can manually set up an *Environment* and call programs within it.
 
 Let's see the *Environments* we've created so far:
    ```bash
-   $ cliv -l
+   $ clinst -l
    aws
    aws-foo
    aws=2.0.50
-   cliv-test-ext
+   clinst-test-ext
    ```
 
 ### List *Extensions*
 
 Want to know what extensions are available?
    ```bash
-   $ cliv -L
+   $ clinst -L
    ansible
    aws
    docker-compose
@@ -280,7 +280,7 @@ Want to know what extensions are available?
    ```
 How about the available versions of an extension?
    ```bash
-   $ cliv -L terraform | head
+   $ clinst -L terraform | head
    1.0.1
    1.0.0
    0.15.5
@@ -296,7 +296,7 @@ How about the available versions of an extension?
 
 ### Cryptographically verifying signatures
 
-To ensure the **cliv** tool and extensions are genuine and not modified by an attacker,
+To ensure the **clinst** tool and extensions are genuine and not modified by an attacker,
 you can use GPG or other OpenPGP tools to verify the authenticity of the files. These
 authenticated files can then be used to authenticate your downloaded/installed programs.
 
@@ -332,8 +332,8 @@ $ for i in *.asc .ext/*.asc ; do gpg --verify $i ; done
 
 ### Be quiet
 
-To silence the normal output of **cliv**, pass the `-q` option, or set environment
-variable `CLIV_QUIET=1`.
+To silence the normal output of **clinst**, pass the `-q` option, or set environment
+variable `CLINST_QUIET=1`.
 
 ---
 
