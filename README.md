@@ -1,12 +1,22 @@
 # About
 
-**clinst** is a tool to manage arbitrary applications (and versions) in individual environments. Inspired by programs like `rbenv`, `tfenv`, `virtualenv`, etc.
+**clinst** is a tool to help you switch between and run different versions of applications. It is intended to automatically install and run a specific version of a program, with the verion pinned in a `.NAME-version` file. There is no need for you to run **clinst** itself.
+
+**clinst** supports a number of *Extensions*, which are instructions on how to install and manage a specific application.
+
+If an *Extension* doesn't exist for an application you want to use, you can contribute one to this project, or create and use one in your own GitHub repository, or on your local machine.
+
+You can also use **clinst** without *Extensions*. **clinst** allows you to create directories called *Environments*, which are basically just a plain directory with a small shell script that's loaded to set things like the `$PATH` to use before running a command.
+
+This program was inspired by `rbenv`, `tfenv`, `virtualenv`, etc.
+
 
 # Requirements
 
  - A POSIX shell
  - Standard Unix-y tools (mkdir, env, chmod, basename, etc)
  - `curl` (if you use *Extensions*, which you probably want to)
+
 
 # Features
  - Use *Extensions* to automate downloading & installing any application (**ansible**, **aws**, **docker-compose**, **eksctl**, **helm**, **istioctl**, **kind**, **krew**, **kubectl**, **packer**, **saml2aws**, **terraform-docs**, **terraformer**, **terraform**, **terraform_landscape**, **terragrunt**, **tflint**, **tfsec**, **ydiff**, **yq**)
