@@ -86,14 +86,18 @@ _clinst_ext_install () {
     ext="${1%%=*}" ver="${1#*=}" environ="${2:-}"
     [ "${ext%%/*}" = "github.com" ] && ghrepo="${ext#github.com/}" && ghrepo="${ghrepo%%=*}" && ghbranch="${ghrepo##*@}" && ghrepo="${ghrepo%@*}" && ext="${ghrepo##*/}" && [ "$ver" = "$1" ] && ver="latest"
     [ -n "${ghbranch:-}" -a -n "${ghrepo:-}" ] && [ "${ghbranch:-}" = "${ghrepo:-}" ] && ghbranch=""
-    if [ $# -lt 2 -o -z "$environ" ] ; then  shift 1; environ="$ext";       else shift 2;  fi
-    if [ ! "$ver" = "$ext" ]         ; then  export CLINST_E_VERSION="$ver";                 fi
     export CLINST_E_NAME="$ext"
+    if [ ! "$ver" = "$CLINST_E_NAME" ] ; then export CLINST_E_VERSION="$ver" ; fi
+    if [ $# -lt 2 -o -z "$environ" ] ; then
+        shift 1 ; CLINST_E_ENVIRON="$CLINST_E_NAME=$CLINST_E_VERSION"
+    else
+        shift 2 ; CLINST_E_ENVIRON="$environ"
+    fi
     _echo_err "Installing extention '$CLINST_E_NAME'"
     _clinst_ext_download
-    [ -z "${CLINST_E_VERSION:-}" ]        && CLINST_E_VERSION="latest"
+    CLINST_E_VERSION="${CLINST_E_VERSION:-latest}"
     [ "$CLINST_E_VERSION" = "latest" ]    && CLINST_E_VERSION="$(_ext_latest)"
-    export CLINST_E_VERSION CLINST_E_ENVIRON="$CLINST_E_NAME=$CLINST_E_VERSION" CLINST_E_INSTDIR="$CLINST_DIR/$CLINST_E_NAME=$CLINST_E_VERSION"
+    export CLINST_E_VERSION CLINST_E_ENVIRON CLINST_E_INSTDIR="$CLINST_DIR/$CLINST_E_ENVIRON"
     [ -d "$CLINST_DIR/$CLINST_E_ENVIRON" ] || _clinst_new "$CLINST_E_ENVIRON"
     _echo_err "Loading extension '$CLINST_E_NAME' version '$CLINST_E_VERSION'"
     _ext_variables # NOTE: loads whatever CLINST_E_* variables the extension outputs
