@@ -14,7 +14,7 @@ _bumpver () {
 }
 _extlist () {
     extensions="$(ls .clext/*.ex | grep -ve "test\.ex" | sed -e 's/^\.clext\/\(.\+\)\.ex$/**\1**, /g' | xargs | sed -e 's/,$//')"
-    sed -i -e "s/\(to automate downloading & installing any application\).*)/\1 ($extensions)/" README.md
+    sed -i -e "s/\(to automate downloading & installing applications\).*)/\1 ($extensions)/" README.md
 }
 _checksums () {
     sha256sum clinst .clext/*.ex > CHECKSUMS.sha256
