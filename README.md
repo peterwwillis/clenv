@@ -57,15 +57,23 @@ This program was inspired by `rbenv`, `tfenv`, `virtualenv`, etc.
    clinst: packer: Installing wrapper
    clinst: Executing /home/vagrant/.clinst/packer/bin/packer
    1.7.3
+   ```
 
-   vagrant@devbox:~$ export PATH=$HOME/.clinst/.bin:$PATH
+3. Add the path to **clinst**'s `.bin` directory to your environment *PATH*:
+   ```bash
+   echo 'export PATH=$HOME/.clinst/.bin:$PATH' >> .bashrc
+   ```
 
+   Now you can do things like run your installed programs without having to call
+   the **clinst** program itself:
+   ```bash
    vagrant@devbox:~$ packer --version
    clinst: Executing /home/vagrant/.clinst/packer/bin/packer
    1.7.3
    ```
 
-3. Pin the version of the *Extension*
+4. Pin the version of the *Extension* in the current directory, so the same
+   version of your application is always run:
    ```bash
    vagrant@devbox:~$ echo "1.7.3" > .packer-version
    vagrant@devbox:~$ packer --version
@@ -85,6 +93,24 @@ This program was inspired by `rbenv`, `tfenv`, `virtualenv`, etc.
    clinst: packer: Installing wrapper
    clinst: Executing /home/vagrant/.clinst/packer=1.7.3/bin/packer
    1.7.3
+   ```
+
+5. If you use the `bash` shell, add a function to your `.bashrc` file to
+   automatically attempt to install a **clinst** *Extension*:
+
+   ```bash
+   if declare -F "command_not_found_handle" >/dev/null ; then
+       cnfhn="old_cnfh_$(printf "%(%s)T_$$_$RANDOM")"
+       eval "$(echo "$cnfhn()"; declare -f command_not_found_handle | tail -n +2)"
+   fi
+   eval 'function command_not_found_handle () { if clinst -L|grep -qe "^$1$"; then clinst -E "$1" "$@"; else '"$cnfhn"' "$@"; fi; };'
+   ```
+
+6. To always get the latest *Extensions* (not just the ones that were released
+   with your version of **clinst**) use the `main` version of **clinst**:
+
+   ```bash
+   export CLINST_VER=main
    ```
 
 ---
