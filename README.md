@@ -327,6 +327,8 @@ How about the available versions of an extension?
 
 ### Cryptographically verifying signatures
 
+**NOTE: This feature is still in testing; consider it non-functional!**
+
 To ensure the **clinst** tool and extensions are genuine and not modified by an attacker,
 you can use GPG or other OpenPGP tools to verify the authenticity of the files. These
 authenticated files can then be used to authenticate your downloaded/installed programs.

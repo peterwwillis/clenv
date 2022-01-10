@@ -28,7 +28,7 @@ Opts:
 	-e ENVIRON		Use environment ENVIRON
 	-D EXT=V		Make version V the default wrapper for EXT
 	-r FILE			Install a list of extensions from FILE
-	-X CMD [ARG ..]		(internal function) Run command for an extention
+	-X CMD [ARG ..]		(internal function) Run command for an extension
 	-W			Disables wrapper mode
 	-s			Outputs Bourne shell features to include in your ~/.bashrc
 	-f			Force mode
@@ -71,16 +71,19 @@ _clinst_ext_download () {
           then  [ -z "${ghbranch:-}" ] && ghbranch="$(eval curl -fsSL ${CURL_OPTS:-} https://api.github.com/repos/$ghrepo | grep -e "^[[:space:]]*\"default_branch\":" | sed -e 's/^[[:space:]]*"default_branch": "\([^"]\+\)".*/\1/')"
                 clinst_http_ext_path="https://raw.githubusercontent.com/$ghrepo/$ghbranch"
           fi
+          _echo_err "Downloading extension '$CLINST_E_NAME'"
           eval curl -fsSL ${CURL_OPTS:-} -o "$CLINST_EXT_DIR/$CLINST_E_NAME.ex" "$clinst_http_ext_path/$CLINST_EXT_DIR_NAME/$CLINST_E_NAME.ex"
           chmod +x "$CLINST_EXT_DIR/$CLINST_E_NAME.ex"
-          if eval curl -fsSL ${CURL_OPTS:-} -o "$CLINST_EXT_DIR/$CLINST_E_NAME.ex.asc" "$clinst_http_ext_path/$CLINST_EXT_DIR_NAME/$CLINST_E_NAME.ex.asc" ; then
-               if command -v gpg 2>/dev/null 1>/dev/null && ! gpg --verify "$CLINST_EXT_DIR/$CLINST_E_NAME.ex.asc" ; then
-                   _echo_err "Error: validation of '$CLINST_E_NAME.ex.asc' failed! Make sure you import the public key first and try again."
-                   rm -rf "$CLINST_EXT_DIR/$CLINST_E_NAME.ex.asc" "$CLINST_EXT_DIR/$CLINST_E_NAME.ex"
-                   exit 1
-               fi
-          else _echo_err "Error downloading signature file '$CLINST_E_NAME.ex.asc'; not verifying extension signature!"
-          fi
+          [ ! "${CLINST_EXPERIMENT_GPG_VALIDATE:-0}" = "1" ] || {
+              if eval curl -fsSL ${CURL_OPTS:-} -o "$CLINST_EXT_DIR/$CLINST_E_NAME.ex.asc" "$clinst_http_ext_path/$CLINST_EXT_DIR_NAME/$CLINST_E_NAME.ex.asc" ; then
+                   if command -v gpg 2>/dev/null 1>/dev/null && ! gpg --verify "$CLINST_EXT_DIR/$CLINST_E_NAME.ex.asc" ; then
+                       _echo_err "Error: validation of '$CLINST_E_NAME.ex.asc' failed! Make sure you import the public key first and try again."
+                       rm -rf "$CLINST_EXT_DIR/$CLINST_E_NAME.ex.asc" "$CLINST_EXT_DIR/$CLINST_E_NAME.ex"
+                       exit 1
+                   fi
+              else _echo_err "Error downloading signature file '$CLINST_E_NAME.ex.asc'; not verifying extension signature!"
+              fi
+          }
     fi
 }
 _clinst_ext_install () {
@@ -88,16 +91,15 @@ _clinst_ext_install () {
     [ "${ext%%/*}" = "github.com" ] && ghrepo="${ext#github.com/}" && ghrepo="${ghrepo%%=*}" && ghbranch="${ghrepo##*@}" && ghrepo="${ghrepo%@*}" && ext="${ghrepo##*/}" && [ "$ver" = "$1" ] && ver="latest"
     [ -n "${ghbranch:-}" -a -n "${ghrepo:-}" ] && [ "${ghbranch:-}" = "${ghrepo:-}" ] && ghbranch=""
     export CLINST_E_NAME="$ext"
+    _clinst_ext_download # Need the extension before we can get the latest version
     CLINST_E_VERSION="${CLINST_E_VERSION:-latest}"
     [ "$CLINST_E_VERSION" = "latest" ] && CLINST_E_VERSION="$(_ext_latest)"
     if [ ! "$ver" = "$CLINST_E_NAME" ] ; then export CLINST_E_VERSION="$ver" ; fi
-    if [ $# -lt 2 -o -z "$environ" ] ; then
-        shift 1 ; CLINST_E_ENVIRON="$CLINST_E_NAME=$CLINST_E_VERSION"
+    if [ $# -lt 2 ] || [ -z "$environ" ] || [ -n "${CLINST_E_NAME:-}" -a -n "${CLINST_E_VERSION:-}" ] ; then
+        shift $# ; CLINST_E_ENVIRON="$CLINST_E_NAME=$CLINST_E_VERSION"
     else
         shift 2 ; CLINST_E_ENVIRON="$environ"
     fi
-    _echo_err "Installing extention '$CLINST_E_NAME'"
-    _clinst_ext_download
     export CLINST_E_VERSION CLINST_E_ENVIRON CLINST_E_INSTDIR="$CLINST_DIR/$CLINST_E_ENVIRON"
     [ -d "$CLINST_DIR/$CLINST_E_ENVIRON" ] || _clinst_new "$CLINST_E_ENVIRON"
     _echo_err "Loading extension '$CLINST_E_NAME' version '$CLINST_E_VERSION'"
