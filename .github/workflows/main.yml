@@ -20,9 +20,10 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Archive logs
+        if: always()
         uses: actions/upload-artifact@v2
         with:
-          name: dist-without-markdown
+          name: test-logs
           path: |
              *.log
              .clext/*.log
