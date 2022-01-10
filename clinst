@@ -30,6 +30,7 @@ Opts:
 	-r FILE			Install a list of extensions from FILE
 	-X CMD [ARG ..]		(internal function) Run command for an extention
 	-W			Disables wrapper mode
+	-s			Outputs Bourne shell features to include in your ~/.bashrc
 	-f			Force mode
  	-V			Version of clinst
 	-q			Quiet mode
@@ -87,6 +88,8 @@ _clinst_ext_install () {
     [ "${ext%%/*}" = "github.com" ] && ghrepo="${ext#github.com/}" && ghrepo="${ghrepo%%=*}" && ghbranch="${ghrepo##*@}" && ghrepo="${ghrepo%@*}" && ext="${ghrepo##*/}" && [ "$ver" = "$1" ] && ver="latest"
     [ -n "${ghbranch:-}" -a -n "${ghrepo:-}" ] && [ "${ghbranch:-}" = "${ghrepo:-}" ] && ghbranch=""
     export CLINST_E_NAME="$ext"
+    CLINST_E_VERSION="${CLINST_E_VERSION:-latest}"
+    [ "$CLINST_E_VERSION" = "latest" ] && CLINST_E_VERSION="$(_ext_latest)"
     if [ ! "$ver" = "$CLINST_E_NAME" ] ; then export CLINST_E_VERSION="$ver" ; fi
     if [ $# -lt 2 -o -z "$environ" ] ; then
         shift 1 ; CLINST_E_ENVIRON="$CLINST_E_NAME=$CLINST_E_VERSION"
@@ -95,8 +98,6 @@ _clinst_ext_install () {
     fi
     _echo_err "Installing extention '$CLINST_E_NAME'"
     _clinst_ext_download
-    CLINST_E_VERSION="${CLINST_E_VERSION:-latest}"
-    [ "$CLINST_E_VERSION" = "latest" ]    && CLINST_E_VERSION="$(_ext_latest)"
     export CLINST_E_VERSION CLINST_E_ENVIRON CLINST_E_INSTDIR="$CLINST_DIR/$CLINST_E_ENVIRON"
     [ -d "$CLINST_DIR/$CLINST_E_ENVIRON" ] || _clinst_new "$CLINST_E_ENVIRON"
     _echo_err "Loading extension '$CLINST_E_NAME' version '$CLINST_E_VERSION'"
@@ -146,6 +147,19 @@ _clinst_wrapper () {
     # Try to auto-install extensions in case a new/different version is needed
     _clinst_list "$CLINST_E_ENVIRON" >/dev/null || _clinst_ext_install "$CLINST_E_NAME" "$CLINST_E_ENVIRON"
 }
+_clinst_bourne () {
+    cat <<'EOBOURNE'
+pmunge () { if ! echo "$PATH"|/bin/grep -Eq "(^|:)$1($|:)";then if [ "$2" = "after" ]; then PATH="$PATH:$1"; else PATH="$1:$PATH"; fi;fi; }
+pmunge "$HOME/.clinst/.bin" ; export PATH
+if declare -F "command_not_found_handle" >/dev/null ; then
+    cnfhn="old_cnfh_$(printf "%(%s)T_$$_$RANDOM")"
+    eval "$(echo "$cnfhn()"; declare -f command_not_found_handle | tail -n +2)"
+fi ; eval 'function command_not_found_handle () { if clinst -L|grep -qe "^$1$";
+           then clinst -E "$1" "$@"; elif [ -n "'"$cnfhn"'" ] ; then '"$cnfhn"' "$@";
+           else echo "$1: command not found"; return 127; fi; };'
+EOBOURNE
+    echo "export CLINST_VER=$CLINST_VER"
+}
 
 
 ### Extension functions
@@ -194,7 +208,7 @@ _ext_install_wrapper () {
     then  _clinst_ext_run "install-wrapper"
     else  [ -d "$CLINST_BIN_DIR" ] || mkdir -p "$CLINST_BIN_DIR"
           if    [ ! -e "$CLINST_BIN_DIR/$CLINST_E_BIN_NAME" -o "${CLINST_FORCE:-0}" = "1" ]
-          then  printf "#!/usr/bin/env sh\nexec clinst -E $CLINST_E_NAME -e $CLINST_E_ENVIRON $CLINST_E_BIN_NAME \"\$@\"\n" > "$CLINST_BIN_DIR/$CLINST_E_BIN_NAME"
+          then  printf "#!/usr/bin/env sh\nexec clinst -E $CLINST_E_NAME=$CLINST_E_VERSION -e $CLINST_E_ENVIRON $CLINST_E_BIN_NAME \"\$@\"\n" > "$CLINST_BIN_DIR/$CLINST_E_BIN_NAME"
           fi
           [ -x "$CLINST_BIN_DIR/$CLINST_E_BIN_NAME" ] || chmod +x "$CLINST_BIN_DIR/$CLINST_E_BIN_NAME"
     fi
@@ -275,7 +289,7 @@ fi
 [ "$1" = "-i" ] && shift 1 && exec env -i "$0" "$@"
 
 CLINST_FORCE=0 CLINST_QUIET="${CLINST_QUIET:-0}"
-while getopts "hnlLE:e:D:r:X:WfVq" args
+while getopts "hnlLE:e:D:r:X:WfVqs" args
 do
       case "$args" in
           h)  _usage ;;
@@ -291,6 +305,8 @@ do
           f)  export CLINST_FORCE=1 ;;
           V)  echo "clinst $CLINST_VER" ; exit 0 ;;
           q)  CLINST_QUIET=1 ;;
+          s)  _clinst_bourne ; exit 0 ;;
+          *)  echo "$0: Illegal option '$args'" ; _usage ;;
       esac
 done
 shift $(($OPTIND-1))

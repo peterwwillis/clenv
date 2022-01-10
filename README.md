@@ -28,13 +28,13 @@ This program was inspired by `rbenv`, `tfenv`, `virtualenv`, etc.
 
 # Quick start
 
-1. Install **clinst**
+1. Copy+paste the following snippet in your terminal to install **clinst**:
    ```bash
-   $ sudo curl -fsSL -o /usr/local/bin/clinst https://raw.githubusercontent.com/peterwwillis/clinst/v3.0.0/clinst \
-     && sudo chmod +x /usr/local/bin/clinst \
-     && echo "e8a600cca7c68f72ff2412a1d1aae3e1ca1ff7da0c28884a2739343e7164cf82  /usr/local/bin/clinst" | sha256sum -c \
-     || { echo "FAILED CHECKSUM: REMOVING clinst" && sudo rm -f /usr/local/bin/clinst ; }
-   /usr/local/bin/clinst: OK
+   mkdir -p $HOME/.clinst/.bin && \
+   curl -fsSL -o $HOME/.clinst/.bin/clinst https://raw.githubusercontent.com/peterwwillis/clinst/v3.0.0/clinst \
+   && sudo chmod +x $HOME/.clinst/.bin/clinst \
+   && echo "e8a600cca7c68f72ff2412a1d1aae3e1ca1ff7da0c28884a2739343e7164cf82  $HOME/.clinst/.bin/clinst" | sha256sum -c \
+   || { echo "FAILED CHECKSUM: REMOVING clinst" && sudo rm -f $HOME/.clinst/.bin/clinst ; }
    ```
 
 2. Install and run an application with an *Extension*
@@ -42,7 +42,7 @@ This program was inspired by `rbenv`, `tfenv`, `virtualenv`, etc.
    vagrant@devbox:~$ packer --version
    bash: packer: command not found
    
-   vagrant@devbox:~$ clinst packer --version
+   vagrant@devbox:~$ clinst -E packer --version
    clinst: Creating new environment '/home/vagrant/.clinst/packer'
    clinst: Loading extension 'packer' version '1.7.3'
    clinst: packer: Removing temporary download files
@@ -59,18 +59,24 @@ This program was inspired by `rbenv`, `tfenv`, `virtualenv`, etc.
    1.7.3
    ```
 
-3. Add the path to **clinst**'s `.bin` directory to your environment *PATH*:
+3. Add the following to your `~/.bashrc` file to add `~/.clinst/.bin` to your
+   shell's *PATH*:
    ```bash
-   echo 'export PATH=$HOME/.clinst/.bin:$PATH' >> .bashrc
+   eval "$(~/.clinst/.bin/clinst -s)"
    ```
-
-   Now you can do things like run your installed programs without having to call
-   the **clinst** program itself:
+   
+   Now if you run a command that you've installed with **clinst**, it will be
+   automatically run using the wrapper in `~/.clinst/.bin`:
+   
    ```bash
    vagrant@devbox:~$ packer --version
    clinst: Executing /home/vagrant/.clinst/packer/bin/packer
    1.7.3
    ```
+   
+   Not only that, but if you haven't even installed a program with **clinst**
+   yet, but an *Extension* does exist for that program you want to run, **clinst**
+   will automatically install and run it. (This is a Bash-only feature)
 
 4. Pin the version of the *Extension* in the current directory, so the same
    version of your application is always run:
@@ -95,27 +101,7 @@ This program was inspired by `rbenv`, `tfenv`, `virtualenv`, etc.
    1.7.3
    ```
 
-5. Bash has a useful feature where if Bash can't find a command you want to run,
-   Bash calls a custom function to find it.
-   
-   Copy and paste the following snippet into your `.bashrc` file and **clinst**
-   will automatically look up an *Extension* matching the missing command, and
-   if it exists, will automatically install it and run the command.
-   install an *Extension* if Bash can't find a matching program.
-
-   In this way, **clinst** *Extensions* are automatically installed without you
-   ever having to run `clinst` by hand.
-
-   ```bash
-   if declare -F "command_not_found_handle" >/dev/null ; then
-       cnfhn="old_cnfh_$(printf "%(%s)T_$$_$RANDOM")"
-       eval "$(echo "$cnfhn()"; declare -f command_not_found_handle | tail -n +2)"
-   fi
-   eval 'function command_not_found_handle () { if clinst -L|grep -qe "^$1$"; 
-         then clinst -E "$1" "$@"; else '"$cnfhn"' "$@"; fi; };'
-   ```
-
-6. To always get the latest *Extensions* (not just the ones that were released
+5. To always get the latest *Extensions* (not just the ones that were released
    with your version of **clinst**) use the `main` version of **clinst**:
 
    ```bash
