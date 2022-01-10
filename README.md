@@ -95,15 +95,24 @@ This program was inspired by `rbenv`, `tfenv`, `virtualenv`, etc.
    1.7.3
    ```
 
-5. If you use the `bash` shell, add a function to your `.bashrc` file to
-   automatically attempt to install a **clinst** *Extension*:
+5. Bash has a useful feature where if Bash can't find a command you want to run,
+   Bash calls a custom function to find it.
+   
+   Copy and paste the following snippet into your `.bashrc` file and **clinst**
+   will automatically look up an *Extension* matching the missing command, and
+   if it exists, will automatically install it and run the command.
+   install an *Extension* if Bash can't find a matching program.
+
+   In this way, **clinst** *Extensions* are automatically installed without you
+   ever having to run `clinst` by hand.
 
    ```bash
    if declare -F "command_not_found_handle" >/dev/null ; then
        cnfhn="old_cnfh_$(printf "%(%s)T_$$_$RANDOM")"
        eval "$(echo "$cnfhn()"; declare -f command_not_found_handle | tail -n +2)"
    fi
-   eval 'function command_not_found_handle () { if clinst -L|grep -qe "^$1$"; then clinst -E "$1" "$@"; else '"$cnfhn"' "$@"; fi; };'
+   eval 'function command_not_found_handle () { if clinst -L|grep -qe "^$1$"; 
+         then clinst -E "$1" "$@"; else '"$cnfhn"' "$@"; fi; };'
    ```
 
 6. To always get the latest *Extensions* (not just the ones that were released
