@@ -201,7 +201,7 @@ _ext_install_local () {
     if    [ $# -lt 1 ] && _ext_help_grep "install-local"
     then  _clinst_ext_run "install-local"
     else  mkdir -p "$CLINST_E_INSTDIR/bin"
-          ln -sf "$CLINST_E_INSTDIR/${1:-/usr/bin/$CLINST_E_BIN_NAME}" "$CLINST_E_INSTDIR/bin/$CLINST_E_BIN_NAME"
+          eval ln -sf "$CLINST_E_INSTDIR/${1:-/usr/bin/$CLINST_E_BIN_NAME}" "$CLINST_E_INSTDIR/bin/$CLINST_E_BIN_NAME"
     fi
 }
 _ext_install_wrapper () {
@@ -229,7 +229,7 @@ _ext_unpack () {
     then  _clinst_ext_run "unpack"
     else  mkdir -p "$CLINST_E_INSTDIR/usr/bin"
           chmod +x "$CLINST_E_INSTDIR/download/$CLINST_E_DLFILE"
-          mv "$CLINST_E_INSTDIR/download/$CLINST_E_DLFILE" "$CLINST_E_INSTDIR/usr/bin/$CLINST_E_BIN_NAME"
+          eval mv "$CLINST_E_INSTDIR/download/$CLINST_E_DLFILE" "$CLINST_E_INSTDIR/usr/bin/$CLINST_E_BIN_NAME"
     fi
 }
 _ext_unpack_unzip () {
@@ -278,9 +278,12 @@ _ext_versions_pypi () {
         fi;
     }
 }
-_ext_versions_hc () {
+_ext_versions_hashicorp () {
     eval curl -fsSL ${CURL_OPTS:-} "$1" | grep -e "<a href=\"/$CLINST_E_NAME/" | grep -v alpha | cut -d \" -f 2 | cut -d / -f 3 | sed -e 's/^v//'
 }
+uname_m_amd () { uname -m | sed -e 's/x86_/amd/g' ; }
+uname_m () { uname -m ; }
+uname_lc () { uname | tr A-Z a-z ; }
 
 
 ### Main program
