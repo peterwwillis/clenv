@@ -48,6 +48,7 @@ _clinst_listext () {
     if    [ $# -gt 0 ]
     then  CLINST_E_NAME="$1"
           _clinst_ext_download
+          _ext_variables
           _ext_versions
     else  [ ! -r "$CLINST_DIR/CHECKSUMS.sha256" -o "$CLINST_FORCE" = "1" ] && eval curl -fsSL ${CURL_OPTS:-} -o "$CLINST_DIR/CHECKSUMS.sha256" "$CLINST_HTTP_PATH/CHECKSUMS.sha256"
           {    [ -r "$CLINST_DIR/CHECKSUMS.sha256" ] && grep -e "  $CLINST_EXT_DIR_NAME/.*\.ex\?$" "$CLINST_DIR/CHECKSUMS.sha256"  | sed -e "s/.*$CLINST_EXT_DIR_NAME\///; s/\.ex\?$//"
@@ -103,7 +104,6 @@ _clinst_ext_download () {
               rm -rf "$lf.asc" "$lf"
         fi
     fi
-    _ext_variables # NOTE: loads whatever CLINST_E_* variables the extension outputs
 }
 _clinst_ext_gpg_validate () {
     for ext in .e .ex ; do
@@ -129,6 +129,7 @@ _clinst_ext_install () {
     fi
     export CLINST_E_NAME="$ext"
     _clinst_ext_download # Need the extension before we can get the latest version
+    _ext_variables
     CLINST_E_VERSION="${CLINST_E_VERSION:-latest}"
     [ "$CLINST_E_VERSION" = "latest" ] && CLINST_E_VERSION="$(_ext_latest)"
     if [ ! "$ver" = "$CLINST_E_NAME" ] ; then export CLINST_E_VERSION="$ver" ; fi
