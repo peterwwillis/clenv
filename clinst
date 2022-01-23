@@ -66,7 +66,8 @@ _clinst_new () {
 _clinst_ext_run () {
     funcname="$1"; shift
     if    set | grep "^ext_$funcname=" >/dev/null
-    then  eval "handler=\${ext_$funcname}; \$handler" "$@"
+    then  eval "handler=\${ext_$funcname}"
+          eval "$handler" "$@"
     elif  [ -e "$CLINST_EXT_DIR/$CLINST_E_NAME.ex" ] && _ext_help_grep "$funcname"
     then  "$CLINST_EXT_DIR/$CLINST_E_NAME.ex" "$funcname" "$@"
     else  eval "handler=ext_$funcname; \$handler" "$@"
@@ -74,7 +75,7 @@ _clinst_ext_run () {
 }
 _clinst_ext_download () {
     clinst_http_ext_path="$CLINST_HTTP_PATH"
-    if [ ! "$CLINST_FORCE" = "1" ] && [ -e "$CLINST_EXT_DIR/$CLINST_E_NAME.ex" -o -e "$CLINST_EXT_DIR/$CLINST_E_NAME.e" ] ; then
+    if [ "$CLINST_FORCE" = "0" ] && [ -e "$CLINST_EXT_DIR/$CLINST_E_NAME.ex" -o -e "$CLINST_EXT_DIR/$CLINST_E_NAME.e" ] ; then
         return 0
     fi
     if [ -n "${ghrepo:-}" ] ; then
@@ -82,26 +83,35 @@ _clinst_ext_download () {
             ghbranch="$(eval curl -fsSL ${CURL_OPTS:-} https://api.github.com/repos/$ghrepo | grep -e "^[[:space:]]*\"default_branch\":" | sed -e 's/^[[:space:]]*"default_branch": "\([^"]\+\)".*/\1/')"
             clinst_http_ext_path="https://raw.githubusercontent.com/$ghrepo/$ghbranch"
         fi
-        _echo_err "Downloading extension '$CLINST_E_NAME'"
-        lf="$CLINST_EXT_DIR/$CLINST_E_NAME"
-        rf="$clinst_http_ext_path/$CLINST_EXT_DIR_NAME/$CLINST_E_NAME"
-        for ext in .e .ex ; do
-            status="$(eval curl -I -w "%{http_code}\n" -o /dev/null -fsSL ${CURL_OPTS:-} "$rf.$ext" || true)"
-            if [ "$status" = "200" ] ; then
-                lf="$lf.$ext"
-                rf="$rf.$ext"
-            fi
-        done
-        eval curl -fsSL ${CURL_OPTS:-} -o "$lf" "$rf"
-        chmod +x "$lf"
-        if [ "${CLINST_EXPERIMENT_GPG_VALIDATE:-0}" = "1" ] ; then
-            if eval curl -fsSL ${CURL_OPTS:-} -o "$lf.asc" "$rf.asc"
-            then  _clinst_ext_gpg_validate
-            else  _echo_err "Error downloading signature file '$lf.asc'; not verifying extension signature!"
-                  rm -rf "$lf.asc" "$lf"
-            fi
+    fi
+    _echo_err "Downloading extension '$CLINST_E_NAME'"
+    lf="$CLINST_EXT_DIR/$CLINST_E_NAME"
+    rf="$clinst_http_ext_path/$CLINST_EXT_DIR_NAME/$CLINST_E_NAME"
+    for ext in e ex ; do
+        set +e
+        if eval curl -fsSL ${CURL_OPTS:-} -o "$lf.$ext" "$rf.$ext" ; then
+            lf="$lf.$ext"
+            rf="$rf.$ext"
+            set -e
+            break
+        fi
+        #status="$(eval curl -I -w "%{http_code}\\\n" -o /dev/null -fsSL ${CURL_OPTS:-} "$rf.$ext")"
+        #if [ $? -eq 0 ] && [ "$status" = "200" -o "$status" = "000" ] ; then
+        #    lf="$lf.$ext"
+        #    rf="$rf.$ext"
+        #    break
+        #fi
+        #set -e
+    done
+    chmod +x "$lf"
+    if [ "${CLINST_EXPERIMENT_GPG_VALIDATE:-0}" = "1" ] ; then
+        if eval curl -fsSL ${CURL_OPTS:-} -o "$lf.asc" "$rf.asc"
+        then  _clinst_ext_gpg_validate
+        else  _echo_err "Error downloading signature file '$lf.asc'; not verifying extension signature!"
+              rm -rf "$lf.asc" "$lf"
         fi
     fi
+    _ext_variables # NOTE: loads whatever CLINST_E_* variables the extension outputs
 }
 _clinst_ext_gpg_validate () {
     for ext in .e .ex ; do
@@ -130,7 +140,6 @@ _clinst_ext_install () {
     export CLINST_E_VERSION CLINST_E_ENVIRON CLINST_E_INSTDIR="$CLINST_DIR/$CLINST_E_ENVIRON"
     [ -d "$CLINST_DIR/$CLINST_E_ENVIRON" ] || _clinst_new "$CLINST_E_ENVIRON"
     _echo_err "Loading extension '$CLINST_E_NAME' version '$CLINST_E_VERSION'"
-    _ext_variables # NOTE: loads whatever CLINST_E_* variables the extension outputs
     _ext_clean; _ext_download; _ext_unpack; _ext_install_local; _ext_test; _ext_clean; _ext_install_wrapper
 }
 _clinst_exec () {
