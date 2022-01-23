@@ -124,19 +124,24 @@ _clinst_ext_install () {
         ghrepo="${ghrepo%@*}"
         ext="${ghrepo##*/}"
         [ "$ver" = "$1" ] && ver="latest"
-        if   [ -n "${ghbranch:-}" ] && [ -n "${ghrepo:-}" ] && [ "${ghbranch:-}" = "${ghrepo:-}" ]
-        then ghbranch="" ; fi
+        if [ -n "${ghbranch:-}" ] && [ -n "${ghrepo:-}" ] && [ "${ghbranch:-}" = "${ghrepo:-}" ] ; then
+            ghbranch=""
+        fi
     fi
     export CLINST_E_NAME="$ext"
-    _clinst_ext_download # Need the extension before we can get the latest version
+    _clinst_ext_download
     _ext_variables
-    CLINST_E_VERSION="${CLINST_E_VERSION:-latest}"
-    [ "$CLINST_E_VERSION" = "latest" ] && CLINST_E_VERSION="$(_ext_latest)"
-    if [ ! "$ver" = "$CLINST_E_NAME" ] ; then export CLINST_E_VERSION="$ver" ; fi
-    if [ $# -lt 2 ] || [ -z "$environ" ] || [ -n "${CLINST_E_NAME:-}" -a -n "${CLINST_E_VERSION:-}" ] ; then
-        shift $# ; CLINST_E_ENVIRON="$CLINST_E_NAME=$CLINST_E_VERSION"
+    CLINST_E_VERSION="${CLINST_E_VERSION:-$(_ext_latest)}"
+    if [ ! "$ver" = "$CLINST_E_NAME" ] ; then
+        export CLINST_E_VERSION="$ver"
+    fi
+    # Set the default environment name
+    if [ -z "$environ" ] && [ -n "${CLINST_E_NAME:-}" ] && [ -n "${CLINST_E_VERSION:-}" ] ; then
+        shift $#
+        CLINST_E_ENVIRON="$CLINST_E_NAME=$CLINST_E_VERSION"
     else
-        shift 2  ; CLINST_E_ENVIRON="$environ"
+        shift 2
+        CLINST_E_ENVIRON="$environ"
     fi
     export CLINST_E_VERSION CLINST_E_ENVIRON CLINST_E_INSTDIR="$CLINST_DIR/$CLINST_E_ENVIRON"
     [ -d "$CLINST_DIR/$CLINST_E_ENVIRON" ] || _clinst_new "$CLINST_E_ENVIRON"
@@ -361,7 +366,10 @@ do   [ -d "$d" ] || mkdir -p "$d"
 done
 
 if    [ -n "${CLINST_XCALL:-}" ]
-then  ext_"$CLINST_XCALL" "$@"
+then  if   command -v ext_"$CLINST_XCALL" >/dev/null
+      then ext_"$CLINST_XCALL" "$@"
+      else _ext_"$CLINST_XCALL" "$@"
+      fi
 
 elif  [ "${CLINST_DEFAULT_WRAPPER:-0}" = "1" ]
 then  _clinst_default_wrapper "$@"
