@@ -1,29 +1,28 @@
-# About
+# clinst
 
-**clinst** is a tool to help you switch between and run different versions of applications. It is intended to automatically install and run a specific version of a program, with the verion pinned in a `.NAME-version` file. There is no need for you to run **clinst** itself.
+A version-tracking non-packaged-software installer for local/unprivileged users. Inspired by tools like `rbenv`, `tfenv`, and `virtualenv`, but without being dedicated to a single program or programming language.
 
-**clinst** supports a number of *Extensions*, which are instructions on how to install and manage a specific application.
+**clinst** installs software in your local user's home directory (primarily software that has no installer or official package distribution). It also tracks the versions of software and can keep multiple versions of the same software installed simultaneously. You can choose what version of the software to execute, or you can use `.EXTENSION-version` files to execute a different version in different directories.
 
-If an *Extension* doesn't exist for an application you want to use, you can contribute one to this project, or create and use one in your own GitHub repository, or on your local machine.
+**clinst** requires an *Extension*, or program-specific instructions, to know how to download and install that program. There are many *Extensions* bundled in this repo. You can contribute *Extensions* to this project, or maintain and use your own.
 
-You can also use **clinst** without *Extensions*. **clinst** allows you to create directories called *Environments*, which are basically just a plain directory with a small shell script that's loaded to set things like the `$PATH` to use before running a command.
-
-This program was inspired by `rbenv`, `tfenv`, `virtualenv`, etc.
+You can also use **clinst** without *Extensions*, as a sort of environment-managing tool. **clinst** allows you to create directories called *Environments* which are a plain directory with a small shell script that's loaded to set a `$PATH` before running a command.
 
 
 # Requirements
 
  - A POSIX shell
- - Standard Unix-y tools (mkdir, env, chmod, basename, etc)
- - `curl` (if you use *Extensions*, which you probably want to)
+ - Standard Unix-y tools (mkdir, env, chmod, basename, grep, etc)
+ - `curl`
 
 
 # Features
  - Use *Extensions* to automate downloading & installing applications (**ansible**, **aws**, **docker-compose**, **eksctl**, **helm**, **istioctl**, **kind**, **krew**, **kubectl**, **packer**, **saml2aws**, **terraform-docs**, **terraformer**, **terraform**, **terraform_landscape**, **terragrunt**, **tflint**, **tfsec**, **ydiff**, **yq**)
- - Install custom *Extensions* from GitHub (`clinst -E github.com/foo/bar`)
+ - Install your own *Extensions* from GitHub (`clinst -E github.com/foo/bar`)
  - Pin versions with `.EXTENSION-version` files
- - Wrappers in `~/.clinst/.bin` allow your shell to automatically find installed applications
- - Small codebase, minimal dependencies
+ - Wrappers in your shell to automatically try to install and run supported programs if they're not yet installed
+ - Wrappers for each installed program to automatically change or install specific
+ - Small codebase, common dependencies
  - Customize environments to your needs
 
 # Quick start
@@ -37,48 +36,74 @@ This program was inspired by `rbenv`, `tfenv`, `virtualenv`, etc.
    || { echo "FAILED CHECKSUM: REMOVING clinst" && sudo rm -f $HOME/.clinst/.bin/clinst ; }
    ```
 
-2. Install and run an application with an *Extension*
-   ```bash
-   vagrant@devbox:~$ packer --version
-   bash: packer: command not found
-   
-   vagrant@devbox:~$ clinst -E packer --version
-   clinst: Creating new environment '/home/vagrant/.clinst/packer'
-   clinst: Loading extension 'packer' version '1.7.3'
-   clinst: packer: Removing temporary download files
-   clinst: packer: Downloading artifact
-     % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
-                                    Dload  Upload   Total   Spent    Left  Speed
-   100 30.2M  100 30.2M    0     0  10.6M      0  0:00:02  0:00:02 --:--:-- 10.6M
-   clinst: packer: Unpacking to '/home/vagrant/.clinst/packer'
-   clinst: packer: Installing symlink
-   clinst: packer: Testing
-   clinst: packer: Removing temporary download files
-   clinst: packer: Installing wrapper
-   clinst: Executing /home/vagrant/.clinst/packer/bin/packer
-   1.7.3
-   ```
-
-3. Add the following to your `~/.bashrc` file to add `~/.clinst/.bin` to your
+2. Add the following to your `~/.bashrc` file to add `~/.clinst/.bin` to your
    shell's *PATH*:
    ```bash
    eval "$(~/.clinst/.bin/clinst -s)"
    ```
+
+3. Install a program using **clinst**:
+
+   ```bash
+   $ clinst -E packer
+   clinst: Downloading extension 'packer'
+   clinst: Creating new environment '/home/vagrant/.clinst/packer=1.7.9'
+   clinst: Loading extension 'packer' version '1.7.9'
+   clinst: packer: Removing temporary download files
+   clinst: packer: Downloading artifact
+     % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                    Dload  Upload   Total   Spent    Left  Speed
+   100 30.6M  100 30.6M    0     0  12.3M      0  0:00:02  0:00:02 --:--:-- 12.3M
+   clinst: packer: Unpacking to '/home/vagrant/.clinst/packer=1.7.9'
+   clinst: packer: Installing locally
+   clinst: packer: Testing
+   clinst: packer: Removing temporary download files
+   clinst: packer: Installing wrapper
+   ```
    
    Now if you run a command that you've installed with **clinst**, it will be
    automatically run using the wrapper in `~/.clinst/.bin`:
-   
+      
    ```bash
    vagrant@devbox:~$ packer --version
    clinst: Executing /home/vagrant/.clinst/packer/bin/packer
-   1.7.3
+   1.7.9
    ```
-   
-   Not only that, but if you haven't even installed a program with **clinst**
-   yet, but an *Extension* does exist for that program you want to run, **clinst**
-   will automatically install and run it. (This is a Bash-only feature)
 
-4. Pin the version of the *Extension* in the current directory, so the same
+4. If you use the **bash** shell, you don't even need to run **clinst** to install a program.
+   Just call the name of a supported program and it will automatically be installed and run:
+   ```bash
+   vagrant@devbox:~$ which packer
+   vagrant@devbox:~$ packer
+   clinst: Downloading extension 'packer'
+   clinst: Creating new environment '/home/vagrant/.clinst/packer=1.7.9'
+   clinst: Loading extension 'packer' version '1.7.9'
+   clinst: packer: Removing temporary download files
+   clinst: packer: Downloading artifact
+     % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                    Dload  Upload   Total   Spent    Left  Speed
+   100 30.6M  100 30.6M    0     0  12.4M      0  0:00:02  0:00:02 --:--:-- 12.4M
+   clinst: packer: Unpacking to '/home/vagrant/.clinst/packer=1.7.9'
+   clinst: packer: Installing locally
+   clinst: packer: Testing
+   clinst: packer: Removing temporary download files
+   clinst: packer: Installing wrapper
+   clinst: Executing /home/vagrant/.clinst/packer=1.7.9/bin/packer
+   Usage: packer [--version] [--help] <command> [<args>]
+   
+   Available commands are:
+       build           build image(s) from template
+       console         creates a console for testing variable interpolation
+       fix             fixes templates from old versions of packer
+       fmt             Rewrites HCL2 config files to canonical format
+       hcl2_upgrade    transform a JSON template into an HCL2 configuration
+       init            Install missing plugins or upgrade plugins
+       inspect         see components of a template
+       validate        check that a template is valid
+       version         Prints the Packer version
+   ```
+
+5. Pin the version of the *Extension* in the current directory, so the same
    version of your application is always run:
    ```bash
    vagrant@devbox:~$ echo "1.7.3" > .packer-version
@@ -101,7 +126,7 @@ This program was inspired by `rbenv`, `tfenv`, `virtualenv`, etc.
    1.7.3
    ```
 
-5. To always get the latest *Extensions* (not just the ones that were released
+6. To always get the latest *Extensions* (not just the ones that were released
    with your version of **clinst**) use the `main` version of **clinst**:
 
    ```bash
@@ -116,74 +141,27 @@ This program was inspired by `rbenv`, `tfenv`, `virtualenv`, etc.
    Usage: clinst [OPTS]
           clinst [OPTS] [CMD [ARGS ..]]
    Opts:
-           -h                      This screen
-           -i                      Clear environment variables. Must be first argument
-           -l [ENVIRON]            List environments
-           -L [EXT]                List remote extensions
-           -n ENVIRON              Create a new environment ENVIRON
-           -E EXT[=V]              Use (optional) version V of extension EXT
-           -e ENVIRON              Use environment ENVIRON
-           -D EXT=V                Make version V the default wrapper for EXT
-           -r FILE                 Install a list of extensions from FILE
-           -X CMD [ARG ..]         (internal function) Run command for an extention
-           -W                      Disables wrapper mode
-           -f                      Force mode
-           -V                      Version of clinst
-           -q                      Quiet mode
+        -h                      This screen
+        -i                      Clear environment variables. Must be first argument
+        -l [ENVIRON]            List environments
+        -L [EXT]                List remote extensions
+        -n ENVIRON              Create a new environment ENVIRON
+        -E EXT[=V]              Use (optional) version V of extension EXT
+        -e ENVIRON              Use environment ENVIRON
+        -D EXT=V                Make version V the default wrapper for EXT
+        -r FILE                 Install a list of extensions from FILE
+        -X CMD [ARG ..]         (internal function) Run command for an extension
+        -W                      Disables wrapper mode
+        -s                      Outputs Bourne shell features to include in your ~/.bashrc
+        -f                      Force mode
+        -V                      Version of clinst
+        -q                      Quiet mode
    ```
 
 ---
 
 ## How it works
 
-### What are Environments?
-
-*Environments* are basically just directories with a couple files in them. They
-keep some configuration, and any programs you install in them. **clinst** loads 
-the configuration and runs your program.
-
-*Environments* are kept in sub-directories of *$CLINST_DIR* (default: *$HOME/.clinst/*).
-Each *Environment* has at least two files:
- - `bin/` : applications (or symlinks to applications) installed here.
- - `.env` : A shell script to set environment variables at run time.
-
-### What are Extensions?
-
-Normally you might use your operating system's package manager to install a 
-program, but sometimes those packages don't exist or are out of date. 
-*Extensions* fill that void by downloading, installing and running specific
-versions of programs. (There is no dependency management, so this is mostly
-for statically-compiled binaries)
-
-For convenience, *Extensions* also install a wrapper for your program in a common
-directory (`$HOME/.clinst/.bin/`) that you can add to your `$PATH`. This way you
-can automatically run the right version of your program.
-
-Since there is only one wrapper for all the possible *Environments* of an 
-*Extension* (only one '~/.clinst/.bin/terraform' for all the installed versions of
-Terraform) you can choose which *Environment* the wrapper runs in two ways:
-
-1. The *Extension* installs a wrapper that points to a specific *Environment*. You
-   can change the default *Environment* used by the wrapper using the `-D` option.
-   ```
-   vagrant@devbox $ terraform --version
-   clinst: Executing /home/vagrant/.clinst/terraform=0.11.15/bin/terraform
-   Terraform v0.11.15
-   vagrant@devbox $ clinst -D terraform=0.12.31
-   clinst: Switching default environment for extension terraform to terraform=0.12.31
-   clinst: terraform: Installing wrapper
-   vagrant@devbox $ terraform --version
-   clinst: Executing /home/vagrant/.clinst/terraform=0.12.31/bin/terraform
-   Terraform v0.12.31
-   ```
-
-2. If a file `.EXTENSION-version` exists in the current or a parent directory, the
-   contents of the file becomes the version of an *Extension* to install. If you
-   specify a version in the `-E` option, this does not happen, and the `-W` option
-   disables it entirely.
-
-(Don't see an *Extension* you want? Check out the [.clext/](./.clext/) directory,
-cut me a Pull Request, I'll merge it! Or create your own via a GitHub repository)
 
 ### How do I install and run a program?
 
@@ -194,9 +172,9 @@ When you run a command like `clinst CMD`, this happens:
     Then it will try to run program `CMD`.
 
  2. If the *Environment* was not found, **clinst** looks for an *Extension* of the
-    same name (`$CLINST_HTTP_PATH/.clext/CMD.ex`). If found, it downloads the 
-    *Extension*, uses it to install `CMD` in an *Environment* of the same name,
-    then follows step #1.
+    same name (`$CLINST_HTTP_PATH/.clext/EXTENSION.ex` or `EXTENSION.e`). If found,
+    it downloads the  *Extension*, uses it to install `CMD` in an *Environment* of
+    the same name, then follows step #1.
 
  3. If no *Extension* or *Environment* is found, **clinst** dies.
     ```bash
@@ -206,11 +184,103 @@ When you run a command like `clinst CMD`, this happens:
     ```
 
 
-### Using Extensions
+### *Environments*
+
+*Environments* are directories with a configuration file, some shell scripts,
+and any programs you install.
+
+*Environments* are kept in sub-directories of *$CLINST_DIR* (default: *$HOME/.clinst/*).
+Each *Environment* has at least two files:
+ - `bin/` : applications (or symlinks to applications) installed here.
+ - `.env` : A shell script to set environment variables at run time.
+
+*Environments* are created or modified when a program is installed in one.
+You can also create them manually using the `-n` option.
+
+#### Default *Environment*
+
+Every installed version of a program gets its own *Environment*. You can change
+the default *Environment* used by the wrapper using the `-D` option.
+
+   ```bash
+   vagrant@devbox:~$ terraform --version
+   clinst: Executing /home/vagrant/.clinst/terraform=0.11.15/bin/terraform
+   Terraform v0.11.15
+   vagrant@devbox $ clinst -D terraform=0.12.31
+   clinst: Switching default environment for extension terraform to terraform=0.12.31
+   clinst: terraform: Installing wrapper
+   vagrant@devbox $ terraform --version
+   clinst: Executing /home/vagrant/.clinst/terraform=0.12.31/bin/terraform
+   Terraform v0.12.31
+   ```
+
+#### Manually setting up an *Environment*
+
+You actually don't need to use *Extensions* at all to take advantage of **clinst**.
+You can manually set up an *Environment* and call programs within it.
+
+1. Create a new *Environment*. For this example we'll call it just "aws",
+   but you could also give it a more descriptive name, like "aws=2.0.50".
+   ```bash
+   $ clinst -n aws-foo
+   ```
+
+2. Manually install an application (like `aws`) in the new `bin/` directory of the new *Environment*
+   (`~/.clinst/aws-foo/bin/`).
+
+3. If you want, you can customize the environment used by editing the
+   `~/.clinst/aws-foo/.env` file. `clinst` loads this as a shell script before running
+   your application.
+
+4. Run your application with `clinst`
+   ```bash
+   $ clinst -e aws-foo aws --version
+   clinst: Executing /home/vagrant/.clinst/aws-foo/bin/aws
+   aws-cli/2.0.50 Python/3.7.3 Linux/4.15.0-135-generic exe/x86_64.ubuntu.18
+   ```
+
+#### Listing *Environments*
+
+Let's see the *Environments* we've created so far:
+   ```bash
+   $ clinst -l
+   aws
+   aws-foo
+   aws=2.0.50
+   clinst-test-ext
+   ```
+
+
+### *Extensions*
+
+*Extensions* are files that contain instructions for how to download and install
+a program. They're like the build instructions used by package managers to build
+and package software.
+
+#### Different kinds of *Extensions*
+
+There are two kinds of *Extensions*:
+ - **Stub extension:** A set of key=value pairs that are `eval`ed by the running
+   shell and set configuration information.
+ - **Executable extension:** An executable program that takes command-line inputs
+   and returns output. Each function of **clinst** can be written as a dedicated
+   command of this executable, so that you can implement any stage of the process
+   using any kind of executable (write them in any program language, basically).
+
+#### *Extension* Wrappers
+
+*Extensions* install a wrapper for your program in a common directory
+(`$HOME/.clinst/.bin/`) that you can add to your shell's `$PATH`. This wrapper
+points at a specific version of your program, so this is how the default version
+to run is set. However, if you have a `.EXTENSION-version` file in your current
+directory (or any parent directory), **clinst** will automatically download,
+install, and run that version of the program instead of the default one.
+
+#### Using *Extensions*
 
 **clinst** will download *Extensions* with `curl` from a URL
-`$CLINST_HTTP_PATH/.clext/EXTENSION.ex`. Override *$CLINST_HTTP_PATH* if you want
-to provide your own *Extension* path or URL.
+(`$CLINST_HTTP_PATH/.clext/EXTENSION.ex` or `EXTENSION.e`). Override 
+*$CLINST_HTTP_PATH* if you want to provide your own *Extension* path or URL.
 
 You can also put extensions directly into your `~/.clinst/.clext/` directory.
 These are not overwritten unless you pass the `-f` option to **clinst**.
@@ -254,43 +324,29 @@ name, and the tag/branch with '@BRANCH'. Example:
 See [.clext/README.md](./.clext/README.md) for details about how to create these extensions.
 
 
-### Manually setting up an *Environment*
+#### Version pinning with `.EXTENSION-version` files
 
-You actually don't need to use *Extensions* at all to take advantage of **clinst**.
-You can manually set up an *Environment* and call programs within it.
+If a file `.EXTENSION-version` exists in the current or a parent directory, the
+contents of the file becomes the version of an *Extension* to install. If you
+specify a version in the `-E` option, this does not happen, and the `-W` option
+disables it entirely. The name `EXTENSION` should be the name of the program
+you're running; if you're running `terraform`, the file name will be
+`.terraform-version`. (Technically, `EXTENSION` should actually be the name of
+the installed *Extension*, not the command you're running)
 
-1. Create a new *Environment*. For this example we'll call it just "aws",
-   but you could also give it a more descriptive name, like "aws=2.0.50".
+Some *Extensions* may install multiple commands, but **clinst** will not create
+wrappers for all of them. If the *Extension* installs multiple commands into
+the *Environment*, you will need to run **clinst** and specify the *Environment*
+to use, along with the command to run. For example:
+
    ```bash
-   $ clinst -n aws-foo
+   vagrant@devbox:~$ clinst -e ansible=4.2.0 ansible-playbook
    ```
 
-2. Manually install an application (like `aws`) in the new `bin/` directory of the new *Environment*
-   (`~/.clinst/aws-foo/bin/`).
+(Don't see an *Extension* you want? Check out the [.clext/](./.clext/) directory,
+cut me a Pull Request, I'll merge it! Or create your own via a GitHub repository)
 
-3. If you want, you can customize the environment used by editing the
-   `~/.clinst/aws-foo/.env` file. `clinst` loads this as a shell script before running
-   your application.
-
-4. Run your application with `clinst`
-   ```bash
-   $ clinst -e aws-foo aws --version
-   clinst: Executing /home/vagrant/.clinst/aws-foo/bin/aws
-   aws-cli/2.0.50 Python/3.7.3 Linux/4.15.0-135-generic exe/x86_64.ubuntu.18
-   ```
-
-### List *Environments*
-
-Let's see the *Environments* we've created so far:
-   ```bash
-   $ clinst -l
-   aws
-   aws-foo
-   aws=2.0.50
-   clinst-test-ext
-   ```
-
-### List *Extensions*
+#### List available *Extensions*
 
 Want to know what extensions are available?
    ```bash
@@ -323,7 +379,6 @@ How about the available versions of an extension?
    0.14.11
    0.14.10
    ```
-
 
 ### Cryptographically verifying signatures
 
