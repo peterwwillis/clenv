@@ -88,16 +88,16 @@ _clinst_ext_download () {
         fi
     fi
     _echo_err "Downloading extension '$CLINST_E_NAME'"
-    downloadedext=0
+    clinst_already_downloaded=0
     for ext in e ex ; do
         lf="$CLINST_EXT_DIR/$CLINST_E_NAME.$ext"
         rf="$clinst_http_ext_path/$CLINST_EXT_DIR_NAME/$CLINST_E_NAME.$ext"
         set +e; errmsg="$( eval curl -fsSL ${CURL_OPTS:-} -o "$lf" "$rf" 2>&1 )" ; res=$? ; set -e
         if [ "$res" -eq 0 ] ; then
-            downloadedext=1; break
+            clinst_already_downloaded=1; break
         fi
     done
-    [ "$downloadedext" -eq 1 ] || _err "Could not download extension '$CLINST_E_NAME': $errmsg"
+    [ "$clinst_already_downloaded" -eq 1 ] || _err "Could not download extension '$CLINST_E_NAME': $errmsg"
     chmod +x "$lf"
     if [ "${CLINST_EXPERIMENT_GPG_VALIDATE:-0}" = "1" ] ; then
         if eval curl -fsSL ${CURL_OPTS:-} -o "$lf.asc" "$rf.asc"
@@ -106,11 +106,10 @@ _clinst_ext_download () {
               rm -rf "$lf.asc" "$lf"
         fi
     fi
-    clinst_already_downloaded="1"
 }
 _clinst_ext_gpg_validate () {
     for ext in .e .ex ; do
-        if [ -e "$CLINST_EXT_DIR/$CLINST_E_NAME.$ex.asc" ] ; then
+        if [ -e "$CLINST_EXT_DIR/$CLINST_E_NAME.$ext.asc" ] ; then
             if command -v gpg 2>/dev/null 1>&2 && ! gpg --verify "$CLINST_EXT_DIR/$CLINST_E_NAME.$ext.asc" ; then
                 _echo_err "Error: validation of '$CLINST_E_NAME.$ext.asc' failed! Make sure you import the public key first and try again."
                 exit 1
@@ -217,7 +216,7 @@ CLINST_EXT_HELP=""
 _ext_help_grep () {
     CLINST_EXT_HELP="$("$CLINST_EXT_DIR/$CLINST_E_NAME.ex" "help" | grep -A999 "^Commands:$")"
     # Support 'install-local' and 'install_local' (function names can't have '-' anyway)
-    cmd="$1" altcmd="$(printf "$1" | tr -- -_ _-)" ; shift
+    cmd="$1" altcmd="$(printf '%s' "$1" | tr -- -_ _-)" ; shift
     if    [ "$(expr "$CLINST_EXT_HELP" : ".*[^:space::graph:]  $cmd")" -ne 0 ] \
           || [ "$(expr "$CLINST_EXT_HELP" : ".*[^:space::graph:]  $altcmd")" -ne 0 ]
     then  return 0 ; fi
@@ -228,7 +227,9 @@ ext_variables () {
     _clinst_ext_download
     if    [ -e "$CLINST_EXT_DIR/$CLINST_E_NAME.e" ]
     then  cat "$CLINST_EXT_DIR/$CLINST_E_NAME.e"
-    else  _echo_err "Error: no extension '$CLINST_EXT_DIR/$CLINST_E_NAME.e' found!" 1>&2
+    elif  [ -e "$CLINST_EXT_DIR/$CLINST_E_NAME.ex" ]
+    then  "$CLINST_EXT_DIR/$CLINST_E_NAME.ex" "variables" "$@"
+    else  _err "Error: no extension '$CLINST_E_NAME' found!" 1>&2
     fi
 }
 _ext_test () {
