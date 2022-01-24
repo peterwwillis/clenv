@@ -183,6 +183,7 @@ When you run a command like `clinst CMD`, this happens:
     curl: (22) The requested URL returned error: 404
     ```
 
+---
 
 ### *Environments*
 
@@ -250,6 +251,7 @@ Let's see the *Environments* we've created so far:
    clinst-test-ext
    ```
 
+---
 
 ### *Extensions*
 
@@ -380,6 +382,8 @@ How about the available versions of an extension?
    0.14.10
    ```
 
+---
+
 ### Cryptographically verifying signatures
 
 **NOTE: This feature is still in testing; consider it non-functional!**
@@ -417,6 +421,7 @@ Now you can manually verify the `*.asc` files were signed by that key:
 $ for i in *.asc .clext/*.asc ; do gpg --verify $i ; done
 ```
 
+---
 
 ### Be quiet
 
