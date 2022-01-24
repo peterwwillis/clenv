@@ -16,7 +16,7 @@ CLINST_E_BASEURL_ARGS='"${CLINST_E_VERSION}" "${CLINST_E_VERSION}" "${CLINST_E_O
 export CLINST_E_NAME CLINST_E_REV CLINST_E_BIN_NAME CLINST_E_DLFILE
 
 ### Extension-specific functions
-_ext_versions () {  clinst -E "$CLINST_E_NAME" -X versions_hc "$CLINST_E_HCURL" ;  }
+_ext_versions () {  clinst -E "$CLINST_E_NAME" -X versions_hashicorp "$CLINST_E_HCURL" ;  }
 _ext_unpack () {  clinst -E "$CLINST_E_NAME" -X unpack_unzip "/usr/bin" ;  }
 
 ### The rest of this doesn't need to be modified

@@ -33,10 +33,17 @@ set -u
 ###  3. Run `./test.sh tests/*.t`
 
 PWD="${PWD:-$(pwd)}"
-TESTSH_SRCDIR="${TESTSH_SRCDIR:-$PWD}"
-TESTSH_SRCDIR="$(cd "$TESTSH_SRCDIR" && pwd -P)"
+
+# Where you first ran test.sh from
+TESTSH_SRCDIR="$( cd "${TESTSH_SRCDIR:-$PWD}" && pwd -P)"
+
+# Set this to 1 to make a new log file for every test
 TESTSH_LOGGING="${TESTSH_LOGGING:-0}"
+
+# Use a config file to set settings or define common tests
 TESTSH_ENVRC="${TESTSH_ENVRC:-$TESTSH_SRCDIR/.testshrc}"
+
+# Extension for your test files
 TESTSH_TESTEXT="${TESTSH_TESTEXT:-.t}"
 
 _main () {
@@ -47,14 +54,15 @@ _main () {
 
         cd "$testshpwd" || { echo "$0: Error: could not cd '$testshpwd'" && exit 1 ; }
 
-        # The following variables should be used by the tests
-        testbasename="$(basename "$i" "$TESTSH_TESTEXT")"  ### So you don't need ${BASH_SOURCE[0]}
-        testtmpdir="$(mktemp -d)"            ### Copy your test files into here
+        # The following variables should be used by tests:
+        testbasename="$(basename "$i" "$TESTSH_TESTEXT")" # So you don't need ${BASH_SOURCE[0]}
+        testtmpdir="$(mktemp -d)"                         # Copy your test files here
 
-        # Terrible, horrible, no good kludge to add a path to $i
+        # Terrible, horrible, no good kludge to add a path to the test script
         [ "$(expr "$i" : '.*/')" = 0 ] && i="$(cd "$(dirname "$i")" && pwd -P)/$i"
 
-        . "$i" # load the test script into this shell
+        # Load the test script into test.sh
+        . "$i"
 
         # Now we should have a variable $ext_tests set by the test script.
         # The value is a string of space-separated names of '_t_SOMETHING' functions to run.
