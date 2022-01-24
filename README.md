@@ -17,7 +17,7 @@ You can also use **clinst** without *Extensions*, as a sort of environment-manag
 
 
 # Features
- - Use *Extensions* to automate downloading & installing applications (**ansible**, **aws**, **docker-compose**, **eksctl**, **helm**, **istioctl**, **kind**, **krew**, **kubectl**, **packer**, **saml2aws**, **terraform-docs**, **terraformer**, **terraform**, **terraform_landscape**, **terragrunt**, **tflint**, **tfsec**, **ydiff**, **yq**)
+ - Use *Extensions* to automate downloading & installing applications (**ansible**, **aws**, **docker-compose**, **eksctl**, **gh**, **helm**, **istioctl**, **kind**, **krew**, **krew**, **kubectl**, **packer**, **saml2aws**, **terraform-docs**, **terraformer**, **terraform**, **terraform_landscape**, **terragrunt**, **tflint**, **tfsec**, **ydiff**, **yq**)
  - Install your own *Extensions* from GitHub (`clinst -E github.com/foo/bar`)
  - Pin versions with `.EXTENSION-version` files
  - Wrappers in your shell to automatically try to install and run supported programs if they're not yet installed
@@ -32,7 +32,7 @@ You can also use **clinst** without *Extensions*, as a sort of environment-manag
    mkdir -p $HOME/.clinst/.bin && \
    curl -fsSL -o $HOME/.clinst/.bin/clinst https://raw.githubusercontent.com/peterwwillis/clinst/v3.0.0/clinst \
    && chmod +x $HOME/.clinst/.bin/clinst \
-   && echo "e8a600cca7c68f72ff2412a1d1aae3e1ca1ff7da0c28884a2739343e7164cf82  $HOME/.clinst/.bin/clinst" | sha256sum -c \
+   && echo "4e4d436139ac29467139708704a42b308198491364e132e40a4e7f2a8aaa0924  $HOME/.clinst/.bin/clinst" | sha256sum -c \
    || { echo "FAILED CHECKSUM: REMOVING clinst" && sudo rm -f $HOME/.clinst/.bin/clinst ; }
    ```
 

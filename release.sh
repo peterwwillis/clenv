@@ -13,16 +13,17 @@ _bumpver () {
     sed -i -e "s/\(raw\.githubusercontent\.com\/peterwwillis\/clinst\/v\)[0-9.]\+\(\/clinst\)/\1$new_ver\2/g" README.md
 }
 _extlist () {
-    extensions="$(ls .clext/*.ex | grep -ve "test\.ex" | sed -e 's/^\.clext\/\(.\+\)\.ex$/**\1**, /g' | xargs | sed -e 's/,$//')"
+    extensions="$(ls .clext/*.ex .clext/*.e | grep -ve "test\.ex" | sed -e 's/^\.clext\/\(.\+\)\.ex\?$/**\1**, /g' | xargs | sed -e 's/,$//')"
     sed -i -e "s/\(to automate downloading & installing applications\).*)/\1 ($extensions)/" README.md
 }
 _checksums () {
-    sha256sum clinst .clext/*.ex > CHECKSUMS.sha256
+    sha256sum clinst .clext/*.ex .clext/*.e > CHECKSUMS.sha256
 }
 _signatures () {
-    for i in clinst .clext/*.ex ; do
-        gpg -s -a -b -o $i.asc $i
-    done
+    #for i in clinst .clext/*.ex .clext/*.e ; do
+    #    gpg -s -a -b -o $i.asc $i
+    #done
+    return 0
 }
 
 if [ $# -lt 1 ] ; then
