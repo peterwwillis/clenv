@@ -34,7 +34,7 @@ Opts:
 	-f			Force mode
  	-V			Version of clinst
 	-q			Quiet mode
-"
+" 1>&2
   exit 1
 }
 _err () { printf "%s\n" "$0: Error: $*" ; exit 1 ; }
@@ -65,13 +65,13 @@ _clinst_new () {
     printf "%s\n" 'pmunge "'"$CLINST_DIR/$_env/bin"'"' >> "$CLINST_DIR/$_env/.env"
 }
 _clinst_ext_run () {
-    funcname="$1"; shift
+    # shell function names have limited character sets; squash to '_'
+    funcname="$(printf "%s" "$1" | tr -c 'a-zA-Z0-9_' _)"; shift
     if    set | grep "^ext_$funcname=" >/dev/null
-    then  eval "handler=\${ext_$funcname}"
-          eval "$handler" "$@"
+    then  eval "handler=\${ext_$funcname}";   eval "$handler" "$@"
     elif  [ -e "$CLINST_EXT_DIR/$CLINST_E_NAME.ex" ] && _ext_help_grep "$funcname"
     then  "$CLINST_EXT_DIR/$CLINST_E_NAME.ex" "$funcname" "$@"
-    else  eval "handler=ext_$funcname; \$handler" "$@"
+    else  eval "handler=ext_$funcname ; \$handler" "$@"
     fi
 }
 _clinst_ext_download () {
@@ -213,15 +213,19 @@ EOBOURNE
 
 CLINST_EXT_HELP=""
 _ext_help_grep () {
-    CLINST_EXT_HELP="$("$CLINST_EXT_DIR/$CLINST_E_NAME.ex" "help")"
-    if    [ $(expr "$CLINST_EXT_HELP" : ".*  $*") -ne 0 ]
-    then  return 0 ; else  return 1 ;  fi
+    CLINST_EXT_HELP="$("$CLINST_EXT_DIR/$CLINST_E_NAME.ex" "help" | grep -A999 "^Commands:$")"
+    # Support 'install-local' and 'install_local' (function names can't have '-' anyway)
+    cmd="$1" altcmd="$(printf "$1" | tr -- -_ _-)" ; shift
+    if    [ "$(expr "$CLINST_EXT_HELP" : ".*[^:space::graph:]  $cmd")" -ne 0 ] \
+          || [ "$(expr "$CLINST_EXT_HELP" : ".*[^:space::graph:]  $altcmd")" -ne 0 ]
+    then  return 0 ; fi
+    return 1
 }
 _ext_variables () {  eval $(_clinst_ext_run "variables" "$@") ; }
 ext_variables () {
     if [ -e "$CLINST_EXT_DIR/$CLINST_E_NAME.e" ]
     then  cat "$CLINST_EXT_DIR/$CLINST_E_NAME.e"
-    else  echo "$0: Error: no extension '$CLINST_EXT_DIR/$CLINST_E_NAME.e' found!" 1>&2
+    else  _echo_err "Error: no extension '$CLINST_EXT_DIR/$CLINST_E_NAME.e' found!" 1>&2
     fi
 }
 _ext_test () {
@@ -290,8 +294,8 @@ _ext_download () {
 }
 ext_download () {
     mkdir -p "$CLINST_E_INSTDIR/download"
-    if    [ ! -e "$CLINST_E_INSTDIR/download/$CLINST_E_DLFILE" ] || [ "${CLINST_FORCE:-0}" = "1" ]
-    then  eval curl -fSL ${CURL_OPTS:-} "$(_ext_url)" -o "$CLINST_E_INSTDIR/download/$CLINST_E_DLFILE"
+    if  [ ! -e "$CLINST_E_INSTDIR/download/$CLINST_E_DLFILE" ] || [ "${CLINST_FORCE:-0}" = "1" ] ; then
+        eval curl -fSL ${CURL_OPTS:-} "$(_ext_url)" -o "$CLINST_E_INSTDIR/download/$CLINST_E_DLFILE"
     fi
 }
 _ext_versions () {  _clinst_ext_run "versions" "$@" ; }
@@ -356,7 +360,7 @@ do
           V)  echo "clinst $CLINST_VER" ; exit 0 ;;
           q)  CLINST_QUIET=1 ;;
           s)  _clinst_bourne ; exit 0 ;;
-          *)  echo "$0: Illegal option '$args'" ; _usage ;;
+          \?) _usage ;;
       esac
 done
 shift $((OPTIND-1))
