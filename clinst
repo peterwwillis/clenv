@@ -194,12 +194,12 @@ _clinst_wrapper () {
 }
 _clinst_bourne () {
     cat <<'EOBOURNE'
-pmunge () { if ! echo "$PATH"|/bin/grep -Eq "(^|:)$1($|:)";then if [ "$2" = "after" ]; then PATH="$PATH:$1"; else PATH="$1:$PATH"; fi;fi; }
-pmunge "$HOME/.clinst/.bin" ; export PATH
+pmunge () { if ! echo "$PATH"|/bin/grep -Eq "(^|:)$1($|:)";then if [ "$2" = "after" ]; then PATH="$PATH:$1"; else PATH="$1:$PATH"; fi;fi; } ;
+pmunge "$HOME/.clinst/.bin" ; export PATH ;
 if declare -F "command_not_found_handle" >/dev/null ; then
-    cnfhn="old_cnfh_$(printf "%(%s)T_$$_$RANDOM")"
-    eval "$(echo "$cnfhn()"; declare -f command_not_found_handle | tail -n +2)"
-fi
+    cnfhn="old_cnfh_$(printf "%(%s)T_$$_$RANDOM")" ;
+    eval "$(echo "$cnfhn()"; declare -f command_not_found_handle | tail -n +2)" ;
+fi ;
 eval 'function command_not_found_handle () {
         if clinst -L|grep -qe "^$1$"; then clinst -E "$1" "$@";
         elif [ -n "'"$cnfhn"'" ] ; then '"$cnfhn"' "$@";
