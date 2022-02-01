@@ -5,7 +5,7 @@ set -eu
 [ "${DEBUG:-0}" = "1" ] && set -x
 
 CLINST_VER="${CLINST_VER:-v3.0.0}"
-CLINST_HTTP_PATH="${CLINST_HTTP_PATH:-https://raw.githubusercontent.com/peterwwillis/clinst/$CLINST_VER}"
+CLINST_HTTP_PATH="${CLINST_HTTP_PATH:-https://raw.githubusercontent.com/peterwwillis/clinst/main}"
 HOME="${HOME:-$(getent passwd "$(id -u)" | cut -d : -f 6)}"
 export CLINST_DIR="${CLINST_DIR:-$HOME/.clinst}"
 export CLINST_BIN_DIR="${CLINST_BIN_DIR:-$CLINST_DIR/.bin}"
