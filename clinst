@@ -153,7 +153,7 @@ _clinst_exec () {
   export CLINST_E_ENVIRON="${CLINST_E_ENVIRON:-$1}" # default environment name to command name
   [ "${CLINST_WRAPPER:-1}" -eq 1 ]       && _clinst_wrapper "$CLINST_E_ENVIRON"
   [ -d "$CLINST_DIR/$CLINST_E_ENVIRON" ] || _err "No environment '$CLINST_DIR/$CLINST_E_ENVIRON' found"
-  if    [ -r "$CLINST_DIR/$CLINST_E_ENVIRON/.env" ]
+  if    [ -e "$CLINST_DIR/$CLINST_E_ENVIRON/.env" ]
   then  set -a;  . "$CLINST_DIR/$CLINST_E_ENVIRON/.env"
   else  _echo_err "Warning: no '$CLINST_DIR/$CLINST_E_ENVIRON/.env' found"
   fi
