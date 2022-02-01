@@ -1,5 +1,29 @@
 # Changelog
 
+## [3.0.0] - 2022-01-31
+### Added
+ - Begin work on signature verification for extensions
+ - New extensions: Terraform Landscape, Krew, GitHub CLI
+ - Variable *CLINST_BIN_DIR* to specify .bin directory
+ - Variable *CLINST_EXT_DIR* to specify .clext directory
+ - New '-s' option to load settings into bourne shells
+ - New stub extensions allow simpler creation of extensions
+### Changed
+ - Renamed project from 'cliv' to 'clinst'
+ - Renamed '.ext' to '.clext'
+ - Updated test.sh framework
+ - Now the default environment name for programs without an explicit version 
+   will include the version that is downloaded
+ - Extensions will now be downloaded from the main branch instead of the
+   version-specific tag so that new extensions are always available
+### Fixed
+ - Fix '-h', '-L', '-D' options
+ - Handle illegal arguments
+ - Versions for extention yq
+ - Wasn't specifying ENVIRON variable correctly
+
+---
+
 ## [2.5.0] - 2021-08-24
 ### Added
  - New extensions: ydiff, kind
