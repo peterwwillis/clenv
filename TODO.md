@@ -24,3 +24,7 @@
  - [ ] Fix bug: Downloading envs versus running them.
        If you run 'clinst -E terraform=1.1.2 terraform --help' it will run the correct terraform environment.
        If you run 'clinst -E terraform=1.1.2 ./some_script.sh', it will download Terraform again, even if it already exists in the environment.
+
+ - [ ] Fix bug: Downloading extensions
+       If you run 'clinst -E terraform=1.1.4' or 'clinst -E terraform=1.1.4 -e terraform=1.1.4' and it already exists, it will download it again.
+       If you run 'clinst -E terraform=1.1.4 terraform' it will run '~/.clinst/terraform/bin/terraform'

@@ -148,7 +148,8 @@ You can also use **clinst** without *Extensions*, as a sort of environment-manag
         -n ENVIRON              Create a new environment ENVIRON
         -E EXT[=V]              Use (optional) version V of extension EXT
         -e ENVIRON              Use environment ENVIRON
-        -D EXT=V                Make version V the default wrapper for EXT
+        -D                      Set what environment (-e) and extension (-E) a wrapper should point
+                                to by default
         -r FILE                 Install a list of extensions from FILE
         -X CMD [ARG ..]         (internal function) Run command for an extension
         -W                      Disables wrapper mode
@@ -200,20 +201,29 @@ You can also create them manually using the `-n` option.
 
 #### Default *Environment*
 
-Every installed version of a program gets its own *Environment*. You can change
-the default *Environment* used by the wrapper using the `-D` option.
+Every installed version of a program gets its own *Environment*. Each program also
+installs a wrapper in `~/.clinst/.bin/` that will try to detect what version of a
+program you want to run. To change the default version of the program (what version
+is run if you don't pin the version with a `.EXT-version` or specify on the
+command-line) use the `-D` option.
+
+If you pass the `-e` option with the `-D` option, it will pin the default
+*Environment* to use.
 
    ```bash
    vagrant@devbox:~$ terraform --version
    clinst: Executing /home/vagrant/.clinst/terraform=0.11.15/bin/terraform
    Terraform v0.11.15
-   vagrant@devbox $ clinst -D terraform=0.12.31
+   vagrant@devbox $ clinst -D -e terraform=0.12.31
    clinst: Switching default environment for extension terraform to terraform=0.12.31
    clinst: terraform: Installing wrapper
    vagrant@devbox $ terraform --version
    clinst: Executing /home/vagrant/.clinst/terraform=0.12.31/bin/terraform
    Terraform v0.12.31
    ```
+
+**However:** if you pass the `-E` option with `-D`, it will force that specific version
+of a program to run every single time. The `.EXT-version` files will be ignored!
 
 #### Manually setting up an *Environment*
 

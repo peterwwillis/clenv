@@ -26,7 +26,8 @@ Opts:
 	-n ENVIRON		Create a new environment ENVIRON
 	-E EXT[=V] 	 	Use (optional) version V of extension EXT
 	-e ENVIRON		Use environment ENVIRON
-	-D EXT=V		Make version V the default wrapper for EXT
+	-D      		Set what environment (-e) and extension (-E) a wrapper should point
+	          		to by default
 	-r FILE			Install a list of extensions from FILE
 	-X CMD [ARG ..]		(internal function) Run command for an extension
 	-W			Disables wrapper mode
@@ -133,15 +134,13 @@ _clinst_ext_install () {
     export CLINST_E_NAME="$ext"
     _ext_variables
     CLINST_E_VERSION="${CLINST_E_VERSION:-$(_ext_latest)}"
-    if [ ! "$ver" = "$CLINST_E_NAME" ] ; then
+    if [ -n "$ver" ] && [ ! "$ver" = "$CLINST_E_NAME" ] ; then
         export CLINST_E_VERSION="$ver"
     fi
     # Set the default environment name
-    if [ -z "$environ" ] && [ -n "${CLINST_E_NAME:-}" ] && [ -n "${CLINST_E_VERSION:-}" ] ; then
-        shift $#
-        CLINST_E_ENVIRON="$CLINST_E_NAME=$CLINST_E_VERSION"
-    else
-        shift 2
+    if [ "${environ:-}" = "${ext:-}" ] ; then
+        CLINST_E_ENVIRON="$CLINST_E_NAME${CLINST_E_VERSION:+=$CLINST_E_VERSION}"
+    elif [ -n "${environ:-}" ] ; then
         CLINST_E_ENVIRON="$environ"
     fi
     export CLINST_E_VERSION CLINST_E_ENVIRON CLINST_E_INSTDIR="$CLINST_DIR/$CLINST_E_ENVIRON"
@@ -163,11 +162,22 @@ _clinst_exec () {
   exec env "$@"
 }
 _clinst_default_wrapper () {
-    CLINST_E_ENVIRON="${CLINST_E_ENVIRON:-$1}"
-    ext="${CLINST_E_ENVIRON%%=*}" ver="${CLINST_E_ENVIRON#*=}"
-    CLINST_E_NAME="$ext"
-    [ "$ver" = "$ext" ] || CLINST_E_VERSION="$ver"
-    _echo_err "Switching default environment for extension $ext to $CLINST_E_ENVIRON"
+    [ -n "${CLINST_E_NAME:-}" -o -n "${CLINST_E_ENVIRON:-}" ] || _err "Please pass -e or -E (or both)"
+    if [ -n "${CLINST_E_ENVIRON:-}" ] ; then
+        if [ -z "${CLINST_E_NAME:-}" ] ; then
+            ext="${CLINST_E_ENVIRON%%=*}" ver="${CLINST_E_ENVIRON#*=}"
+            CLINST_E_NAME="$ext"
+            # do not set CLINST_E_VERSION based on CLINST_E_ENVIRON; let the user
+            # pass -E option if they want to pin the extension version
+        fi
+    fi
+    if [ -n "${CLINST_E_NAME:-}" ] ; then
+        ext="${CLINST_E_NAME%%=*}" ver="${CLINST_E_NAME#*=}"
+        CLINST_E_NAME="$ext"
+        [ "$ver" = "$ext" ] || CLINST_E_VERSION="$ver"
+    fi
+    [ -n "${CLINST_E_ENVIRON:-}" ] || CLINST_E_ENVIRON="$CLINST_E_NAME${CLINST_E_VERSION:+=$CLINST_E_VERSION}"
+    _echo_err "Switching default environment for wrapper $ext to $CLINST_E_ENVIRON"
     _ext_variables # NOTE: loads whatever CLINST_E_* variables the extension outputs
     CLINST_FORCE=1 _ext_install_wrapper "$CLINST_E_ENVIRON"
 }
@@ -263,9 +273,11 @@ _ext_install_wrapper () {
 }
 ext_install_wrapper () {
     [ -d "$CLINST_BIN_DIR" ] || mkdir -p "$CLINST_BIN_DIR"
-    if    [ ! -e "$CLINST_BIN_DIR/$CLINST_E_BIN_NAME" -o "${CLINST_FORCE:-0}" = "1" ]
-    then  printf "#!/usr/bin/env sh\nexec clinst -E $CLINST_E_NAME=$CLINST_E_VERSION -e $CLINST_E_ENVIRON $CLINST_E_BIN_NAME \"\$@\"\n" \
-            > "$CLINST_BIN_DIR/$CLINST_E_BIN_NAME"
+    if [ ! -e "$CLINST_BIN_DIR/$CLINST_E_BIN_NAME" -o "${CLINST_FORCE:-0}" = "1" ] ; then
+        line="#!/usr/bin/env sh\n"
+        line="${line}exec clinst -E $CLINST_E_NAME"
+        line="${line} -e $CLINST_E_ENVIRON $CLINST_E_BIN_NAME \"\$@\"\n"
+        printf "$line"  > "$CLINST_BIN_DIR/$CLINST_E_BIN_NAME"
     fi
     [ -x "$CLINST_BIN_DIR/$CLINST_E_BIN_NAME" ] || chmod +x "$CLINST_BIN_DIR/$CLINST_E_BIN_NAME"
 }
@@ -350,7 +362,7 @@ fi
 [ "$1" = "-i" ] && shift 1 && exec env -i "$0" "$@"
 
 CLINST_FORCE=0 CLINST_QUIET="${CLINST_QUIET:-0}"
-while getopts "hnlLE:e:D:r:X:WfVqs" args
+while getopts "hnlLE:e:Dr:X:WfVqs" args
 do
       case "$args" in
           h)  _usage ;;
@@ -359,7 +371,7 @@ do
           L)  CLINST_LISTEXT=1 ;;
           E)  CLINST_E_NAME="$OPTARG" ;;
           e)  CLINST_E_ENVIRON="$OPTARG" ;;
-          D)  CLINST_E_ENVIRON="$OPTARG" ; CLINST_DEFAULT_WRAPPER=1 ;;
+          D)  CLINST_DEFAULT_WRAPPER=1 ;;
           r)  CLINST_REQUIRES="$OPTARG" ;;
           X)  CLINST_XCALL="$OPTARG" ;;
           W)  CLINST_WRAPPER=0 ;;

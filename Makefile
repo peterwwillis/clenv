@@ -1,6 +1,9 @@
 
 .PHONY: test test-main test-extensions
-test: test-main test-extensions
+test: shellcheck test-main test-extensions
+
+shellcheck:
+	shellcheck clinst
 
 test-extensions:
 	export PATH="`pwd`:$$PATH" ; \
