@@ -138,10 +138,12 @@ _clinst_ext_install () {
         export CLINST_E_VERSION="$ver"
     fi
     # Set the default environment name
-    if [ "${environ:-}" = "${ext:-}" ] ; then
+    if [ "${environ:-}" = "${ext:-}" ] || [ -z "${environ:-}" ] ; then
         CLINST_E_ENVIRON="$CLINST_E_NAME${CLINST_E_VERSION:+=$CLINST_E_VERSION}"
     elif [ -n "${environ:-}" ] ; then
         CLINST_E_ENVIRON="$environ"
+    else
+        __err "ext '${ext:-}' ver '${ver:-}' environ '${environ:-}'"
     fi
     export CLINST_E_VERSION CLINST_E_ENVIRON CLINST_E_INSTDIR="$CLINST_DIR/$CLINST_E_ENVIRON"
     if [ ! -d "$CLINST_DIR/$CLINST_E_ENVIRON" ] || [ "${CLINST_FORCE:-0}" = "1" ] ; then
