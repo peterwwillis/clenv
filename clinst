@@ -144,9 +144,11 @@ _clinst_ext_install () {
         CLINST_E_ENVIRON="$environ"
     fi
     export CLINST_E_VERSION CLINST_E_ENVIRON CLINST_E_INSTDIR="$CLINST_DIR/$CLINST_E_ENVIRON"
-    [ -d "$CLINST_DIR/$CLINST_E_ENVIRON" ] || _clinst_new "$CLINST_E_ENVIRON"
-    _echo_err "Loading extension '$CLINST_E_NAME' version '$CLINST_E_VERSION'"
-    _ext_clean; _ext_download; _ext_unpack; _ext_install_local; _ext_test; _ext_clean; _ext_install_wrapper
+    if [ ! -d "$CLINST_DIR/$CLINST_E_ENVIRON" ] || [ "${CLINST_FORCE:-0}" = "1" ] ; then
+        _clinst_new "$CLINST_E_ENVIRON"
+        _echo_err "Loading extension '$CLINST_E_NAME' version '$CLINST_E_VERSION'"
+        _ext_clean; _ext_download; _ext_unpack; _ext_install_local; _ext_test; _ext_clean; _ext_install_wrapper
+    fi
 }
 _clinst_exec () {
   export CLINST_E_ENVIRON="${CLINST_E_ENVIRON:-$1}" # default environment name to command name
